@@ -1,0 +1,55 @@
+.nav-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 1rem;
+    background-color: #ffffff;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 0.1rem;
+    left: 0;
+    box-shadow: 0 -2px 2px rgba(156, 155, 155, 0.1);
+
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0;
+
+}
+
+.nav-link svg {
+    width: 1.5rem;
+    height: auto;
+    margin: 0;
+    stroke: rgb(122, 120, 120);
+
+}
+
+.nav-link p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgb(122, 120, 120);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.nav-link.active svg,
+a.nav-link.active svg {
+    stroke: #d76925;
+    fill: #d76925;
+}
+
+.nav-link.active p,
+a.nav-link.active p {
+    color: #d76925;
+}

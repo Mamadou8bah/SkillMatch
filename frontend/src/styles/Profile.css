@@ -1,0 +1,479 @@
+.profile-container {
+    max-width: 480px;
+    margin: 1rem auto;
+    padding: 0 1rem;
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+}
+
+/* Animations */
+.profile-container {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 0.7rem;
+}
+
+.profile-avatar-container {
+    margin-bottom: 0.2rem;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 7rem;
+    height: 7rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 0;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.profile-role {
+    margin: 0.05rem;
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 0.8rem;
+}
+
+.edit-profile-btn {
+    background-color: #d76925;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(215, 105, 37, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.edit-profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(215, 105, 37, 0.4);
+}
+
+.profile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item:hover {
+    background-color: #fafafa;
+}
+
+.menu-item.logout {
+    margin-top: 1rem;
+    color: #d76925;
+}
+
+.menu-item.logout .menu-label {
+    color: #d76925;
+    font-weight: 600;
+}
+
+.menu-item.logout .menu-icon-wrapper {
+    background-color: #fff0e6;
+    color: #d76925;
+}
+
+.menu-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.menu-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    overflow: hidden;
+}
+
+.menu-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.menu-value {
+    font-size: 0.85rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menu-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.menu-value-simple {
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.chevron {
+    color: #ccc;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* --- Edit & Sub-View Styles --- */
+.sub-view {
+    animation: slideLeft 0.3s ease-in-out;
+}
+
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.edit-header h2 {
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.back-btn {
+    background: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+.back-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: #1a1a1a;
+}
+
+.back-btn:hover {
+    background: #f8f9fa;
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.spacer {
+    width: 24px;
+}
+
+.edit-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.camera-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #333;
+    border: 2px solid white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-input {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    color: #333;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    box-shadow: 0 0 0 2px rgba(215, 105, 37, 0.2);
+}
+
+.password-input-wrapper {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    display: flex;
+    align-items: center;
+}
+
+.save-btn {
+    margin-top: 1rem;
+    background-color: #d76925;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(215, 105, 37, 0.3);
+    transition: transform 0.2s;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Skills View */
+.skills-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.add-skill-box {
+    display: flex;
+    gap: 1rem;
+}
+
+.add-skill-btn {
+    background-color: #d76925;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.skills-list-full {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.skill-chip {
+    background: #fff0e6;
+    color: #d76925;
+    padding: 0.6rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.remove-skill-btn {
+    background: none;
+    border: none;
+    color: #d76925;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+/* Experience View */
+.experience-textarea {
+    resize: none;
+    line-height: 1.5;
+}
+
+/* Settings View */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.setting-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.setting-icon {
+    color: #888;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #d76925;
+}
+
+input:checked+.slider:before {
+    transform: translateX(22px);
+}
+
+/* Language View */
+.language-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.language-option {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.language-option.selected {
+    color: #d76925;
+}
+
+.check-mark {
+    color: #d76925;
+    font-weight: bold;
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 0 1.5rem;
+    }
+}

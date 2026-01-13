@@ -1,0 +1,66 @@
+.jobs-page{
+    padding: 1rem;
+}
+
+.jp-header{
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+.jp-header h2{
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    justify-self: center;
+    text-align: center;
+    color: #333333;
+    position: absolute;
+    left: 50%;
+}
+@media(max-width:640px) {
+    .jp-header h2{
+        left: 45%;
+    }
+}
+
+.back-button{
+    width: 1.5rem;
+    height: auto;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.back-button svg{
+    width: 100%;
+    height: auto;
+    stroke: #000000;
+    stroke-width: 1rem;
+}
+
+.jp-nav-bar{
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    margin-top: 0.5rem;
+    justify-content: space-evenly;
+    border-bottom: 1px solid #dddddd;
+}
+.jp-nav-link{
+    text-decoration: none;
+    color: #666666;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 500;
+  
+
+}
+.jp-nav-link.active{
+    color: #1b5aeb;
+    border-bottom: 2px solid #1b5aeb;
+    padding-bottom: 0.25rem;
+}
