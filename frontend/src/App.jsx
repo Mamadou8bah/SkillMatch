@@ -11,6 +11,7 @@ import { JobDetails } from './pages/JobDetails';
 import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
 import { Conversation } from './components/Conversation';
+import { Candidates } from './components/Candidates';
 function App() {
   return (
     <div className="App">
@@ -24,6 +25,7 @@ function App() {
           <Route path="about" element={<div>About</div>} />
           <Route path="profile" element={<Profile />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="candidates" element={<Candidates />} />
           <Route path="jobs" element={<Jobs />}>
             <Route index element={<Discover />} />
             <Route path="bookmarks" element={<Bookmarks />} />

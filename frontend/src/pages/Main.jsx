@@ -1,53 +1,71 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import '../styles/Main.css'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Home } from '../components/Home'
+import { Users } from 'lucide-react'
 
 export const Main = () => {
+  const [role, setRole] = useState(localStorage.getItem('userRole') || 'CANDIDATE')
+
+  useEffect(() => {
+    // If we don't have the role in localStorage, fetch it from profile
+    if (!localStorage.getItem('userRole')) {
+      const fetchProfile = async () => {
+        const token = localStorage.getItem('token')
+        if (!token) return
+        try {
+          const response = await fetch('/api/users/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const data = await response.json()
+          if (data.success) {
+            localStorage.setItem('userRole', data.data.role)
+            localStorage.setItem('userId', data.data.id)
+            setRole(data.data.role)
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile", err)
+        }
+      }
+      fetchProfile()
+    }
+  }, [])
+
   return (
     <div className="main-container">
-
-
       <div className="element">
         <Outlet />
       </div>
       <div className="nav-bar">
-
         <NavLink to='/' end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path opacity="0.5" d="M2 12.2039C2 9.91549 2 8.77128 2.5192 7.82274C3.0384 6.87421 3.98695 6.28551 5.88403 5.10813L7.88403 3.86687C9.88939 2.62229 10.8921 2 12 2C13.1079 2 14.1106 2.62229 16.116 3.86687L18.116 5.10812C20.0131 6.28551 20.9616 6.87421 21.4808 7.82274C22 8.77128 22 9.91549 22 12.2039V13.725C22 17.6258 22 19.5763 20.8284 20.7881C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.7881C2 19.5763 2 17.6258 2 13.725V12.2039Z" stroke-width="1.5"></path> <path d="M15 18H9" stroke-width="1.5" stroke-linecap="round"></path> </g></svg>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.5" d="M2 12.2039C2 9.91549 2 8.77128 2.5192 7.82274C3.0384 6.87421 3.98695 6.28551 5.88403 5.10813L7.88403 3.86687C9.88939 2.62229 10.8921 2 12 2C13.1079 2 14.1106 2.62229 16.116 3.86687L18.116 5.10812C20.0131 6.28551 20.9616 6.87421 21.4808 7.82274C22 8.77128 22 9.91549 22 12.2039V13.725C22 17.6258 22 19.5763 20.8284 20.7881C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.7881C2 19.5763 2 17.6258 2 13.725V12.2039Z" stroke-width="1.5"></path> <path d="M15 18H9" stroke-width="1.5" stroke-linecap="round"></path></svg>
           <p>Home</p>
         </NavLink>
+
         <NavLink to='/jobs' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M12 14V12M12 14V16M12 14H18C19.1046 14 20 13.1046 20 12M12 14H6C4.89543 14 4 13.1046 4 12M20 12V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V12M20 12V8C20 6.89543 19.1046 6 18 6H6C4.89543 6 4 6.89543 4 8V12M15 6V5C15 3.89543 14.1046 3 13 3H11C9.89543 3 9 3.89543 9 5V6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-            </g>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 14V12M12 14V16M12 14H18C19.1046 14 20 13.1046 20 12M12 14H6C4.89543 14 4 13.1046 4 12M20 12V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V12M20 12V8C20 6.89543 19.1046 6 18 6H6C4.89543 6 4 6.89543 4 8V12M15 6V5C15 3.89543 14.1046 3 13 3H11C9.89543 3 9 3.89543 9 5V6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
           <p>Jobs</p>
-
         </NavLink>
-        <NavLink to='/messages' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
 
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-              <path d="M8 18L10.29 20.29C10.514 20.5156 10.7804 20.6946 11.0739 20.8168C11.3674 20.9389 11.6821 21.0018 12 21.0018C12.3179 21.0018 12.6326 20.9389 12.9261 20.8168C13.2196 20.6946 13.486 20.5156 13.71 20.29L16 18H18C19.0609 18 20.0783 17.5786 20.8284 16.8285C21.5786 16.0783 22 15.0609 22 14V7C22 5.93913 21.5786 4.92178 20.8284 4.17163C20.0783 3.42149 19.0609 3 18 3H6C4.93913 3 3.92172 3.42149 3.17157 4.17163C2.42142 4.92178 2 5.93913 2 7V14C2 15.0609 2.42142 16.0783 3.17157 16.8285C3.92172 17.5786 4.93913 18 6 18H8Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-              <g clipPath="url(#clip0_8_46)">
-                <path d="M16 12C15.87 12.0016 15.7409 11.9778 15.62 11.93C15.4971 11.8781 15.3852 11.8035 15.29 11.7101C15.2001 11.6179 15.1287 11.5092 15.08 11.39C15.0296 11.266 15.0025 11.1338 15 11C15.0011 10.7376 15.1053 10.4863 15.29 10.3C15.3825 10.2033 15.4952 10.1282 15.62 10.0801C15.8031 10.0047 16.0044 9.98535 16.1984 10.0245C16.3924 10.0637 16.5705 10.1596 16.71 10.3C16.8947 10.4863 16.9989 10.7376 17 11C16.9975 11.1338 16.9704 11.266 16.92 11.39C16.8713 11.5092 16.7999 11.6179 16.71 11.7101C16.6166 11.8027 16.5057 11.876 16.3839 11.9258C16.2621 11.9755 16.1316 12.0007 16 12Z" fill="#000000"></path>
-                <path d="M12 12C11.87 12.0016 11.7409 11.9778 11.62 11.93C11.4971 11.8781 11.3852 11.8035 11.29 11.7101C11.2001 11.6179 11.1287 11.5092 11.08 11.39C11.0296 11.266 11.0025 11.1338 11 11C11.0011 10.7376 11.1053 10.4863 11.29 10.3C11.3825 10.2033 11.4952 10.1282 11.62 10.0801C11.8031 10.0047 12.0044 9.98535 12.1984 10.0245C12.3924 10.0637 12.5705 10.1596 12.71 10.3C12.8947 10.4863 12.9989 10.7376 13 11C12.9975 11.1338 12.9704 11.266 12.92 11.39C12.8713 11.5092 12.7999 11.6179 12.71 11.7101C12.6166 11.8027 12.5057 11.876 12.3839 11.9258C12.2621 11.9755 12.1316 12.0007 12 12Z" fill="#000000"></path>
-                <path d="M8 12C7.86999 12.0016 7.74091 11.9778 7.62 11.93C7.49713 11.8781 7.38519 11.8035 7.29001 11.7101C7.20006 11.6179 7.12873 11.5092 7.07999 11.39C7.0296 11.266 7.0025 11.1338 7 11C7.0011 10.7376 7.10526 10.4863 7.29001 10.3C7.3825 10.2033 7.49516 10.1282 7.62 10.0801C7.80305 10.0047 8.00435 9.98535 8.19839 10.0245C8.39244 10.0637 8.57048 10.1596 8.70999 10.3C8.89474 10.4863 8.9989 10.7376 9 11C8.9975 11.1338 8.9704 11.266 8.92001 11.39C8.87127 11.5092 8.79994 11.6179 8.70999 11.7101C8.61655 11.8027 8.50575 11.876 8.38391 11.9258C8.26207 11.9755 8.13161 12.0007 8 12Z" fill="#000000"></path>
-              </g>
-              <defs>
-                <clipPath id="clip0_8_46">
-                  <rect width="10" height="2" fill="white" transform="translate(7 10)"></rect>
-                </clipPath>
-              </defs>
-            </g>
-          </svg>
+        {role === 'EMPLOYER' && (
+          <NavLink to='/candidates' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+            <Users size={24} />
+            <p>Candidates</p>
+          </NavLink>
+        )}
+
+        <NavLink to='/messages' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 18L10.29 20.29C10.514 20.5156 10.7804 20.6946 11.0739 20.8168C11.3674 20.9389 11.6821 21.0018 12 21.0018C12.3179 21.0018 12.6326 20.9389 12.9261 20.8168C13.2196 20.6946 13.486 20.5156 13.71 20.29L16 18H18C19.0609 18 20.0783 17.5786 20.8284 16.8285C21.5786 16.0783 22 15.0609 22 14V7C22 5.93913 21.5786 4.92178 20.8284 4.17163C20.0783 3.42149 19.0609 3 18 3H6C4.93913 3 3.92172 3.42149 3.17157 4.17163C2.42142 4.92178 2 5.93913 2 7V14C2 15.0609 2.42142 16.0783 3.17157 16.8285C3.92172 17.5786 4.93913 18 6 18H8Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          <p>Messages</p>
+        </NavLink>
+
+        <NavLink to='/profile' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M20.5901 22C20.5901 18.13 16.7401 15 12.0001 15C7.2601 15 3.4101 18.13 3.4101 22" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          <p>Profile</p>
+        </NavLink>
+      </div>
+    </div>
+  )
+}
           <p>Messages</p>
 
         </NavLink>
