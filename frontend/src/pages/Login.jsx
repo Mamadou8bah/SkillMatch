@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
 import { Eye, EyeOff, Building, User as UserIcon, MapPin, Briefcase, FileText } from 'lucide-react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+
+import Loader from '../components/Loader'
 
 export const Login = () => {
     const navigate = useNavigate()
+    const locationState = useLocation()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -25,10 +27,30 @@ export const Login = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
 
+    useEffect(() => {
+        if (locationState.state?.mode === 'signup') {
+            setHasAccount(false)
+        } else if (locationState.state?.mode === 'login') {
+            setHasAccount(true)
+        }
+    }, [locationState])
+
     const handleLogin = async (e) => {
         e.preventDefault()
         setIsLoading(true)
         setError('')
+
+        // Test login shortcut
+        if (email === 'test@gmail.com' && password === 'test') {
+            localStorage.setItem('token', 'test-token');
+            localStorage.setItem('userId', 'test-user-id');
+            localStorage.setItem('userRole', 'CANDIDATE');
+            localStorage.setItem('registrationStage', '4');
+            navigate('/');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -38,6 +60,10 @@ export const Login = () => {
             const data = await response.json()
             if (data.success) {
                 localStorage.setItem('token', data.data.token)
+                localStorage.setItem('userId', data.data.userId)
+                localStorage.setItem('userRole', data.data.role)
+                localStorage.setItem('registrationStage', data.data.registrationStage)
+                
                 navigate('/')
             } else {
                 setError(data.message)
@@ -126,7 +152,7 @@ export const Login = () => {
     return (
         <div className="login-page">
             <div className="back-button">
-                <button onClick={() => navigate('/we')}>
+                <button onClick={() => navigate('/')}>
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f">
                         <path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z" />
                     </svg>
@@ -148,7 +174,9 @@ export const Login = () => {
                             <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setFocused('password')} onBlur={() => setFocused('')} placeholder='Password' />
                             {showPassword ? <EyeOff className='eye-icon' onClick={() => setShowPassword(false)} /> : <Eye className='eye-icon' onClick={() => setShowPassword(true)} />}
                         </div>
-                        <button type="submit" className="login-button" disabled={isLoading}>{isLoading ? 'Loading...' : 'Log In'}</button>
+                        <button type="submit" className="login-button" disabled={isLoading}>
+                            {isLoading ? <Loader size="small" /> : 'Log In'}
+                        </button>
                     </form>
                     <div className="signup-link">
                         <p>Don't have an account? <span onClick={() => { setHasAccount(false); setRegStage(1); }}>Sign Up</span></p>
@@ -177,7 +205,9 @@ export const Login = () => {
                                 <label><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z" /></svg></label>
                                 <input type={showPassword ? 'text' : 'password'} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onFocus={() => setFocused('confirm-password')} onBlur={() => setFocused('')} placeholder='Confirm Password' />
                             </div>
-                            <button type="submit" className="login-button">Next Step</button>
+                            <button type="submit" className="login-button" disabled={isLoading}>
+                                {isLoading ? <Loader size="small" /> : 'Next Step'}
+                            </button>
                         </form>
                     )}
 
@@ -191,7 +221,7 @@ export const Login = () => {
                                 <div 
                                     className={`role-card ${role === 'CANDIDATE' ? 'active' : ''}`}
                                     onClick={() => setRole('CANDIDATE')}
-                                    style={{ border: role === 'CANDIDATE' ? '2px solid #3d5afe' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
+                                    style={{ border: role === 'CANDIDATE' ? '2px solid #ff8c00' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
                                 >
                                     <UserIcon />
                                     <p>Candidate</p>
@@ -199,13 +229,15 @@ export const Login = () => {
                                 <div 
                                     className={`role-card ${role === 'EMPLOYER' ? 'active' : ''}`}
                                     onClick={() => setRole('EMPLOYER')}
-                                    style={{ border: role === 'EMPLOYER' ? '2px solid #3d5afe' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
+                                    style={{ border: role === 'EMPLOYER' ? '2px solid #ff8c00' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
                                 >
                                     <Building />
                                     <p>Employer</p>
                                 </div>
                             </div>
-                            <button type="submit" className="login-button">Next Step</button>
+                            <button type="submit" className="login-button" disabled={isLoading}>
+                                {isLoading ? <Loader size="small" /> : 'Next Step'}
+                            </button>
                         </form>
                     )}
 
@@ -231,7 +263,9 @@ export const Login = () => {
                                     style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none', minHeight: '100px', padding: '10px' }}
                                 />
                             </div>
-                            <button type="submit" className="login-button">Finish Registration</button>
+                            <button type="submit" className="login-button" disabled={isLoading}>
+                                {isLoading ? <Loader size="small" /> : 'Finish Registration'}
+                            </button>
                         </form>
                     )}
 

@@ -4,14 +4,14 @@
     justify-content: space-around;
     align-items: center;
     gap: 1rem;
-    background-color: #ffffff;
+    background-color: var(--nav-bg);
     position: fixed;
     bottom: 0;
     width: 100%;
     padding: 0.1rem;
     left: 0;
-    box-shadow: 0 -2px 2px rgba(156, 155, 155, 0.1);
-
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    border-top: 1px solid var(--border-color);
 }
 
 .nav-link {
@@ -28,14 +28,14 @@
     width: 1.5rem;
     height: auto;
     margin: 0;
-    stroke: rgb(122, 120, 120);
+    stroke: var(--text-secondary);
 
 }
 
 .nav-link p {
     margin: 0;
     font-size: 0.9rem;
-    color: rgb(122, 120, 120);
+    color: var(--text-secondary);
 }
 
 a {
@@ -45,11 +45,11 @@ a {
 
 .nav-link.active svg,
 a.nav-link.active svg {
-    stroke: #d76925;
-    fill: #d76925;
+    stroke: var(--primary-color);
+    fill: var(--primary-color);
 }
 
 .nav-link.active p,
 a.nav-link.active p {
-    color: #d76925;
+    color: var(--primary-color);
 }

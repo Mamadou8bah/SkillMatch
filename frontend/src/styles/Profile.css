@@ -3,7 +3,7 @@
     margin: 1rem auto;
     padding: 0 1rem;
     font-family: 'Montserrat', sans-serif;
-    color: #333;
+    color: var(--text-color);
 }
 
 /* Animations */
@@ -41,7 +41,7 @@
     height: 7rem;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #fff;
+    border: 3px solid var(--bg-color);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin: 0;
 }
@@ -50,32 +50,32 @@
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
-    color: #1a1a1a;
+    color: var(--text-color);
 }
 
 .profile-role {
     margin: 0.05rem;
     font-size: 0.95rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0.8rem;
 }
 
 .edit-profile-btn {
-    background-color: #d76925;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
     border: none;
     padding: 0.75rem 2rem;
     border-radius: 50px;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(215, 105, 37, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .edit-profile-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(215, 105, 37, 0.4);
+    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.4);
 }
 
 .profile-menu {
@@ -87,45 +87,42 @@
 .menu-item {
     display: flex;
     align-items: center;
-    padding: 1rem 0;
+    padding: 0.5rem 0;
     cursor: pointer;
     transition: background-color 0.2s;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .menu-item:last-child {
     border-bottom: none;
 }
 
-.menu-item:hover {
-    background-color: #fafafa;
-}
 
 .menu-item.logout {
-    margin-top: 1rem;
-    color: #d76925;
+    color: var(--primary-color);
+    margin-bottom: 3rem;
 }
 
 .menu-item.logout .menu-label {
-    color: #d76925;
+    color: var(--primary-color);
     font-weight: 600;
 }
 
 .menu-item.logout .menu-icon-wrapper {
     background-color: #fff0e6;
-    color: #d76925;
+    color: var(--primary-color);
 }
 
 .menu-icon-wrapper {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #f8f9fa;
+    background-color: var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 1rem;
-    color: #555;
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 
@@ -140,12 +137,12 @@
 .menu-label {
     font-size: 1rem;
     font-weight: 500;
-    color: #333;
+    color: var(--text-color);
 }
 
 .menu-value {
     font-size: 0.85rem;
-    color: #888;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -160,11 +157,11 @@
 
 .menu-value-simple {
     font-size: 0.9rem;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .chevron {
-    color: #ccc;
+    color: #888;
     margin-left: auto;
     flex-shrink: 0;
 }
@@ -201,25 +198,26 @@
 
 .back-btn {
     background: none;
+    border: none;
     cursor: pointer;
     padding: 8px;
-    color: #333;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
     transition: all 0.2s ease;
 }
 .back-btn svg {
     width: 24px;
     height: 24px;
-    stroke: #1a1a1a;
+    stroke: var(--text-color);
 }
 
 .back-btn:hover {
-    background: #f8f9fa;
+    background: none;
     transform: translateX(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .spacer {
@@ -236,8 +234,8 @@
     position: absolute;
     bottom: 5px;
     right: 5px;
-    background-color: #333;
-    border: 2px solid white;
+    background-color: var(--text-color);
+    border: 2px solid var(--bg-color);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -262,16 +260,16 @@
 .form-group label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .form-input {
-    background-color: #f0f0f0;
+    background-color: var(--border-color);
     border: none;
     border-radius: 12px;
     padding: 1rem;
     font-size: 0.95rem;
-    color: #333;
+    color: var(--text-color);
     outline: none;
     font-family: inherit;
     width: 100%;
@@ -279,7 +277,7 @@
 }
 
 .form-input:focus {
-    box-shadow: 0 0 0 2px rgba(215, 105, 37, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.2);
 }
 
 .password-input-wrapper {
@@ -294,23 +292,25 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: #888;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
 }
 
 .save-btn {
     margin-top: 1rem;
-    background-color: #d76925;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
     border: none;
     padding: 1rem;
     border-radius: 50px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 5px 15px rgba(215, 105, 37, 0.3);
+    box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3);
     transition: transform 0.2s;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .save-btn:hover {
@@ -330,8 +330,8 @@
 }
 
 .add-skill-btn {
-    background-color: #d76925;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
     border: none;
     border-radius: 12px;
     width: 50px;
@@ -349,7 +349,7 @@
 
 .skill-chip {
     background: #fff0e6;
-    color: #d76925;
+    color: var(--primary-color);
     padding: 0.6rem 1rem;
     border-radius: 50px;
     font-weight: 500;
@@ -362,7 +362,7 @@
 .remove-skill-btn {
     background: none;
     border: none;
-    color: #d76925;
+    color: var(--primary-color);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -394,11 +394,11 @@
     align-items: center;
     gap: 1rem;
     font-weight: 500;
-    color: #333;
+    color: var(--text-color);
 }
 
 .setting-icon {
-    color: #888;
+    color: var(--text-secondary);
 }
 
 /* Toggle Switch */
@@ -434,13 +434,13 @@
     width: 20px;
     left: 4px;
     bottom: 4px;
-    background-color: white;
+    background-color: var(--bg-color);
     transition: .4s;
     border-radius: 50%;
 }
 
 input:checked+.slider {
-    background-color: #d76925;
+    background-color: var(--primary-color);
 }
 
 input:checked+.slider:before {
@@ -455,7 +455,7 @@ input:checked+.slider:before {
 
 .language-option {
     padding: 1rem;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -464,11 +464,11 @@ input:checked+.slider:before {
 }
 
 .language-option.selected {
-    color: #d76925;
+    color: var(--primary-color);
 }
 
 .check-mark {
-    color: #d76925;
+    color: var(--primary-color);
     font-weight: bold;
 }
 
@@ -477,3 +477,201 @@ input:checked+.slider:before {
         padding: 0 1.5rem;
     }
 }
+
+.save-btn.small {
+    padding: 8px 20px;
+    margin-top: 0;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.experience-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.experience-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 12px;
+    position: relative;
+}
+
+.exp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.exp-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.remove-exp-btn {
+    background: none;
+    border: none;
+    color: #ff4d4f;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.exp-company {
+    font-weight: 500;
+    color: var(--primary-color);
+    margin: 0.2rem 0;
+}
+
+.exp-dates {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.exp-desc {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    line-height: 1.4;
+}
+
+.add-experience-main-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border: 2px dashed var(--primary-color);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    margin: 1rem 0;
+}
+
+.add-experience-form {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+}
+
+.add-experience-form h3 {
+    margin: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.exp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .exp-row {
+        grid-template-columns: 1fr;
+    }
+
+    .add-experience-form {
+        padding: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.cancel-btn {
+    padding: 8px 20px;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.save-experience-btn {
+    padding: 8px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.save-experience-btn:hover {
+    background-color: #e67e00;
+}
+
+.add-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+}
+
+.experience-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+.experience-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+.exp-dates {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+    display: block;
+}
+
+.exp-desc {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    line-height: 1.6;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+}
+

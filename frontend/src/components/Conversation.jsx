@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useRef, useEffect } from 'react'
+import { ArrowLeft, Send, MoreVertical } from 'lucide-react'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import '../styles/conversation.css'
@@ -25,33 +25,42 @@ export const Conversation = () => {
 
     // Load conversation history and recipient details
     useEffect(() => {
+        const fetchRecipient = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const response = await fetch(`http://localhost:8080/api/users/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                const data = await response.json()
+                if (data.success) {
+                    setRecipient(data.data)
+                }
+            } catch (err) {
+                console.error("Failed to fetch recipient", err)
+            }
+        }
+
         const fetchHistory = async () => {
             try {
                 const token = localStorage.getItem('token')
-                const response = await fetch(`/api/messages/conversation/${id}`, {
+                const response = await fetch(`http://localhost:8080/api/messages/conversation/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const data = await response.json()
                 if (data.success) {
                     setChatMessages(data.data)
-                    // Assuming the first message or another endpoint gives us recipient info
-                    // For now, let's just set a placeholder if we don't have a specific user fetch
-                    if (data.data.length > 0) {
-                        const firstMsg = data.data[0]
-                        const isMe = firstMsg.sender.id === parseInt(localStorage.getItem('userId'))
-                        setRecipient(isMe ? firstMsg.recipient : firstMsg.sender)
-                    }
                 }
             } catch (err) {
                 console.error("Failed to fetch history", err)
             }
         }
+        fetchRecipient()
         fetchHistory()
     }, [id])
 
     // Setup WebSocket
     useEffect(() => {
-        const socket = new SockJS('/ws')
+        const socket = new SockJS('http://localhost:8080/ws')
         const client = new Client({
             webSocketFactory: () => socket,
             // debug: (str) => console.log(str),
@@ -84,7 +93,7 @@ export const Conversation = () => {
 
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch('/api/messages/send', {
+            const response = await fetch('http://localhost:8080/api/messages/send', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -109,39 +118,58 @@ export const Conversation = () => {
     return (
         <div className='conversation-page'>
             <div className="conversation-header">
-                <div className="first-part">
-                    <div className="back-button" onClick={() => navigate(-1)}>
-                        <svg viewBox="0 0 1024 1024" fill="currentColor" className="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M669.6 849.6c8.8 8 22.4 7.2 30.4-1.6s7.2-22.4-1.6-30.4l-309.6-280c-8-7.2-8-17.6 0-24.8l309.6-270.4c8.8-8 9.6-21.6 2.4-30.4-8-8.8-21.6-9.6-30.4-2.4L360.8 480.8c-27.2 24-28 64-0.8 88.8l309.6 280z" fill="currentColor" />
-                        </svg>
-                    </div>
-
-                    <div className="profile">
-                        <div className="profile-img">
-                            <img src={recipient?.avatar || 'https://via.placeholder.com/40'} alt="" />
-                        </div>
-                        <div className="profile-name">
-                            <p className='contact-name'>{recipient?.fullName || 'Loading...'}</p>
-                            <p className="online-status">{connected ? 'Connected' : 'Connecting...'}</p>
+                <div className="header-left">
+                    <button className="back-button" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div className="recipient-info">
+                        <img 
+                            src={recipient?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(recipient?.fullName || 'User')}&background=random`} 
+                            alt={recipient?.fullName}
+                            className="recipient-avatar"
+                        />
+                        <div className="recipient-details">
+                            <h3>{recipient?.fullName || 'Loading...'}</h3>
+                            <span className={`status ${connected ? 'online' : 'offline'}`}>
+                                {connected ? 'Active now' : 'Connecting...'}
+                            </span>
                         </div>
                     </div>
                 </div>
+                <button className="more-button">
+                    <MoreVertical size={20} />
+                </button>
             </div>
             
             <div className="conversation-body">
-                {chatMessages.map((msg) => {
-                    const isMe = msg.sender.id.toString() !== id
-                    return (
-                        <div key={msg.id} className={`message-row ${isMe ? 'sent' : 'received'}`}>
-                            <div className="message-bubble">
-                                {msg.content}
+                {chatMessages.length === 0 ? (
+                    <div className="no-messages">
+                        <p>Start the conversation</p>
+                    </div>
+                ) : (
+                    chatMessages.map((msg) => {
+                        const isMe = msg.sender.id.toString() !== id
+                        return (
+                            <div key={msg.id} className={`message-row ${isMe ? 'sent' : 'received'}`}>
+                                {!isMe && (
+                                    <img 
+                                        src={recipient?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(recipient?.fullName || 'User')}&background=random&size=32`}
+                                        alt=""
+                                        className="message-avatar"
+                                    />
+                                )}
+                                <div className="message-content-wrapper">
+                                    <div className="message-bubble">
+                                        <p>{msg.content}</p>
+                                    </div>
+                                    <span className="message-time">
+                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="message-time">
-                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    )
-                })}
+                        )
+                    })
+                )}
                 <div ref={messagesEndRef} />
             </div>
 
@@ -149,14 +177,13 @@ export const Conversation = () => {
                 <form onSubmit={handleSendMessage}>
                     <input
                         type="text"
-                        placeholder="Type a message..."
+                        placeholder="Type your message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
+                        disabled={!connected}
                     />
-                    <button type="submit" disabled={!connected}>
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 12L4 4L6 12M20 12L4 20L6 12M20 12H6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                        </svg>
+                    <button type="submit" disabled={!connected || !newMessage.trim()}>
+                        <Send size={20} />
                     </button>
                 </form>
             </div>

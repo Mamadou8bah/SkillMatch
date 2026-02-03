@@ -1,31 +1,56 @@
-import React from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import '../styles/discover.css'
-import { useState, useMemo, useEffect } from 'react'
-import { jobs } from '../data/jobs'
 import { JobCard } from './JobCard'
 import { Link } from 'react-router-dom'
+import Loader from './Loader'
 
 export const Discover = () => {
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState(null)
+  const [jobsList, setJobsList] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:8080/post', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setJobsList(data.content || data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching jobs:', err);
+        setIsLoading(false);
+      });
+  }, []);
+
   const tags = useMemo(() => {
     const s = new Set()
-    jobs.forEach(j => (j.tags || []).forEach(t => s.add(t)))
+    jobsList.forEach(j => {
+      if (j.locationType) s.add(j.locationType)
+    })
     return Array.from(s)
-  }, [])
+  }, [jobsList])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return jobs.filter(j => {
-      if (activeTag && !(j.tags || []).includes(activeTag)) return false
+    return jobsList.filter(j => {
+      const locationMatch = !activeTag || (j.locationType === activeTag);
+      if (!locationMatch) return false;
+      
       if (!q) return true
+      
       const inTitle = j.title && j.title.toLowerCase().includes(q)
-      const inCompany = j.company && j.company.toLowerCase().includes(q)
-      const inSkills = Array.isArray(j.skills) && j.skills.some(s => s.toLowerCase().includes(q))
-      const inTags = (j.tags || []).some(t => t.toLowerCase().includes(q))
-      return inTitle || inCompany || inSkills || inTags
+      const inEmployer = j.employer && j.employer.name && j.employer.name.toLowerCase().includes(q)
+      const inSkills = Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => s.name.toLowerCase().includes(q))
+      
+      return inTitle || inEmployer || inSkills
     })
-  }, [search, activeTag])
+  }, [search, activeTag, jobsList])
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -59,11 +84,20 @@ export const Discover = () => {
         
       </div>
 
-      <div className="discover-list">
-        {paginated.map(job => (
-          <Link key={job.id} to={`${job.id}`}><JobCard job={job} /></Link>
-        ))}
-      </div>
+      {isLoading ? (
+          <Loader />
+      ) : paginated.length === 0 ? (
+          <div className="no-jobs-container" style={{ marginTop: '2rem' }}>
+            <p className="no-jobs-title">No jobs match your search</p>
+            <p className="no-jobs-text">Try different keywords or filters.</p>
+          </div>
+      ) : (
+          <div className="discover-list">
+            {paginated.map(job => (
+              <Link key={job.id} to={`/jobs/${job.id}`}><JobCard job={job} /></Link>
+            ))}
+          </div>
+      )}
 
       <div className="pagination">
         <div className="pagination-info">
@@ -73,7 +107,7 @@ export const Discover = () => {
           <button
             className="page-btn"
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
+            disabled={page === 1 || totalPages <= 1}
             aria-label="Previous page"
           >
             <svg viewBox="0 0 1024 1024" fill="currentColor" className="icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -86,11 +120,11 @@ export const Discover = () => {
           <button
             className="page-btn next-btn"
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
+            disabled={page === totalPages || totalPages <= 1}
             aria-label="Next page"
           >
             <svg viewBox="0 0 1024 1024" fill="currentColor" className="icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M669.6 849.6c8.8 8 22.4 7.2 30.4-1.6s7.2-22.4-1.6-30.4l-309.6-280c-8-7.2-8-17.6 0-24.8l309.6-270.4c8.8-8 9.6-21.6 2.4-30.4-8-8.8-21.6-9.6-30.4-2.4L360.8 480.8c-27.2 24-28 64-0.8 88.8l309.6 280z" fill="currentColor" />
+                <path d="M354.4 174.4c-8.8-8-22.4-7.2-30.4 1.6s-7.2 22.4 1.6 30.4l309.6 280c8 7.2 8 17.6 0 24.8l-309.6 270.4c-8.8 8-9.6 21.6-2.4 30.4 8 8.8 21.6 9.6 30.4 2.4L663.2 543.2c27.2-24 28-64 0.8-88.8l-309.6-280z" fill="currentColor"/>
             </svg>
           </button>
         </div>

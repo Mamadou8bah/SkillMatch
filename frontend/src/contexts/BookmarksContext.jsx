@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { jobs } from '../data/jobs'
 
 const BookmarksContext = createContext(null)
 
 export const BookmarksProvider = ({ children }) => {
-  const [ids, setIds] = useState(() => {
+  const [bookmarkedJobs, setBookmarkedJobs] = useState(() => {
     try {
-      const raw = localStorage.getItem('bookmarkedJobIds')
+      const raw = localStorage.getItem('bookmarkedJobs')
       return raw ? JSON.parse(raw) : []
     } catch (e) {
       return []
@@ -15,22 +14,27 @@ export const BookmarksProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('bookmarkedJobIds', JSON.stringify(ids))
+      localStorage.setItem('bookmarkedJobs', JSON.stringify(bookmarkedJobs))
     } catch (e) {
       
     }
-  }, [ids])
+  }, [bookmarkedJobs])
 
-  const isBookmarked = (id) => ids.includes(id)
+  const isBookmarked = (id) => bookmarkedJobs.some(j => j.id === id)
 
   const toggleBookmark = (job) => {
-    setIds((prev) => (prev.includes(job.id) ? prev.filter((i) => i !== job.id) : [...prev, job.id]))
+    setBookmarkedJobs((prev) => {
+        const exists = prev.some(j => j.id === job.id);
+        if (exists) {
+            return prev.filter(j => j.id !== job.id);
+        } else {
+            return [...prev, job];
+        }
+    });
   }
 
-  const bookmarkedJobs = ids.map((id) => jobs.find((j) => j.id === id)).filter(Boolean)
-
   return (
-    <BookmarksContext.Provider value={{ ids, isBookmarked, toggleBookmark, bookmarkedJobs }}>
+    <BookmarksContext.Provider value={{ isBookmarked, toggleBookmark, bookmarkedJobs }}>
       {children}
     </BookmarksContext.Provider>
   )

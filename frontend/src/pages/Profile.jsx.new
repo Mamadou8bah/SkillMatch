@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import '../styles/Profile.css';
 import { useNavigate } from 'react-router-dom';
 import {
-  User as UserIcon,
   Settings,
   LogOut,
   ChevronRight,
@@ -17,7 +16,6 @@ import {
   Volume2,
   Trash2
 } from 'lucide-react';
-import Loader from '../components/Loader';
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -215,6 +213,7 @@ export const Profile = () => {
     navigate('/');
   };
 
+  // VIEWS (Simplified for brevity but keeping all relevant sections)
   const renderBackBtn = () => (
     <button className="back-btn" onClick={() => { setActiveView('main'); setShowAddForm(false); }}>
       <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
@@ -223,8 +222,6 @@ export const Profile = () => {
       </svg>
     </button>
   );
-
-  if (isLoading) return <Loader fullPage={true} />;
 
   if (activeView === 'edit') {
     return (
@@ -289,47 +286,28 @@ export const Profile = () => {
         </div>
         {showAddForm && (
           <div className="add-experience-form">
-            <h3>Add New Experience</h3>
-            <div className="exp-row">
-              <div className="form-group">
-                <label>Company Name</label>
-                <input type="text" placeholder="e.g. Google" value={newExperience.companyName} onChange={(e) => setNewExperience({...newExperience, companyName: e.target.value})} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Job Title</label>
-                <input type="text" placeholder="e.g. Senior Developer" value={newExperience.jobTitle} onChange={(e) => setNewExperience({...newExperience, jobTitle: e.target.value})} className="form-input" />
-              </div>
+            <div className="form-grid">
+              <input type="text" placeholder="Company Name" value={newExperience.companyName} onChange={(e) => setNewExperience({...newExperience, companyName: e.target.value})} className="form-input" />
+              <input type="text" placeholder="Job Title" value={newExperience.jobTitle} onChange={(e) => setNewExperience({...newExperience, jobTitle: e.target.value})} className="form-input" />
+              <input type="date" value={newExperience.startDate} onChange={(e) => setNewExperience({...newExperience, startDate: e.target.value})} className="form-input" />
+              <input type="date" value={newExperience.endDate} onChange={(e) => setNewExperience({...newExperience, endDate: e.target.value})} className="form-input" />
             </div>
-            <div className="exp-row">
-              <div className="form-group">
-                <label>Start Date</label>
-                <input type="date" value={newExperience.startDate} onChange={(e) => setNewExperience({...newExperience, startDate: e.target.value})} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>End Date</label>
-                <input type="date" value={newExperience.endDate} onChange={(e) => setNewExperience({...newExperience, endDate: e.target.value})} className="form-input" />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <textarea placeholder="Describe your roles and achievements..." value={newExperience.description} onChange={(e) => setNewExperience({...newExperience, description: e.target.value})} className="form-input experience-textarea" rows={4} />
-            </div>
+            <textarea placeholder="Description" value={newExperience.description} onChange={(e) => setNewExperience({...newExperience, description: e.target.value})} className="form-input" />
             <div className="form-actions">
               <button className="cancel-btn" onClick={() => setShowAddForm(false)}>Cancel</button>
               <button className="save-experience-btn" onClick={handleAddExperience}>Add Experience</button>
             </div>
           </div>
         )}
-        <div className="experience-list-container">
+        <div className="experience-list">
           {experiences.map(exp => (
             <div key={exp.id} className="experience-card">
               <div className="exp-card-header">
-                <h3>{exp.jobTitle}</h3>
-                <button onClick={() => handleDeleteExperience(exp.id)} className="remove-exp-btn"><Trash2 size={18} /></button>
+                <h3>{exp.jobTitle} at {exp.companyName}</h3>
+                <button onClick={() => handleDeleteExperience(exp.id)} className="delete-exp-btn"><Trash2 size={18} /></button>
               </div>
-              <p className="exp-company">{exp.companyName}</p>
               <p className="exp-dates">{exp.startDate} - {exp.endDate || 'Present'}</p>
-              {exp.description && <p className="exp-desc">{exp.description}</p>}
+              <p>{exp.description}</p>
             </div>
           ))}
         </div>
@@ -337,69 +315,56 @@ export const Profile = () => {
     );
   }
 
+  // --- Main Profile View ---
   return (
     <div className="profile-container">
       <div className="profile-header">
-        <div className="edit-header" style={{ width: '100%', marginBottom: '1rem', padding: '0' }}>
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
-              <path fill="currentColor" d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"></path>
-              <path fill="currentColor" d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"></path>
-            </svg>
-          </button>
-          <div className="spacer"></div>
-        </div>
+        <h1>Profile</h1>
+        <button className="logout-btn" onClick={handleLogout}><LogOut size={20} /></button>
+      </div>
+
+      <div className="profile-card">
         <div className="profile-avatar-container">
           <div className="profile-avatar-placeholder">{profileData.fullName?.charAt(0)}</div>
         </div>
-        <h1 className="profile-name">{profileData.fullName}</h1>
-        <p className="profile-role">{profileData.role}</p>
+        <div className="profile-info">
+          <h2>{profileData.fullName}</h2>
+          <p className="profile-role">{profileData.role}</p>
+          <div className="profile-location">
+            <Globe size={14} />
+            <span>{profileData.location || "Earth"}</span>
+          </div>
+        </div>
         <button className="edit-profile-btn" onClick={() => setActiveView('edit')}>Edit Profile</button>
       </div>
 
-      <div className="profile-menu">
-        <div className="menu-item" onClick={() => setActiveView('edit')}>
-          <div className="menu-icon-wrapper"><UserIcon size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Personal Information</span>
-            <span className="menu-value">{profileData.email}</span>
+      <div className="profile-stats">
+        <div className="stat-item" onClick={() => setActiveView('skills')}>
+          <Award size={20} />
+          <span>{skills.length} Skills</span>
+        </div>
+        <div className="stat-item" onClick={() => setActiveView('experience')}>
+          <Briefcase size={20} />
+          <span>{experiences.length} Experiences</span>
+        </div>
+      </div>
+
+      <div className="profile-sections">
+        <div className="section-item" onClick={() => navigate('/notifications')}>
+          <div className="section-left">
+            <Bell size={20} />
+            <span>Notifications</span>
           </div>
-          <ChevronRight className="chevron" size={20} />
+          <ChevronRight size={20} />
         </div>
-
-        <div className="menu-item" onClick={() => setActiveView('skills')}>
-          <div className="menu-icon-wrapper"><Award size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Skills</span>
-            <span className="menu-value">{skills.slice(0, 3).map(s => s.title).join(', ')}{skills.length > 3 ? '...' : ''}</span>
+        <div className="section-item">
+          <div className="section-left">
+            <Settings size={20} />
+            <span>Settings</span>
           </div>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-item" onClick={() => setActiveView('experience')}>
-          <div className="menu-icon-wrapper"><Briefcase size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Experience</span>
-            <span className="menu-value">{experiences.length} {experiences.length === 1 ? 'entry' : 'entries'}</span>
-          </div>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-divider"></div>
-
-        <div className="menu-item" onClick={() => navigate('/notifications')}>
-          <div className="menu-icon-wrapper"><Bell size={20} /></div>
-          <span className="menu-label">Notifications</span>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-item logout" onClick={handleLogout}>
-          <div className="menu-icon-wrapper"><LogOut size={20} /></div>
-          <span className="menu-label">Log out</span>
-          <ChevronRight className="chevron" size={20} />
+          <ChevronRight size={20} />
         </div>
       </div>
     </div>
   );
 };
-

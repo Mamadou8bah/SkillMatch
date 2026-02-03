@@ -1,8 +1,10 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import  '../styles/welcome.css'
 import image from '../assets/ChatGPT Image Oct 19, 2025, 05_08_56 PM.png'
 
 export const Welcome = () => {
+  const navigate = useNavigate();
   return (
     <div className='welcome-page'>
         <div className="welcome-image-container">
@@ -34,8 +36,8 @@ export const Welcome = () => {
             </div>
 
             <div className="auth-buttons">
-                <button className='btn btn-login'>Login</button>
-                <button className='btn btn-signup'>Sign Up</button>
+                <button className='btn btn-login' onClick={() => navigate('/login', { state: { mode: 'login' } })}>Login</button>
+                <button className='btn btn-signup' onClick={() => navigate('/login', { state: { mode: 'signup' } })}>Sign Up</button>
             </div>
 
     </div>

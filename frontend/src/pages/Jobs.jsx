@@ -6,6 +6,8 @@ import jobs from '../data/jobs'
 import { NavLink } from 'react-router-dom'
 
 export const Jobs = () => {
+  const [role, setRole] = useState(localStorage.getItem('userRole') || 'CANDIDATE')
+
   return (
     <div className='jobs-page'>
         <div className="jp-header">
@@ -23,12 +25,25 @@ export const Jobs = () => {
             <h2>Jobs</h2>
         </div>
         <div className="jp-nav-bar">
-            <NavLink to='/jobs' end className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
-              <p>Discover Jobs</p>
-            </NavLink>
-            <NavLink to='bookmarks' className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
-              <p>Bookmarked Jobs</p>
-            </NavLink>
+            {role === 'EMPLOYER' ? (
+              <>
+                <NavLink to='/jobs' end className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
+                  <p>My Postings</p>
+                </NavLink>
+                <NavLink to='discover' className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
+                  <p>Browse All</p>
+                </NavLink>
+              </>
+            ) : (
+              <>
+                <NavLink to='/jobs' end className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
+                  <p>Discover</p>
+                </NavLink>
+                <NavLink to='bookmarks' className={({ isActive }) => 'jp-nav-link' + (isActive ? ' active' : '')}>
+                  <p>Saved</p>
+                </NavLink>
+              </>
+            )}
         </div>
 
         <Outlet />

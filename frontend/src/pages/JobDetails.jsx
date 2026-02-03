@@ -1,25 +1,100 @@
-import React from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useBookmarks } from '../contexts/BookmarksContext'
-import jobs from '../data/jobs'
 import '../styles/jobdetails.css'
-import { useNavigate } from 'react-router-dom'
+import Loader from '../components/Loader'
 
 export const JobDetails = () => {
     const { isBookmarked, toggleBookmark } = useBookmarks()
     const { id } = useParams()
     const navigate = useNavigate()
+    const [job, setJob] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
 
-    const job = jobs.find((j) => j.id === id)
-    if (!job) {
-        return <div>Job not found</div>
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        fetch(`http://localhost:8080/post/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            setJob(data);
+            setIsLoading(false);
+        })
+        .catch(err => {
+            console.error('Error fetching job details:', err);
+            setIsLoading(false);
+        });
+    }, [id]);
+
+    if (isLoading) {
+        return <Loader fullPage={true} />
     }
+
+    if (!job) {
+        return <div className="jd-not-found">Job not found</div>
+    }
+
+    const [isApplied, setIsApplied] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+    const [applicants, setApplicants] = useState([]);
+    const [showApplicants, setShowApplicants] = useState(false);
+    const myId = localStorage.getItem('userId');
+    const myRole = localStorage.getItem('userRole');
+
+    // Check if this job belongs to the current employer
+    const isOwner = job?.employer?.user?.id?.toString() === myId || (myRole === 'EMPLOYER' && job?.employer?.name === localStorage.getItem('companyName'));
+    // Note: The above is a heuristic. Ideally the API should tell us.
+
+    useEffect(() => {
+        if (isOwner) {
+            const token = localStorage.getItem('token');
+            fetch(`http://localhost:8080/api/apply/submitted/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => setApplicants(data))
+            .catch(err => console.error('Error fetching applicants:', err));
+        }
+    }, [id, isOwner]);
+
+    const handleApply = async () => {
+        setIsApplying(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:8080/api/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(job.id) // It takes a Long jobId
+            });
+            if (response.ok) {
+                setIsApplied(true);
+                alert('Application submitted successfully!');
+            } else {
+                alert('You have already applied for this job');
+            }
+        } catch (err) {
+            console.error('Failed to apply', err);
+        } finally {
+            setIsApplying(false);
+        }
+    };
 
     const onBookmarkClick = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        toggleBookmark(job)
+        toggleBookmark({
+            ...job,
+            company: job.employer?.name || 'Company',
+            companyLogo: job.employer?.logo || ''
+        })
     }
+    
     return (
         <div className='jd-page'>
             <div className="jd-upper">
@@ -56,10 +131,10 @@ export const JobDetails = () => {
                 </div>
                 <div className="jd-info">
                     <div className="jd-logo">
-                        <img src={job.companyLogo} alt="" />
+                        <img src={job.employer?.logo || ''} alt="" />
                     </div>
                     <h1 className="jd-title">{job.title}</h1>
-                    <div className="jd-company">{job.company}- <span>{job.location}</span></div>
+                    <div className="jd-company">{job.employer?.name || 'Company'}- <span>{job.locationType}</span></div>
                 </div>
                 <div className="md-tags-container">
                     <div className="jd-md">
@@ -69,15 +144,15 @@ export const JobDetails = () => {
                                     <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                                     <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
                                     <g id="SVGRepo_iconCarrier">
-                                        <circle cx="12" cy="12" r="10" stroke="#000000" strokeWidth="2"></circle>
-                                        <path d="M15 9.94728C14.5 9.3 13.8 8.5 12 8.5C10.2 8.5 9 9.51393 9 9.94728C9 10.3806 9.06786 10.9277 10 11.5C10.7522 11.9618 12.6684 12.0439 13.5 12.5C14.679 13.1467 14.8497 13.8202 14.8497 14.0522C14.8497 14.6837 13.4175 15.4852 12 15.5C10.536 15.5153 9.5 14.7 9 14.0522" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                                        <path d="M12 7V17" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"></circle>
+                                        <path d="M15 9.94728C14.5 9.3 13.8 8.5 12 8.5C10.2 8.5 9 9.51393 9 9.94728C9 10.3806 9.06786 10.9277 10 11.5C10.7522 11.9618 12.6684 12.0439 13.5 12.5C14.679 13.1467 14.8497 13.8202 14.8497 14.0522C14.8497 14.6837 13.4175 15.4852 12 15.5C10.536 15.5153 9.5 14.7 9 14.0522" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
+                                        <path d="M12 7V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
                                     </g>
                                 </svg>
                             </div>
                             <div className="jd-tag-other">
                                 <p>Salaries</p>
-                                <p>{job.salary}</p>
+                                <p>${job.salary?.toLocaleString()}</p>
                             </div>
                         </div>
                         <div className="jd-md-shift-type jd-tag">
@@ -95,44 +170,63 @@ export const JobDetails = () => {
                             </div>
                             <div className="jd-tag-other">
                                 <p>Job-Type</p>
-                                <p>{job.jobType}</p>
+                                <p>{job.locationType}</p>
                             </div>
                         </div>
-
                     </div>
                 </div>
-
             </div>
-            <div className="jd-body">
-                <div className="jd-main">
-
-
-
-                    <section className="jd-section description">
-                        <h3>Description</h3>
-                        <p>{job.description}</p>
-                    </section>
-
-                    <section className="jd-section">
-                        <h3>Responsibilities</h3>
-                        <ul>
-                            {Array.isArray(job.responsibilities) && job.responsibilities.map((r, i) => (
-                                <li key={i}>{r}</li>
-                            ))}
-                        </ul>
-                    </section>
-
-                    <section className="jd-section qualifications">
-                        <h3>Qualifications</h3>
-                        <ul>
-                            {Array.isArray(job.qualifications) && job.qualifications.map((q, i) => (
-                                <li key={i}>{q}</li>
-                            ))}
-                        </ul>
-                    </section>
-                    <a href={job.applyUrl} className="apply-link">Apply Now</a>
+            <div className="jd-content">
+                <div className="jd-description">
+                    <h3>Job Description</h3>
+                    <p>{job.description}</p>
+                </div>
+                <div className="jd-skills">
+                    <h3>Required Skills</h3>
+                    <div className="jd-skills-list">
+                        {job.requiredSkills?.map((skill, index) => (
+                            <span key={index} className="jd-skill-tag">{skill.name}</span>
+                        ))}
+                    </div>
+                </div>
+                <div className="jd-apply">
+                    {isOwner ? (
+                        <div className="applicants-section">
+                            <button className="apply-btn" onClick={() => setShowApplicants(!showApplicants)}>
+                                {showApplicants ? 'Hide Applicants' : `View Applicants (${applicants.length})`}
+                            </button>
+                            {showApplicants && (
+                                <div className="applicants-list" style={{ marginTop: '20px' }}>
+                                    {applicants.length === 0 ? (
+                                        <p>No applications yet</p>
+                                    ) : (
+                                        applicants.map(app => (
+                                            <div key={app.id} className="applicant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px', marginBottom: '10px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <img src={app.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.user.fullName)}&background=random`} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+                                                    <div>
+                                                        <p style={{ fontWeight: 'bold', margin:0 }}>{app.user.fullName}</p>
+                                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin:0 }}>{app.user.email}</p>
+                                                    </div>
+                                                </div>
+                                                <Link to={`/messages/${app.user.id}`} className="message-btn" style={{ padding: '5px 10px', borderRadius: '5px', background: 'var(--primary-color)', color: 'white', textDecoration: 'none', fontSize: '13px' }}>Message</Link>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button 
+                            className={`apply-btn ${isApplied ? 'applied' : ''}`} 
+                            onClick={handleApply} 
+                            disabled={isApplied || isApplying}
+                        >
+                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply Now'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};

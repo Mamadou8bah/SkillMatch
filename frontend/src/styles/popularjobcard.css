@@ -33,7 +33,7 @@
     width: 2.2rem;
     height: 2.2rem;
     border-radius: 0.5rem;
-    background-color: #f5f5f5;
+    background-color: var(--tag-bg);
     overflow: hidden;
     display: inline-block;
 }
@@ -47,7 +47,7 @@
 .pjc-ci-text p{
     margin-top: 0;
     font-size: 0.85rem;
-    color: #514f4f;
+    color: var(--text-secondary);
 
 }
 .pjc-ci-text h3{
@@ -66,7 +66,7 @@
     margin-top: 0.3rem;
     font-weight: 400;
     font-size: 0.9rem;
-    color: rgb(65, 64, 64);
+    color: var(--text-secondary);
 }
 .pjc-body{
     display: flex;
@@ -82,7 +82,8 @@
 
 }
 .pjc-tag{
-    background-color: #e0e0e0;
+    background-color: var(--tag-bg);
+    color: var(--tag-text);
     padding: 0.3rem 0.6rem;
     border-radius: 1rem;
     font-size: 0.75rem;
@@ -90,11 +91,11 @@
 .bookmark-icon{
     width: 2rem;
     height: auto;
-    stroke: rgb(87, 87, 87);
+    stroke: var(--text-secondary);
     stroke-width: 1px;
 }
 .bookmark-icon.bookmarked{
-    stroke: #1C274C;
+    stroke: var(--primary-color);
     stroke-width: 1px;
-    fill: rgb(247, 154, 32);
+    fill: var(--primary-color);
 }

@@ -52,7 +52,7 @@
 }
 .jp-nav-link{
     text-decoration: none;
-    color: #666666;
+    color: #444444;
     font-size: 1rem;
     text-align: center;
     font-weight: 500;
@@ -60,7 +60,7 @@
 
 }
 .jp-nav-link.active{
-    color: #1b5aeb;
-    border-bottom: 2px solid #1b5aeb;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
     padding-bottom: 0.25rem;
 }
