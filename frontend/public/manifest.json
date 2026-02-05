@@ -1,19 +1,15 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "SkillMatch",
+  "name": "SkillMatch - Find Your Dream Job",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
+      "src": "assets/logos/skillmatch-logo.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "sizes": "192x192"
+      "purpose": "any maskable"
     },
     {
-      "src": "logo512.png",
+      "src": "assets/logos/skillmatch-logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }

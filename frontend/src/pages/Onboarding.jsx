@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
+import { commonSkills } from '../data/skills';
 import '../styles/onboarding.css';
 
 export const Onboarding = () => {
     const [step, setStep] = useState(1);
     const navigate = useNavigate();
     const [skillInput, setSkillInput] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
     const [formData, setFormData] = useState({
         role: localStorage.getItem('userRole') || 'CANDIDATE',
         skills: [],
@@ -14,13 +16,45 @@ export const Onboarding = () => {
         location: ''
     });
 
-    const addSkill = () => {
-        if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
-            setFormData({
-                ...formData,
-                skills: [...formData.skills, skillInput.trim()]
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest('.skill-input-wrapper')) {
+                setSuggestions([]);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleSkillInputChange = (e) => {
+        const value = e.target.value;
+        setSkillInput(value);
+        
+        if (value.trim()) {
+            const filtered = commonSkills.filter(skill => 
+                skill.toLowerCase().includes(value.toLowerCase()) && 
+                !formData.skills.includes(skill)
+            ).slice(0, 5);
+            setSuggestions(filtered);
+        } else {
+            setSuggestions([]);
+        }
+    };
+
+    const addSkill = (skillTitle) => {
+        const titleToAdd = skillTitle || skillInput.trim();
+        if (skillToAdd) {
+            setFormData(prev => {
+                if (prev.skills.some(s => s.toLowerCase() === skillToAdd.toLowerCase())) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    skills: [...prev.skills, skillToAdd]
+                };
             });
             setSkillInput('');
+            setSuggestions([]);
         }
     };
 
@@ -91,14 +125,32 @@ export const Onboarding = () => {
             content: (
                 <div className="onboarding-skills-wrapper">
                     <div className="skills-input-container">
-                        <input 
-                            type="text" 
-                            placeholder="Add a skill (e.g. React)"
-                            value={skillInput}
-                            onChange={(e) => setSkillInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-                        />
-                        <button className="add-skill-btn" onClick={addSkill}>
+                        <div className="skill-input-wrapper">
+                            <input 
+                                type="text" 
+                                placeholder="Add a skill (e.g. React)"
+                                value={skillInput}
+                                onChange={handleSkillInputChange}
+                                onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                            />
+                            {suggestions.length > 0 && (
+                                <div className="skills-suggestions">
+                                    {suggestions.map((suggestion, index) => (
+                                        <div 
+                                            key={index} 
+                                            className="suggestion-item"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                addSkill(suggestion);
+                                            }}
+                                        >
+                                            {suggestion}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <button className="add-skill-btn" onClick={() => addSkill()}>
                             <Plus size={20} />
                         </button>
                     </div>
@@ -151,6 +203,9 @@ export const Onboarding = () => {
     return (
         <div className="onboarding-page">
             <div className="onboarding-container">
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch" style={{ height: '60px' }} />
+                </div>
                 <div className="progress-bar">
                     <div className="progress-fill" style={{ width: `${(step / 4) * 100}%` }}></div>
                 </div>

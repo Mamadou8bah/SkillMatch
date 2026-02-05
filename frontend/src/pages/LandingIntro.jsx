@@ -44,7 +44,7 @@ export const LandingIntro = () => {
         <div className="intro-page">
             <div className="intro-header">
                 <div className="logo">
-                 SkillMatch
+                 <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" />
                 </div>
                 {step < 3 && <button className="skip-btn" onClick={handleSkip}>Skip</button>}
             </div>

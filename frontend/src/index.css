@@ -14,11 +14,11 @@
 }
 
 [data-theme='dark'] {
-  --bg-color: #000000;
+  --bg-color: #121212;
   --text-color: #e7e9ea;
   --text-secondary: #71767b;
-  --card-bg: #000000;
-  --nav-bg: #000000;
+  --card-bg: #121212;
+  --nav-bg: #121212;
   --primary-color: #ff8c00;
   --border-color: #2f3336;
   --shadow-color: rgba(255, 255, 255, 0);

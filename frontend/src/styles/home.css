@@ -38,6 +38,27 @@
 
 .notification {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-mini-avatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background-color: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--primary-color);
+    overflow: hidden;
+}
+
+.profile-mini-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .notification-badge {

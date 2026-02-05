@@ -7,6 +7,9 @@ export const Welcome = () => {
   const navigate = useNavigate();
   return (
     <div className='welcome-page'>
+        <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10 }}>
+            <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '60px' }} />
+        </div>
         <div className="welcome-image-container">
             <div className="welcome-image">
                <img src={image} alt="Happy Girl" />

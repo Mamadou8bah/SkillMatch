@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-  <rect width="120" height="120" rx="20" fill="#ffffff"/>
-  <g>
-    <path d="M30 60c0-16 24-32 48-16 24 16 0 32-24 32-24 0-24-8-24-16z" fill="#1877F2"/>
-    <text x="60" y="88" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Meta</text>
-  </g>
-</svg>

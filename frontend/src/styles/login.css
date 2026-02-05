@@ -21,10 +21,10 @@
 .welcome-subheading {
     font-size: 1rem;
     margin-top: 0;
-    color: var(--text-secondary);
-    line-height: 1.1;
+    color: #555;
+    line-height: 1.4;
     max-width: 400px;
-    font-weight: 100;
+    font-weight: 300;
     margin-bottom: 2rem;
 }
 
@@ -47,10 +47,12 @@
 .input-div label svg {
     width: 1.5rem;
     height: 1.5rem;
+    stroke: var(--text-secondary);
     fill: var(--text-secondary);
 }
 
 .input-div.focused label svg {
+    stroke: var(--primary-color);
     fill: var(--primary-color);
 }
 
@@ -101,6 +103,21 @@
 
 .login-form {
     margin: 1.5rem;
+}
+
+.login-form, .signup-form {
+    animation: authSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes authSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .oo-header {
@@ -180,6 +197,13 @@
     color: #ff8c00;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.signup-link span:hover {
+    text-decoration: underline;
+    opacity: 0.8;
 }
 
 .signup-form {

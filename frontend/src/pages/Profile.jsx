@@ -18,6 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import Loader from '../components/Loader';
+import { commonSkills } from '../data/skills';
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -29,11 +30,13 @@ export const Profile = () => {
     email: "",
     role: "",
     location: "",
-    mobile: ""
+    mobile: "",
+    photoUrl: ""
   });
 
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
 
   const [experiences, setExperiences] = useState([]);
   const [newExperience, setNewExperience] = useState({
@@ -48,6 +51,16 @@ export const Profile = () => {
 
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.skill-input-wrapper')) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (userId) {
@@ -69,7 +82,8 @@ export const Profile = () => {
           email: data.data.email || '',
           role: data.data.role || '',
           location: data.data.location || '',
-          mobile: data.data.mobile || ''
+          mobile: data.data.mobile || '',
+          photoUrl: data.data.photo?.url || ''
         });
       }
     } catch (error) {
@@ -131,29 +145,56 @@ export const Profile = () => {
     }
   };
 
-  const handleAddSkill = async () => {
-    if (newSkill.trim()) {
-      try {
-        const response = await fetch('/api/skill', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ title: newSkill.trim() })
-        });
-        const data = await response.json();
-        if (data.success) {
-          setSkills([...skills, data.data]);
-          setNewSkill('');
-        }
-      } catch (e) {
-        console.error(e);
+  const handleSkillInputChange = (e) => {
+    const value = e.target.value;
+    setNewSkill(value);
+    
+    if (value.trim()) {
+      const searchTerm = value.toLowerCase();
+      const filtered = commonSkills.filter(skill => {
+        const skillName = skill.toLowerCase();
+        return skillName.includes(searchTerm) && 
+               !skills.some(s => s.title && s.title.toLowerCase() === skillName);
+      }).slice(0, 5);
+      setSuggestions(filtered);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleAddSkill = async (skillTitle) => {
+    const titleToAdd = skillTitle || newSkill.trim();
+    if (!titleToAdd) return;
+
+    // Check if duplicate locally first
+    if (skills.some(s => s.title.toLowerCase() === titleToAdd.toLowerCase())) {
+      setNewSkill('');
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/skill', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title: titleToAdd })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSkills(prev => [...prev, data.data]);
+        setNewSkill('');
+        setSuggestions([]);
       }
+    } catch (e) {
+      console.error('Failed to add skill:', e);
     }
   };
 
   const handleRemoveSkill = async (id) => {
+    if (!id) return;
     try {
       const response = await fetch(`/api/skill/${id}`, {
         method: 'DELETE',
@@ -161,10 +202,10 @@ export const Profile = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setSkills(skills.filter(s => s.id !== id));
+        setSkills(prev => prev.filter(s => s.id !== id));
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to remove skill:', e);
     }
   };
 
@@ -263,8 +304,33 @@ export const Profile = () => {
         </div>
         <div className="skills-view-container">
           <div className="add-skill-box">
-            <input type="text" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()} className="form-input" />
-            <button className="add-skill-btn" onClick={handleAddSkill}><Plus size={20} /></button>
+            <div className="skill-input-wrapper">
+              <input 
+                type="text" 
+                value={newSkill} 
+                onChange={handleSkillInputChange} 
+                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()} 
+                className="form-input" 
+                placeholder="Add a skill (e.g. JavaScript)"
+              />
+              {suggestions.length > 0 && (
+                <div className="skills-suggestions">
+                  {suggestions.map((suggestion, index) => (
+                    <div 
+                      key={index} 
+                      className="suggestion-item"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleAddSkill(suggestion);
+                      }}
+                    >
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button className="add-skill-btn" onClick={() => handleAddSkill()}><Plus size={20} /></button>
           </div>
           <div className="skills-list-full">
             {skills.map((skill) => (
@@ -350,7 +416,15 @@ export const Profile = () => {
           <div className="spacer"></div>
         </div>
         <div className="profile-avatar-container">
-          <div className="profile-avatar-placeholder">{profileData.fullName?.charAt(0)}</div>
+          {profileData.photoUrl ? (
+            <img src={profileData.photoUrl} alt="Profile" className="profile-image-large" />
+          ) : (
+            <img 
+              src="https://www.shutterstock.com/image-vector/default-avatar-social-media-display-600nw-2632690107.jpg" 
+              alt="Default Avatar" 
+              className="profile-image-large" 
+            />
+          )}
         </div>
         <h1 className="profile-name">{profileData.fullName}</h1>
         <p className="profile-role">{profileData.role}</p>

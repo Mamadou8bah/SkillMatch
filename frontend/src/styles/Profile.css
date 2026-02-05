@@ -4,7 +4,9 @@
     padding: 0 1rem;
     font-family: 'Montserrat', sans-serif;
     color: var(--text-color);
+    overflow: visible;
 }
+
 
 /* Animations */
 .profile-container {
@@ -34,6 +36,17 @@
 .profile-avatar-container {
     margin-bottom: 0.2rem;
     position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.profile-image-large {
+    width: 7rem;
+    height: 7rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3.2px solid var(--primary-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .profile-avatar {
@@ -168,8 +181,19 @@
 
 /* --- Edit & Sub-View Styles --- */
 .sub-view {
+    position: relative;
+    z-index: 10;
+    padding-bottom: 2rem;
     animation: slideLeft 0.3s ease-in-out;
+    overflow: visible !important;
 }
+
+@media (max-width: 600px) {
+    .sub-view {
+        padding-bottom: 100px; /* Space for the floating nav bar on mobile */
+    }
+}
+
 
 @keyframes slideLeft {
     from {
@@ -322,11 +346,60 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: relative;
+    z-index: 500;
 }
+
 
 .add-skill-box {
     display: flex;
     gap: 1rem;
+    position: relative;
+}
+
+.skill-input-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.skills-suggestions {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    z-index: 1000;
+    max-height: 250px;
+    overflow-y: auto;
+    display: block !important;
+    pointer-events: auto !important;
+}
+
+
+.suggestion-item {
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: var(--hover-color);
+    color: var(--primary-color);
+}
+
+
+.suggestion-item:hover {
+    background: var(--border-color);
 }
 
 .add-skill-btn {
@@ -577,24 +650,6 @@ input:checked+.slider:before {
     gap: 1rem;
 }
 
-@media (max-width: 600px) {
-    .exp-row {
-        grid-template-columns: 1fr;
-    }
-
-    .add-experience-form {
-        padding: 1rem;
-    }
-
-    .form-actions {
-        flex-direction: column-reverse;
-    }
-
-    .form-actions button {
-        width: 100%;
-    }
-}
-
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -623,6 +678,31 @@ input:checked+.slider:before {
 
 .save-experience-btn:hover {
     background-color: #e67e00;
+}
+
+@media (max-width: 600px) {
+    .exp-row {
+        grid-template-columns: 1fr;
+    }
+
+    .add-experience-form {
+        padding: 1rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.8rem;
+    }
+
+    .form-actions button {
+        width: 100%;
+        padding: 12px;
+    }
+
+    .exp-card-header h3 {
+        font-size: 1rem;
+        word-break: break-word;
+    }
 }
 
 .add-btn {
