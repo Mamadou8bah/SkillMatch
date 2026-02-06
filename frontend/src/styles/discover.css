@@ -21,7 +21,7 @@
     padding: 8px 12px;
     color: var(--text-color); 
     outline: none;
-    width:85%;
+    width: 100%; /* Fill the container */
 }
 .d-search-input input::placeholder{
     color: #888888;

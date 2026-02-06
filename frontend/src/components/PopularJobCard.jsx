@@ -45,7 +45,7 @@ export const PopularJobCard = ({ job }) => {
             </div>
             <div className="pjc-body">
                 <h3>{job.title}</h3>
-                <p className="pjc-salary">${job.salary?.toLocaleString()}</p>
+                <p className="pjc-salary">{job.salary || 'Salary Not Disclosed'}</p>
                 <div className="tags">
                     {tags.map((tag, index) => (
                         <span key={index} className="pjc-tag">{tag}</span>

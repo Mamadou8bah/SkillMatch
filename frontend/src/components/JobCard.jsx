@@ -48,7 +48,7 @@ export const JobCard = ({ job }) => {
                         </div>
                 </div>
                 <div className="jc-body">
-                        <p className="jc-salary">${job.salary?.toLocaleString()}</p>
+                        <p className="jc-salary">{job.salary || 'Salary Not Disclosed'}</p>
                         <p className="jc-location">{job.locationType} </p>
                 </div>
                 </div>

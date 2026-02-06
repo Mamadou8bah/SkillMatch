@@ -152,7 +152,7 @@ export const JobDetails = () => {
                             </div>
                             <div className="jd-tag-other">
                                 <p>Salaries</p>
-                                <p>${job.salary?.toLocaleString()}</p>
+                                <p>{job.salary || 'Salary Not Disclosed'}</p>
                             </div>
                         </div>
                         <div className="jd-md-shift-type jd-tag">
@@ -170,7 +170,7 @@ export const JobDetails = () => {
                             </div>
                             <div className="jd-tag-other">
                                 <p>Job-Type</p>
-                                <p>{job.locationType}</p>
+                                <p>{job.type || job.locationType}</p>
                             </div>
                         </div>
                     </div>

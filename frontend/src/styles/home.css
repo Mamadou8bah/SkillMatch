@@ -76,17 +76,22 @@
     font-size: 0.7rem;
 }
 
+.home-content {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
 .search-input {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
-    margin: 0.7rem;
+    margin: 0.7rem auto;
     margin-bottom: 0;
     position: relative;
-    left: 0.3rem;
-    right: 0.3rem;
-    width: 85%;
+    width: calc(100% - 1.4rem); /* Increased width */
     border: 1px solid var(--border-color);
     background-color: var(--card-bg);
     border-radius: 0.7rem;
