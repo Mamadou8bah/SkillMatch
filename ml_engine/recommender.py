@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import re
 
-# Initialize model once at module level for reuse
-# 'all-MiniLM-L6-v2' is small, fast, and excellent for semantic similarity
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def clean_text(text):
