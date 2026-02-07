@@ -13,7 +13,7 @@ export const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
     const [location, setLocation] = useState('')
-    const [role, setRole] = useState('CANDIDATE')
+    const [role, setRole] = useState('CANDIDATE') // Only Candidates now
     const [companyName, setCompanyName] = useState('')
     const [industry, setIndustry] = useState('')
     const [description, setDescription] = useState('')
@@ -27,6 +27,20 @@ export const Login = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
 
+    const validateEmail = (email) => {
+        return String(email)
+            .toLowerCase()
+            .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+    };
+
+    const validatePassword = (pass) => {
+        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        return regex.test(pass);
+    };
+
     useEffect(() => {
         if (locationState.state?.mode === 'signup') {
             setHasAccount(false)
@@ -37,6 +51,12 @@ export const Login = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault()
+        
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address')
+            return
+        }
+
         setIsLoading(true)
         setError('')
 
@@ -77,10 +97,24 @@ export const Login = () => {
 
     const handleStage1 = async (e) => {
         e.preventDefault()
+        
+        if (fullName.trim().split(' ').length < 2) {
+            setError('Please enter your full name (First and Last name)')
+            return
+        }
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address')
+            return
+        }
+        if (!validatePassword(password)) {
+            setError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number')
+            return
+        }
         if (password !== confirmPassword) {
             setError('Passwords do not match')
             return
         }
+
         setIsLoading(true)
         setError('')
         try {
@@ -105,21 +139,23 @@ export const Login = () => {
 
     const handleStage2 = async (e) => {
         e.preventDefault()
+        
+        if (location.trim().length < 3) {
+            setError('Please enter a valid location (City, Country)')
+            return
+        }
+
         setIsLoading(true)
         try {
             const response = await fetch(`/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ location, role })
+                body: JSON.stringify({ location, role: 'CANDIDATE' })
             })
             const data = await response.json()
             if (data.success) {
-                if (role === 'EMPLOYER') {
-                    setRegStage(3)
-                } else {
-                    alert('Registration stage 1 & 2 complete. Please verify your email.')
-                    setHasAccount(true)
-                }
+                alert('Registration stage 1 & 2 complete. Please verify your email.')
+                setHasAccount(true)
             }
         } catch (err) {
             setError('Update failed.')
@@ -130,6 +166,20 @@ export const Login = () => {
 
     const handleStage3 = async (e) => {
         e.preventDefault()
+        
+        if (companyName.trim().length < 2) {
+            setError('Please enter a valid company name')
+            return
+        }
+        if (industry.trim().length < 2) {
+            setError('Please specify your industry')
+            return
+        }
+        if (description.trim().length < 20) {
+            setError('Company description should be at least 20 characters')
+            return
+        }
+
         setIsLoading(true)
         try {
             const response = await fetch(`/api/auth/register/stage3/${userId}`, {
@@ -158,7 +208,20 @@ export const Login = () => {
                     </svg>
                 </button>
             </div>
-            {error && <div className="error-message" style={{ color: 'red', textAlign: 'center', marginBottom: '1rem', padding: '10px', background: '#ffebee' }}>{error}</div>}
+            {error && (
+                <div className="error-message" style={{ 
+                    background: '#fff5f5', 
+                    color: '#c53030', 
+                    padding: '0.75rem', 
+                    borderRadius: '8px', 
+                    margin: '0 2rem 1rem 2rem',
+                    fontSize: '0.85rem',
+                    textAlign: 'center',
+                    border: '1px solid #feb2b2' 
+                }}>
+                    {error}
+                </div>
+            )}
             
             {hasAccount ? (
                 <div className="login-form" key="login">
@@ -194,8 +257,8 @@ export const Login = () => {
                     <div className="login-logo-container" style={{ textAlign: 'center', marginBottom: '1rem' }}>
                         <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '50px' }} />
                     </div>
-                    <p className="welcome-back">{regStage === 1 ? 'Create account' : regStage === 2 ? 'Almost there' : 'Business Details'}</p>
-                    <p className="welcome-subheading">Step {regStage} of {role === 'EMPLOYER' ? 3 : 2}</p>
+                    <p className="welcome-back">{regStage === 1 ? 'Create account' : 'Almost there'}</p>
+                    <p className="welcome-subheading">Step {regStage} of 2</p>
 
                     {regStage === 1 && (
                         <form onSubmit={handleStage1}>
@@ -235,26 +298,8 @@ export const Login = () => {
                                 <label><MapPin size={20} /></label>
                                 <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)} onFocus={() => setFocused('location')} onBlur={() => setFocused('')} placeholder='Location (City, Country)' />
                             </div>
-                            <div className="role-selection" style={{ display: 'flex', gap: '1rem', margin: '1rem 0' }}>
-                                <div 
-                                    className={`role-card ${role === 'CANDIDATE' ? 'active' : ''}`}
-                                    onClick={() => setRole('CANDIDATE')}
-                                    style={{ border: role === 'CANDIDATE' ? '2px solid #ff8c00' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
-                                >
-                                    <UserIcon />
-                                    <p>Candidate</p>
-                                </div>
-                                <div 
-                                    className={`role-card ${role === 'EMPLOYER' ? 'active' : ''}`}
-                                    onClick={() => setRole('EMPLOYER')}
-                                    style={{ border: role === 'EMPLOYER' ? '2px solid #ff8c00' : '1px solid #ddd', padding: '1rem', borderRadius: '8px', cursor: 'pointer', flex: 1, textAlign: 'center' }}
-                                >
-                                    <Building />
-                                    <p>Employer</p>
-                                </div>
-                            </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
-                                {isLoading ? <Loader size="small" /> : 'Next Step'}
+                                {isLoading ? <Loader size="small" /> : 'Complete Registration'}
                             </button>
                         </form>
                     )}

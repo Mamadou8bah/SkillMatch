@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useBookmarks } from '../contexts/BookmarksContext'
 import '../styles/jobdetails.css'
 import Loader from '../components/Loader'
@@ -10,7 +10,11 @@ export const JobDetails = () => {
     const navigate = useNavigate()
     const [job, setJob] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
-
+    const [isApplied, setIsApplied] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+    const [applicants, setApplicants] = useState([]);
+    const [showApplicants, setShowApplicants] = useState(false);
+ 
     useEffect(() => {
         const token = localStorage.getItem('token');
         fetch(`http://localhost:8080/post/${id}`, {
@@ -29,27 +33,14 @@ export const JobDetails = () => {
         });
     }, [id]);
 
-    if (isLoading) {
-        return <Loader fullPage={true} />
-    }
-
-    if (!job) {
-        return <div className="jd-not-found">Job not found</div>
-    }
-
-    const [isApplied, setIsApplied] = useState(false);
-    const [isApplying, setIsApplying] = useState(false);
-    const [applicants, setApplicants] = useState([]);
-    const [showApplicants, setShowApplicants] = useState(false);
     const myId = localStorage.getItem('userId');
     const myRole = localStorage.getItem('userRole');
 
     // Check if this job belongs to the current employer
     const isOwner = job?.employer?.user?.id?.toString() === myId || (myRole === 'EMPLOYER' && job?.employer?.name === localStorage.getItem('companyName'));
-    // Note: The above is a heuristic. Ideally the API should tell us.
 
     useEffect(() => {
-        if (isOwner) {
+        if (isOwner && job) {
             const token = localStorage.getItem('token');
             fetch(`http://localhost:8080/api/apply/submitted/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -58,9 +49,22 @@ export const JobDetails = () => {
             .then(data => setApplicants(data))
             .catch(err => console.error('Error fetching applicants:', err));
         }
-    }, [id, isOwner]);
+    }, [id, isOwner, job]);
+
+    if (isLoading) {
+        return <Loader fullPage={true} />
+    }
+
+    if (!job) {
+        return <div className="jd-not-found">Job not found</div>
+    }
 
     const handleApply = async () => {
+        if (job.jobUrl && job.source !== 'Own') {
+            window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
         setIsApplying(true);
         try {
             const token = localStorage.getItem('token');
@@ -94,6 +98,8 @@ export const JobDetails = () => {
             companyLogo: job.employer?.logo || ''
         })
     }
+    
+    const isNew = job.postedAt && (new Date() - new Date(job.postedAt)) < 24 * 60 * 60 * 1000;
     
     return (
         <div className='jd-page'>
@@ -133,8 +139,9 @@ export const JobDetails = () => {
                     <div className="jd-logo">
                         <img src={job.employer?.logo || ''} alt="" />
                     </div>
+                    {isNew && <span className="jd-badge">NEW</span>}
                     <h1 className="jd-title">{job.title}</h1>
-                    <div className="jd-company">{job.employer?.name || 'Company'}- <span>{job.locationType}</span></div>
+                    <div className="jd-company">Source • <span>{job.source}</span></div>
                 </div>
                 <div className="md-tags-container">
                     <div className="jd-md">
@@ -178,17 +185,40 @@ export const JobDetails = () => {
             </div>
             <div className="jd-content">
                 <div className="jd-description">
-                    <h3>Job Description</h3>
-                    <p>{job.description}</p>
+                    {
+                        job.source == 'own' && (
+                                 <h3>Job Description</h3>
+                        )
+                    }
+               
+                    <div 
+                        className="description-text"
+                        dangerouslySetInnerHTML={{ __html: job.description }}
+                    />
                 </div>
-                <div className="jd-skills">
-                    <h3>Required Skills</h3>
-                    <div className="jd-skills-list">
-                        {job.requiredSkills?.map((skill, index) => (
-                            <span key={index} className="jd-skill-tag">{skill.name}</span>
-                        ))}
+
+                {job.requirements && job.requirements.length > 0 && (
+                    <div className="jd-requirements">
+                        <h3>Requirements</h3>
+                        <ul className="jd-requirements-list">
+                            {job.requirements.map((req, index) => (
+                                <li key={index}>{req}</li>
+                            ))}
+                        </ul>
                     </div>
-                </div>
+                )}
+
+                {job.skills && job.skills.length > 0 && (
+                    <div className="jd-skills">
+                        <h3>Required Skills</h3>
+                        <div className="jd-skills-list">
+                            {job.skills.map((skill, index) => (
+                                <span key={index} className="jd-skill-tag">{skill}</span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
                 <div className="jd-apply">
                     {isOwner ? (
                         <div className="applicants-section">
@@ -196,20 +226,20 @@ export const JobDetails = () => {
                                 {showApplicants ? 'Hide Applicants' : `View Applicants (${applicants.length})`}
                             </button>
                             {showApplicants && (
-                                <div className="applicants-list" style={{ marginTop: '20px' }}>
+                                <div className="applicants-list">
                                     {applicants.length === 0 ? (
                                         <p>No applications yet</p>
                                     ) : (
                                         applicants.map(app => (
-                                            <div key={app.id} className="applicant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px', marginBottom: '10px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <img src={app.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.user.fullName)}&background=random`} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+                                            <div key={app.id} className="applicant-item">
+                                                <div className="applicant-info">
+                                                    <img src={app.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.user.fullName)}&background=random`} alt="" />
                                                     <div>
-                                                        <p style={{ fontWeight: 'bold', margin:0 }}>{app.user.fullName}</p>
-                                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin:0 }}>{app.user.email}</p>
+                                                        <p className="applicant-name">{app.user.fullName}</p>
+                                                        <p className="applicant-email">{app.user.email}</p>
                                                     </div>
                                                 </div>
-                                                <Link to={`/messages/${app.user.id}`} className="message-btn" style={{ padding: '5px 10px', borderRadius: '5px', background: 'var(--primary-color)', color: 'white', textDecoration: 'none', fontSize: '13px' }}>Message</Link>
+                                                <Link to={`/messages/${app.user.id}`} className="message-btn">Message</Link>
                                             </div>
                                         ))
                                     )}
@@ -220,9 +250,9 @@ export const JobDetails = () => {
                         <button 
                             className={`apply-btn ${isApplied ? 'applied' : ''}`} 
                             onClick={handleApply} 
-                            disabled={isApplied || isApplying}
+                            disabled={(isApplied || isApplying) && job.source === 'Own'}
                         >
-                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply Now'}
+                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : (job.source !== 'Own' && job.jobUrl ? `Apply on ${job.source}` : 'Apply Now')}
                         </button>
                     )}
                 </div>

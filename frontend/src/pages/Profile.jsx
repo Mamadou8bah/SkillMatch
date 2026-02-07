@@ -24,6 +24,15 @@ export const Profile = () => {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState('main'); 
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const validateEmail = (email) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
 
   const [profileData, setProfileData] = useState({
     fullName: "",
@@ -127,6 +136,11 @@ export const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
+    setError('');
+    if (!profileData.fullName.trim()) return setError('Full Name is required');
+    if (!profileData.location.trim()) return setError('Location is required');
+    if (!profileData.mobile.trim()) return setError('Mobile number is required');
+
     try {
       const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
@@ -142,6 +156,7 @@ export const Profile = () => {
       }
     } catch (error) {
       console.error('Error saving profile:', error);
+      setError('Failed to update profile');
     }
   };
 
@@ -163,11 +178,16 @@ export const Profile = () => {
   };
 
   const handleAddSkill = async (skillTitle) => {
+    setError('');
     const titleToAdd = skillTitle || newSkill.trim();
-    if (!titleToAdd) return;
+    if (!titleToAdd) {
+      setError('Please enter or select a skill');
+      return;
+    }
 
     // Check if duplicate locally first
     if (skills.some(s => s.title.toLowerCase() === titleToAdd.toLowerCase())) {
+      setError('Skill already added');
       setNewSkill('');
       setSuggestions([]);
       return;
@@ -210,6 +230,12 @@ export const Profile = () => {
   };
 
   const handleAddExperience = async () => {
+    setError('');
+    if (!newExperience.companyName.trim()) return setError('Company Name is required');
+    if (!newExperience.jobTitle.trim()) return setError('Job Title is required');
+    if (!newExperience.startDate.trim()) return setError('Start Date is required');
+    if (!newExperience.description.trim()) return setError('Description is required');
+
     try {
       const response = await fetch('/api/experience', {
         method: 'POST',
@@ -233,6 +259,7 @@ export const Profile = () => {
       }
     } catch (e) {
       console.error(e);
+      setError('Failed to add experience');
     }
   };
 
@@ -276,6 +303,7 @@ export const Profile = () => {
           <div className="spacer"></div>
         </div>
         <div className="edit-form">
+          {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
           <div className="form-group">
             <label>Full Name</label>
             <input type="text" name="fullName" value={profileData.fullName} onChange={handleInputChange} className="form-input" />
@@ -303,6 +331,7 @@ export const Profile = () => {
           <div className="spacer"></div>
         </div>
         <div className="skills-view-container">
+          {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
           <div className="add-skill-box">
             <div className="skill-input-wrapper">
               <input 
@@ -356,6 +385,7 @@ export const Profile = () => {
         {showAddForm && (
           <div className="add-experience-form">
             <h3>Add New Experience</h3>
+            {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
             <div className="exp-row">
               <div className="form-group">
                 <label>Company Name</label>

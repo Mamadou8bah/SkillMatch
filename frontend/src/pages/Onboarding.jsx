@@ -9,6 +9,7 @@ export const Onboarding = () => {
     const navigate = useNavigate();
     const [skillInput, setSkillInput] = useState('');
     const [suggestions, setSuggestions] = useState([]);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         role: localStorage.getItem('userRole') || 'CANDIDATE',
         skills: [],
@@ -43,18 +44,19 @@ export const Onboarding = () => {
 
     const addSkill = (skillTitle) => {
         const titleToAdd = skillTitle || skillInput.trim();
-        if (skillToAdd) {
+        if (titleToAdd) {
             setFormData(prev => {
-                if (prev.skills.some(s => s.toLowerCase() === skillToAdd.toLowerCase())) {
+                if (prev.skills.some(s => s.toLowerCase() === titleToAdd.toLowerCase())) {
                     return prev;
                 }
                 return {
                     ...prev,
-                    skills: [...prev.skills, skillToAdd]
+                    skills: [...prev.skills, titleToAdd]
                 };
             });
             setSkillInput('');
             setSuggestions([]);
+            setError('');
         }
     };
 
@@ -66,7 +68,24 @@ export const Onboarding = () => {
     };
 
     const handleNext = async () => {
-        if (step < 4) {
+        setError('');
+
+        if (step === 1 && formData.skills.length < 3) {
+            setError('Please add at least 3 skills to help us find better matches.');
+            return;
+        }
+
+        if (step === 2 && !formData.location.trim()) {
+            setError('Please specify your preferred work location.');
+            return;
+        }
+
+        if (step === 3 && !formData.experience) {
+            setError('Please select your experience level.');
+            return;
+        }
+
+        if (step < 3) {
             setStep(step + 1);
         } else {
             // Finally save onboarding data
@@ -77,7 +96,7 @@ export const Onboarding = () => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({...formData, role: 'CANDIDATE'})
                 });
                 if (response.ok) {
                     localStorage.setItem('registrationStage', '4');
@@ -95,30 +114,6 @@ export const Onboarding = () => {
     };
 
     const steps = [
-        {
-            title: "Choose your role",
-            subtitle: "Are you looking for a job or hiring talent?",
-            content: (
-                <div className="onboarding-options">
-                    <div 
-                        className={`option-card ${formData.role === 'CANDIDATE' ? 'active' : ''}`}
-                        onClick={() => setFormData({...formData, role: 'CANDIDATE'})}
-                    >
-                        <div className="icon">👨‍💻</div>
-                        <h3>Candidate</h3>
-                        <p>I want to find my dream job</p>
-                    </div>
-                    <div 
-                        className={`option-card ${formData.role === 'EMPLOYER' ? 'active' : ''}`}
-                        onClick={() => setFormData({...formData, role: 'EMPLOYER'})}
-                    >
-                        <div className="icon">🏢</div>
-                        <h3>Employer</h3>
-                        <p>I want to hire top talent</p>
-                    </div>
-                </div>
-            )
-        },
         {
             title: "What are your skills?",
             subtitle: "Add your top skills to help our AI recommend better matches.",
@@ -207,10 +202,24 @@ export const Onboarding = () => {
                     <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch" style={{ height: '60px' }} />
                 </div>
                 <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${(step / 4) * 100}%` }}></div>
+                    <div className="progress-fill" style={{ width: `${(step / 3) * 100}%` }}></div>
                 </div>
                 
                 <div key={step} className="onboarding-content-wrapper">
+                    {error && (
+                        <div className="onboarding-error" style={{ 
+                            color: '#e53e3e', 
+                            background: '#fff5f5', 
+                            padding: '10px 15px', 
+                            borderRadius: '8px', 
+                            marginBottom: '15px',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                            border: '1px solid #feb2b2'
+                        }}>
+                            {error}
+                        </div>
+                    )}
                     <div className="onboarding-header">
                         <h1>{currentStep.title}</h1>
                         <p>{currentStep.subtitle}</p>
@@ -228,9 +237,8 @@ export const Onboarding = () => {
                     <button 
                         className="btn-primary" 
                         onClick={handleNext}
-                        disabled={step === 1 && !formData.role}
                     >
-                        {step === 4 ? "Complete Profile" : "Continue"}
+                        {step === 3 ? "Complete Profile" : "Continue"}
                     </button>
                 </div>
             </div>
