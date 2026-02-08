@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify
 import pandas as pd
+import torch
+import os
+
+# MEMORY OPTIMIZATION: Limit torch threads
+torch.set_num_threads(1)
+
 from recommender import recommender, get_job_recommendations, get_candidate_recommendations, get_connection_recommendations
 
 app = Flask(__name__)

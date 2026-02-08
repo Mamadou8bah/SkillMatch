@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.linear_model import LogisticRegression
+import torch
 import pandas as pd
 import numpy as np
 import re
@@ -10,13 +11,17 @@ import json
 import sqlite3
 from datetime import datetime
 
+# MEMORY OPTIMIZATION: Limit torch threads
+torch.set_num_threads(1)
+
 # Path Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'reranker_model.pkl')
 DB_PATH = os.path.join(BASE_DIR, 'interactions.db')
 
 # Initialize sentence transformer (Shared across instances)
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# MEMORY OPTIMIZATION: Use device='cpu' explicitly
+model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 
 class AIRecommender:
     def __init__(self):
@@ -58,6 +63,11 @@ class AIRecommender:
         ids = df['id'].tolist()
         texts = df[text_col].fillna('').tolist()
         
+        # MEMORY OPTIMIZATION: Clear cache if it gets too large (> 1000 items)
+        if len(cache) > 1000:
+            print("Cache limit reached, clearing...")
+            cache.clear()
+            
         final_embeddings = [None] * len(ids)
         to_encode_indices = []
         to_encode_texts = []
