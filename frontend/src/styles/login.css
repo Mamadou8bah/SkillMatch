@@ -62,15 +62,6 @@
     outline: none;
 }
 
-.google-places-container {
-    flex: 1;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.input-div.focused .google-places-container {
-    border-bottom: none;
-}
-
 .input-div input {
     flex: 1;
     padding: 0.5rem 0;
@@ -275,4 +266,57 @@
 
 .resend-container span:hover {
     text-decoration: underline;
+}
+
+.photo-preview-circle {
+    transition: all 0.3s ease;
+}
+
+.photo-preview-circle:hover {
+    border-color: var(--primary-color);
+}
+
+.photo-upload-label {
+    transition: transform 0.2s ease;
+}
+
+.photo-upload-label:hover {
+    transform: scale(1.1);
+}
+
+.skill-pill {
+    user-select: none;
+}
+
+.skill-pill:hover {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.skill-pill.selected {
+    animation: pillSelect 0.2s ease-out;
+}
+
+@keyframes pillSelect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.skills-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.skills-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.skills-grid::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.skills-grid::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
 }

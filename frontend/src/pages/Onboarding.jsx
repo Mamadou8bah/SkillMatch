@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, Camera, User as UserIcon, Code, Palette, Wind, Wrench, Droplet, Sprout, Sparkles, Truck, Zap, Paintbrush, Hammer, Cpu, TrendingUp, Edit3 } from 'lucide-react';
 import { commonSkills } from '../data/skills';
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import '../styles/onboarding.css';
 
 export const Onboarding = () => {
@@ -217,26 +216,13 @@ export const Onboarding = () => {
             title: "Set your location",
             subtitle: "Where would you like to work?",
             content: (
-                <div className="onboarding-input-group onboarding-google-places">
-                    <GooglePlacesAutocomplete
-                        apiKey="YOUR_GOOGLE_MAPS_API_KEY"
-                        selectProps={{
-                            value: formData.location ? { label: formData.location, value: formData.location } : null,
-                            onChange: (val) => setFormData({...formData, location: val ? val.label : ''}),
-                            placeholder: 'e.g. Lagos, Nigeria / Remote',
-                            styles: {
-                                control: (provided) => ({
-                                    ...provided,
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '12px',
-                                    padding: '5px',
-                                    boxShadow: 'none',
-                                    '&:hover': {
-                                        border: '1px solid #cbd5e0'
-                                    }
-                                })
-                            }
-                        }}
+                <div className="onboarding-input-group">
+                    <input 
+                        type="text" 
+                        placeholder="e.g. Lagos, Nigeria / Remote"
+                        value={formData.location}
+                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                        style={{ width: '100%' }}
                     />
                 </div>
             )

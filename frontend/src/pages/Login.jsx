@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
-import { Eye, EyeOff, Building, User as UserIcon, MapPin, Briefcase, FileText } from 'lucide-react'
+import { Eye, EyeOff, Building, User as UserIcon, MapPin, Briefcase, FileText, Camera, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 
 import Loader from '../components/Loader'
 
@@ -19,9 +18,63 @@ export const Login = () => {
     const [industry, setIndustry] = useState('')
     const [description, setDescription] = useState('')
     const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', ''])
+    const [photo, setPhoto] = useState(null)
+    const [photoPreview, setPhotoPreview] = useState(null)
+    const [skills, setSkills] = useState([])
+    const [skillInput, setSkillInput] = useState('')
 
     const [userId, setUserId] = useState(null)
     const [regStage, setRegStage] = useState(1)
+
+    const diverseSkills = [
+        { title: "Software Dev", icon: <Code size={18} /> },
+        { title: "UI/UX Design", icon: <Palette size={18} /> },
+        { title: "Data Analysis", icon: <BarChart size={18} /> },
+        { title: "Project Mgmt", icon: <Briefcase size={18} /> },
+        { title: "Digital Marketing", icon: <TrendingUp size={18} /> },
+        { title: "Content Writing", icon: <Edit3 size={18} /> },
+        { title: "Finance", icon: <PieChart size={18} /> },
+        { title: "Human Resources", icon: <Users size={18} /> },
+        { title: "Sales", icon: <Target size={18} /> },
+        { title: "Customer Success", icon: <Headphones size={18} /> },
+        { title: "Product Mgmt", icon: <Package size={18} /> },
+        { title: "DevOps & Cloud", icon: <Cloud size={18} /> },
+        { title: "Cyber Security", icon: <ShieldCheck size={18} /> },
+        { title: "Public Relations", icon: <Megaphone size={18} /> },
+        { title: "Operations", icon: <Settings size={18} /> }
+    ];
+
+    const toggleSkill = (skill) => {
+        const isSelected = skills.some(s => s.toLowerCase() === skill.toLowerCase());
+        if (isSelected) {
+            setSkills(skills.filter(s => s.toLowerCase() !== skill.toLowerCase()));
+        } else {
+            setSkills([...skills, skill]);
+        }
+    };
+
+    const addManualSkill = () => {
+        if (skillInput.trim() && !skills.some(s => s.toLowerCase() === skillInput.trim().toLowerCase())) {
+            setSkills([...skills, skillInput.trim()]);
+            setSkillInput('');
+        }
+    };
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                setError('Photo size should be less than 2MB');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result);
+                setPhoto(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const [focused, setFocused] = useState('')
     const [hasAccount, setHasAccount] = useState(true)
@@ -165,6 +218,50 @@ export const Login = () => {
         }
     }
 
+    const handleStage3 = async (e) => {
+        e.preventDefault()
+        // Photo is optional, so we can proceed even if null
+        setIsLoading(true)
+        try {
+            const response = await fetch(`/api/auth/register/stage3/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ photo })
+            })
+            const data = await response.json()
+            if (data.success) {
+                setRegStage(4)
+            }
+        } catch (err) {
+            setError('Failed to save photo.')
+            // Even if photo fails, let's try to proceed? 
+            // Or just allow setRegStage(4) if it's strictly optional
+            setRegStage(4)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleStage4 = async (e) => {
+        e.preventDefault()
+        setIsLoading(true)
+        try {
+            const response = await fetch(`/api/auth/register/stage4/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ skills })
+            })
+            const data = await response.json()
+            if (data.success) {
+                setRegStage(5)
+            }
+        } catch (err) {
+            setRegStage(5) // Proceed anyway for now or show error
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     const handleVerification = async (e) => {
         e.preventDefault()
         const code = verificationCode.join('')
@@ -229,41 +326,6 @@ export const Login = () => {
         }
     }
 
-    const handleStage3 = async (e) => {
-        e.preventDefault()
-        
-        if (companyName.trim().length < 2) {
-            setError('Please enter a valid company name')
-            return
-        }
-        if (industry.trim().length < 2) {
-            setError('Please specify your industry')
-            return
-        }
-        if (description.trim().length < 20) {
-            setError('Company description should be at least 20 characters')
-            return
-        }
-
-        setIsLoading(true)
-        try {
-            const response = await fetch(`/api/auth/register/stage3/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ companyName, industry, description })
-            })
-            const data = await response.json()
-            if (data.success) {
-                alert('Registration complete! Please verify your email.')
-                setHasAccount(true)
-            }
-        } catch (err) {
-            setError('Finalization failed.')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
     return (
         <div className="login-page">
             <div className="back-button">
@@ -290,8 +352,8 @@ export const Login = () => {
             
             {hasAccount ? (
                 <div className="login-form" key="login">
-                    <div className="login-logo-container" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '60px' }} />
+                    <div className="login-logo-container" style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                        <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '80px' }} />
                     </div>
                     <p className="welcome-back">Welcome back 👋</p>
                     <p className="welcome-subheading">We are happy to see you again. To use your account, you should log in first.</p>
@@ -323,10 +385,17 @@ export const Login = () => {
                         <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '50px' }} />
                     </div>
                     <p className="welcome-back">
-                        {regStage === 1 ? 'Create account' : regStage === 2 ? 'Almost there' : 'Check your email'}
+                        {regStage === 1 ? 'Create account' : 
+                         regStage === 2 ? 'Where are you?' : 
+                         regStage === 3 ? 'Profile Photo' :
+                         regStage === 4 ? 'What are your skills?' :
+                         'Verify Identity'}
                     </p>
                     <p className="welcome-subheading">
-                        {regStage === 3 ? `A 6-digit verification code has been delivered to ${email}` : `Step ${regStage} of 2`}
+                        {regStage === 5 ? `A 6-digit verification code has been delivered to ${email}` : 
+                         regStage === 4 ? 'Select skills that best describe what you can do' :
+                         regStage === 3 ? 'Add a photo so people can recognize you (Optional)' :
+                         `Step ${regStage} of 4`}
                     </p>
 
                     {regStage === 1 && (
@@ -363,44 +432,170 @@ export const Login = () => {
 
                     {regStage === 2 && (
                         <form onSubmit={handleStage2}>
-                            <div className={focused === 'location' ? 'input-div google-places-div focused' : 'input-div google-places-div'}>
+                            <div className={focused === 'location' ? 'input-div focused' : 'input-div'}>
                                 <label><MapPin size={20} /></label>
-                                <div className="google-places-container">
-                                    <GooglePlacesAutocomplete
-                                        apiKey="YOUR_GOOGLE_MAPS_API_KEY"
-                                        selectProps={{
-                                            value: location ? { label: location, value: location } : null,
-                                            onChange: (val) => setLocation(val ? val.label : ''),
-                                            placeholder: 'Location (City, Country)',
-                                            styles: {
-                                                control: (provided) => ({
-                                                    ...provided,
-                                                    border: 'none',
-                                                    boxShadow: 'none',
-                                                    background: 'transparent',
-                                                    minHeight: '45px',
-                                                    width: '100%'
-                                                }),
-                                                input: (provided) => ({
-                                                    ...provided,
-                                                    color: '#333'
-                                                }),
-                                                singleValue: (provided) => ({
-                                                    ...provided,
-                                                    color: '#333'
-                                                })
-                                            }
-                                        }}
-                                    />
-                                </div>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={location} 
+                                    onChange={(e) => setLocation(e.target.value)} 
+                                    onFocus={() => setFocused('location')} 
+                                    onBlur={() => setFocused('')} 
+                                    placeholder='Location (City, Country)' 
+                                />
                             </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
-                                {isLoading ? <Loader size="small" /> : 'Complete Registration'}
+                                {isLoading ? <Loader size="small" /> : 'Next Step'}
                             </button>
                         </form>
                     )}
 
                     {regStage === 3 && (
+                        <form onSubmit={handleStage3} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                            <div className="photo-upload-container" style={{ position: 'relative' }}>
+                                <div className="photo-preview-circle" style={{ 
+                                    width: '120px', 
+                                    height: '120px', 
+                                    borderRadius: '50%', 
+                                    background: '#f0f2f5', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    border: '2px dashed #ff8c00',
+                                    overflow: 'hidden'
+                                }}>
+                                    {photoPreview ? (
+                                        <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <Camera size={40} color="#ff8c00" />
+                                    )}
+                                </div>
+                                <label className="photo-upload-label" style={{
+                                    position: 'absolute',
+                                    bottom: '0',
+                                    right: '0',
+                                    background: '#ff8c00',
+                                    color: 'white',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer'
+                                }}>
+                                    <Plus size={20} />
+                                    <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+                                </label>
+                            </div>
+                            <p style={{ textAlign: 'center', color: '#666', fontSize: '0.9rem' }}>
+                                A professional photo increases your chances of getting hired.
+                            </p>
+                            <button type="submit" className="login-button" disabled={isLoading}>
+                                {isLoading ? <Loader size="small" /> : (photo ? 'Save & Continue' : 'Skip for now')}
+                            </button>
+                        </form>
+                    )}
+
+                    {regStage === 4 && (
+                        <form onSubmit={handleStage4} style={{ width: '100%' }}>
+                            <div className="skills-grid" style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                                gap: '10px', 
+                                marginBottom: '1.5rem',
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                padding: '5px'
+                            }}>
+                                {diverseSkills.map((skill, idx) => (
+                                    <div 
+                                        key={idx}
+                                        onClick={() => toggleSkill(skill.title)}
+                                        className={`skill-pill ${skills.includes(skill.title) ? 'selected' : ''}`}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '8px 12px',
+                                            borderRadius: '25px',
+                                            border: '1.5px solid #eee',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            background: skills.includes(skill.title) ? '#ff8c0020' : 'white',
+                                            borderColor: skills.includes(skill.title) ? '#ff8c00' : '#eee',
+                                            color: skills.includes(skill.title) ? '#ff8c00' : '#333',
+                                            fontSize: '0.85rem'
+                                        }}
+                                    >
+                                        <span style={{ marginRight: '8px' }}>{skill.icon}</span>
+                                        {skill.title}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="manual-skill-input" style={{ marginBottom: '1.5rem' }}>
+                                <p style={{ fontSize: '0.9rem', marginBottom: '8px', color: '#555' }}>Don't see your skill? Add it manually:</p>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div className="input-div" style={{ flex: 1, marginBottom: 0 }}>
+                                        <label><Plus size={18} /></label>
+                                        <input 
+                                            type="text" 
+                                            value={skillInput}
+                                            onChange={(e) => setSkillInput(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addManualSkill())}
+                                            placeholder="Type a skill..."
+                                        />
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={addManualSkill}
+                                        style={{
+                                            padding: '0 15px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #ff8c00',
+                                            background: 'transparent',
+                                            color: '#ff8c00',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            {skills.length > 0 && (
+                                <div className="selected-skills-summary" style={{ marginBottom: '1.5rem' }}>
+                                    <p style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '8px' }}>Selected ({skills.length}):</p>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {skills.map(s => (
+                                            <span key={s} style={{ 
+                                                background: '#ff8c00', 
+                                                color: 'white', 
+                                                padding: '4px 10px', 
+                                                borderRadius: '15px', 
+                                                fontSize: '0.75rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '5px'
+                                            }}>
+                                                {s} <X size={12} onClick={() => toggleSkill(s)} style={{ cursor: 'pointer' }} />
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <button 
+                                type="submit" 
+                                className="login-button" 
+                                disabled={isLoading || skills.length === 0}
+                            >
+                                {isLoading ? <Loader size="small" /> : 'Finish Selection'}
+                            </button>
+                        </form>
+                    )}
+
+                    {regStage === 5 && (
                         <form onSubmit={handleVerification}>
                             <div className="verification-code-container">
                                 {verificationCode.map((digit, index) => (
@@ -420,35 +615,7 @@ export const Login = () => {
                                 <p>Didn't get the code? <span onClick={handleResendCode}>Resend Code</span></p>
                             </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
-                                {isLoading ? <Loader size="small" /> : 'Continue'}
-                            </button>
-                        </form>
-                    )}
-
-                    {regStage === 4 && (
-                        <form onSubmit={handleStage3}>
-                            <div className={focused === 'company' ? 'input-div focused' : 'input-div'}>
-                                <label><Building size={20} /></label>
-                                <input type="text" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} onFocus={() => setFocused('company')} onBlur={() => setFocused('')} placeholder='Company Name' />
-                            </div>
-                            <div className={focused === 'industry' ? 'input-div focused' : 'input-div'}>
-                                <label><Briefcase size={20} /></label>
-                                <input type="text" required value={industry} onChange={(e) => setIndustry(e.target.value)} onFocus={() => setFocused('industry')} onBlur={() => setFocused('')} placeholder='Industry' />
-                            </div>
-                            <div className={focused === 'desc' ? 'input-div focused' : 'input-div'}>
-                                <label><FileText size={20} /></label>
-                                <textarea 
-                                    required 
-                                    value={description} 
-                                    onChange={(e) => setDescription(e.target.value)} 
-                                    onFocus={() => setFocused('desc')} 
-                                    onBlur={() => setFocused('')} 
-                                    placeholder='Company Description'
-                                    style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none', minHeight: '100px', padding: '10px' }}
-                                />
-                            </div>
-                            <button type="submit" className="login-button" disabled={isLoading}>
-                                {isLoading ? <Loader size="small" /> : 'Finish Registration'}
+                                {isLoading ? <Loader size="small" /> : 'Verify Account'}
                             </button>
                         </form>
                     )}
