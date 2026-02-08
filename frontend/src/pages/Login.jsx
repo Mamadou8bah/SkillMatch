@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
 import { Eye, EyeOff, Building, User as UserIcon, MapPin, Briefcase, FileText } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 
 import Loader from '../components/Loader'
 
@@ -17,6 +18,7 @@ export const Login = () => {
     const [companyName, setCompanyName] = useState('')
     const [industry, setIndustry] = useState('')
     const [description, setDescription] = useState('')
+    const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', ''])
 
     const [userId, setUserId] = useState(null)
     const [regStage, setRegStage] = useState(1)
@@ -154,13 +156,76 @@ export const Login = () => {
             })
             const data = await response.json()
             if (data.success) {
-                alert('Registration stage 1 & 2 complete. Please verify your email.')
-                setHasAccount(true)
+                setRegStage(3)
             }
         } catch (err) {
             setError('Update failed.')
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleVerification = async (e) => {
+        e.preventDefault()
+        const code = verificationCode.join('')
+        if (code.length < 6) {
+            setError('Please enter the complete 6-digit code')
+            return
+        }
+
+        setIsLoading(true)
+        setError('')
+        try {
+            const response = await fetch(`/api/auth/register/verify?token=${code}`)
+            const data = await response.json()
+            if (data.success) {
+                alert('Account verified successfully! You can now log in.')
+                setHasAccount(true)
+            } else {
+                setError(data.message)
+            }
+        } catch (err) {
+            setError('Verification failed. Please try again.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleResendCode = async () => {
+        setIsLoading(true)
+        setError('')
+        try {
+            // Re-use stage 2 to trigger email resend or add a dedicated endpoint
+            // For now, let's assume stage 2 re-triggers email or we add a simple resend
+            const response = await fetch(`/api/auth/register/resend-code?email=${email}`)
+            const data = await response.json()
+            if (data.success) {
+                alert('A new code has been sent to your email.')
+            } else {
+                setError(data.message)
+            }
+        } catch (err) {
+            setError('Failed to resend code.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleCodeChange = (index, value) => {
+        if (isNaN(value)) return
+        const newCode = [...verificationCode]
+        newCode[index] = value.substring(value.length - 1)
+        setVerificationCode(newCode)
+
+        // Auto focus next input
+        if (value && index < 5) {
+            document.getElementById(`code-${index + 1}`).focus()
+        }
+    }
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+            document.getElementById(`code-${index - 1}`).focus()
         }
     }
 
@@ -257,8 +322,12 @@ export const Login = () => {
                     <div className="login-logo-container" style={{ textAlign: 'center', marginBottom: '1rem' }}>
                         <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" style={{ height: '50px' }} />
                     </div>
-                    <p className="welcome-back">{regStage === 1 ? 'Create account' : 'Almost there'}</p>
-                    <p className="welcome-subheading">Step {regStage} of 2</p>
+                    <p className="welcome-back">
+                        {regStage === 1 ? 'Create account' : regStage === 2 ? 'Almost there' : 'Check your email'}
+                    </p>
+                    <p className="welcome-subheading">
+                        {regStage === 3 ? `A 6-digit verification code has been delivered to ${email}` : `Step ${regStage} of 2`}
+                    </p>
 
                     {regStage === 1 && (
                         <form onSubmit={handleStage1}>
@@ -294,9 +363,36 @@ export const Login = () => {
 
                     {regStage === 2 && (
                         <form onSubmit={handleStage2}>
-                            <div className={focused === 'location' ? 'input-div focused' : 'input-div'}>
+                            <div className={focused === 'location' ? 'input-div google-places-div focused' : 'input-div google-places-div'}>
                                 <label><MapPin size={20} /></label>
-                                <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)} onFocus={() => setFocused('location')} onBlur={() => setFocused('')} placeholder='Location (City, Country)' />
+                                <div className="google-places-container">
+                                    <GooglePlacesAutocomplete
+                                        apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+                                        selectProps={{
+                                            value: location ? { label: location, value: location } : null,
+                                            onChange: (val) => setLocation(val ? val.label : ''),
+                                            placeholder: 'Location (City, Country)',
+                                            styles: {
+                                                control: (provided) => ({
+                                                    ...provided,
+                                                    border: 'none',
+                                                    boxShadow: 'none',
+                                                    background: 'transparent',
+                                                    minHeight: '45px',
+                                                    width: '100%'
+                                                }),
+                                                input: (provided) => ({
+                                                    ...provided,
+                                                    color: '#333'
+                                                }),
+                                                singleValue: (provided) => ({
+                                                    ...provided,
+                                                    color: '#333'
+                                                })
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
                                 {isLoading ? <Loader size="small" /> : 'Complete Registration'}
@@ -305,6 +401,31 @@ export const Login = () => {
                     )}
 
                     {regStage === 3 && (
+                        <form onSubmit={handleVerification}>
+                            <div className="verification-code-container">
+                                {verificationCode.map((digit, index) => (
+                                    <input
+                                        key={index}
+                                        id={`code-${index}`}
+                                        type="text"
+                                        maxLength="1"
+                                        value={digit}
+                                        onChange={(e) => handleCodeChange(index, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                        className="code-input"
+                                    />
+                                ))}
+                            </div>
+                            <div className="resend-container">
+                                <p>Didn't get the code? <span onClick={handleResendCode}>Resend Code</span></p>
+                            </div>
+                            <button type="submit" className="login-button" disabled={isLoading}>
+                                {isLoading ? <Loader size="small" /> : 'Continue'}
+                            </button>
+                        </form>
+                    )}
+
+                    {regStage === 4 && (
                         <form onSubmit={handleStage3}>
                             <div className={focused === 'company' ? 'input-div focused' : 'input-div'}>
                                 <label><Building size={20} /></label>

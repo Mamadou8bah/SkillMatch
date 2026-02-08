@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Camera, User as UserIcon, Code, Palette, Wind, Wrench, Droplet, Sprout, Sparkles, Truck, Zap, Paintbrush, Hammer, Cpu, TrendingUp, Edit3 } from 'lucide-react';
 import { commonSkills } from '../data/skills';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import '../styles/onboarding.css';
 
 export const Onboarding = () => {
@@ -10,12 +11,30 @@ export const Onboarding = () => {
     const [skillInput, setSkillInput] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [error, setError] = useState('');
+    const [photoPreview, setPhotoPreview] = useState(null);
     const [formData, setFormData] = useState({
         role: localStorage.getItem('userRole') || 'CANDIDATE',
         skills: [],
         experience: '',
-        location: ''
+        location: '',
+        photo: null
     });
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                setError('Photo size should be less than 2MB');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result);
+                setFormData(prev => ({ ...prev, photo: reader.result }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     React.useEffect(() => {
         const handleClickOutside = (event) => {
@@ -60,6 +79,22 @@ export const Onboarding = () => {
         }
     };
 
+    const toggleSkill = (skill) => {
+        setFormData(prev => {
+            const isSelected = prev.skills.some(s => s.toLowerCase() === skill.toLowerCase());
+            if (isSelected) {
+                return {
+                    ...prev,
+                    skills: prev.skills.filter(s => s.toLowerCase() !== skill.toLowerCase())
+                };
+            }
+            return {
+                ...prev,
+                skills: [...prev.skills, skill]
+            };
+        });
+    };
+
     const removeSkill = (skillToRemove) => {
         setFormData({
             ...formData,
@@ -85,7 +120,7 @@ export const Onboarding = () => {
             return;
         }
 
-        if (step < 3) {
+        if (step < 4) {
             setStep(step + 1);
         } else {
             // Finally save onboarding data
@@ -112,6 +147,24 @@ export const Onboarding = () => {
     const handleBack = () => {
         if (step > 1) setStep(step - 1);
     };
+
+    const diverseSkills = [
+        { title: "Home Repairs", icon: <Hammer size={18} /> },
+        { title: "AC Repair", icon: <Wind size={18} /> },
+        { title: "Mechanic", icon: <Wrench size={18} /> },
+        { title: "Smart Home", icon: <Cpu size={18} /> },
+        { title: "Plumbing", icon: <Droplet size={18} /> },
+        { title: "Gardening", icon: <Sprout size={18} /> },
+        { title: "Cleaning", icon: <Sparkles size={18} /> },
+        { title: "Moving", icon: <Truck size={18} /> },
+        { title: "Electrical", icon: <Zap size={18} /> },
+        { title: "Carpentry", icon: <Hammer size={18} /> },
+        { title: "Painting", icon: <Paintbrush size={18} /> },
+        { title: "Coding", icon: <Code size={18} /> },
+        { title: "Design", icon: <Palette size={18} /> },
+        { title: "Marketing", icon: <TrendingUp size={18} /> },
+        { title: "Writing", icon: <Edit3 size={18} /> }
+    ];
 
     const steps = [
         {
@@ -164,30 +217,95 @@ export const Onboarding = () => {
             title: "Set your location",
             subtitle: "Where would you like to work?",
             content: (
-                <div className="onboarding-input-group">
-                    <input 
-                        type="text"
-                        placeholder="e.g. Lagos, Nigeria / Remote"
-                        value={formData.location}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                <div className="onboarding-input-group onboarding-google-places">
+                    <GooglePlacesAutocomplete
+                        apiKey="YOUR_GOOGLE_MAPS_API_KEY"
+                        selectProps={{
+                            value: formData.location ? { label: formData.location, value: formData.location } : null,
+                            onChange: (val) => setFormData({...formData, location: val ? val.label : ''}),
+                            placeholder: 'e.g. Lagos, Nigeria / Remote',
+                            styles: {
+                                control: (provided) => ({
+                                    ...provided,
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    padding: '5px',
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                        border: '1px solid #cbd5e0'
+                                    }
+                                })
+                            }
+                        }}
                     />
                 </div>
             )
         },
         {
             title: "Almost there!",
-            subtitle: "Tell us about your experience level.",
+            subtitle: "Tell us about your experience level and profile photo.",
             content: (
-                <div className="onboarding-options horizontal">
-                    {['Entry', 'Intermediate', 'Senior', 'Lead'].map(lvl => (
-                        <div 
-                            key={lvl}
-                            className={`mini-option ${formData.experience === lvl ? 'active' : ''}`}
-                            onClick={() => setFormData({...formData, experience: lvl})}
-                        >
-                            {lvl}
+                <div className="onboarding-step3-container">
+                    <p className="section-label">What is your experience level?</p>
+                    <div className="onboarding-options horizontal">
+                        {['Entry', 'Intermediate', 'Senior', 'Lead'].map(lvl => (
+                            <div 
+                                key={lvl}
+                                className={`mini-option ${formData.experience === lvl ? 'active' : ''}`}
+                                onClick={() => setFormData({...formData, experience: lvl})}
+                            >
+                                {lvl}
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="photo-upload-section">
+                        <p className="section-label">Profile Picture (Optional)</p>
+                        <div className="photo-upload-wrapper">
+                            <div className="photo-preview-circle" onClick={() => document.getElementById('photo-upload').click()}>
+                                {photoPreview ? (
+                                    <img src={photoPreview} alt="Preview" />
+                                ) : (
+                                    <UserIcon size={40} color="#cbd5e0" />
+                                )}
+                                <div className="camera-icon-badge">
+                                    <Camera size={14} />
+                                </div>
+                            </div>
+                            <input 
+                                type="file" 
+                                id="photo-upload" 
+                                hidden 
+                                accept="image/*"
+                                onChange={handlePhotoChange}
+                            />
+                            <p className="photo-hint">Click circle to upload photo</p>
                         </div>
-                    ))}
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Customize your experience",
+            subtitle: "Tell us the types of services you prefer — we'll show the best options first.",
+            content: (
+                <div className="diverse-skills-wrapper">
+                    <div className="diverse-skills-grid">
+                        {diverseSkills.map(skill => (
+                            <div 
+                                key={skill.title} 
+                                className={`skill-pill ${formData.skills.some(s => s.toLowerCase() === skill.title.toLowerCase()) ? 'active' : ''}`}
+                                onClick={() => toggleSkill(skill.title)}
+                            >
+                                <span className="pill-icon">{skill.icon}</span>
+                                <span className="pill-text">{skill.title}</span>
+                            </div>
+                        ))}
+                        <div className="skill-pill others-pill" onClick={() => setStep(1)}>
+                            <span className="pill-icon"><Plus size={18} /></span>
+                            <span className="pill-text">Others</span>
+                        </div>
+                    </div>
                 </div>
             )
         }
@@ -202,7 +320,7 @@ export const Onboarding = () => {
                     <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch" style={{ height: '60px' }} />
                 </div>
                 <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${(step / 3) * 100}%` }}></div>
+                    <div className="progress-fill" style={{ width: `${(step / 4) * 100}%` }}></div>
                 </div>
                 
                 <div key={step} className="onboarding-content-wrapper">
