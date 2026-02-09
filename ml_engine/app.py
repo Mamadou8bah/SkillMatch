@@ -9,8 +9,18 @@ torch.set_num_threads(1)
 from recommender import recommender, get_job_recommendations, get_candidate_recommendations, get_connection_recommendations
 
 app = Flask(__name__)
-# Fallback for Gunicorn command 'app:app.wsgi' occasionally used in some deployment templates
-app.wsgi = app 
+
+# Standard alias for WSGI servers
+application = app 
+
+@app.route('/')
+@app.route('/health')
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "SkillMatch ML Engine",
+        "model": "all-MiniLM-L6-v2"
+    }), 200
 
 @app.route('/recommend/jobs', methods=['POST'])
 def recommend_jobs():
