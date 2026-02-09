@@ -192,8 +192,24 @@ public class UserService {
     @Transactional
     public User registerStage2(Long userId, RegistrationStage2Request request) {
         User user = repo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setLocation(request.location());
-        user.setRole(request.role());
+        
+        if (request.location() != null) user.setLocation(request.location());
+        if (request.role() != null) user.setRole(request.role());
+        if (request.profession() != null) user.setProfession(request.profession());
+        
+        if (request.photo() != null && !request.photo().isEmpty()) {
+            try {
+                if (user.getPhoto() != null) {
+                    photoService.deletePhoto(user.getPhoto());
+                }
+                Photo photo = photoService.createPhotoFromBase64(request.photo());
+                photo.setUser(user);
+                user.setPhoto(photo);
+            } catch (IOException e) {
+                // Log error but permit progress
+            }
+        }
+        
         user.setRegistrationStage(2);
         return repo.save(user);
     }
@@ -212,6 +228,17 @@ public class UserService {
             employerRepo.save(employer);
         }
 
+        if (request.skills() != null && !request.skills().isEmpty()) {
+            user.getSkills().clear();
+            List<Skill> skills = request.skills().stream().map(title -> {
+                Skill s = new Skill();
+                s.setTitle(title);
+                s.setUser(user);
+                return s;
+            }).toList();
+            user.getSkills().addAll(skills);
+        }
+
         user.setRegistrationStage(3);
         return repo.save(user);
     }
@@ -225,6 +252,29 @@ public class UserService {
             user.setLocation((String) data.get("location"));
         }
 
+        if (data.containsKey("profession")) {
+            user.setProfession((String) data.get("profession"));
+        }
+
+        if (data.containsKey("experience")) {
+            user.setExperienceLevel((String) data.get("experience"));
+        }
+
+        // Handle Photo
+        if (data.containsKey("photo") && data.get("photo") != null && !((String) data.get("photo")).isEmpty()) {
+            String base64Photo = (String) data.get("photo");
+            try {
+                if (user.getPhoto() != null) {
+                    photoService.deletePhoto(user.getPhoto());
+                }
+                Photo photo = photoService.createPhotoFromBase64(base64Photo);
+                photo.setUser(user);
+                user.setPhoto(photo);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to upload profile photo", e);
+            }
+        }
+
         // Update role if changed
         if (data.containsKey("role")) {
             user.setRole(Role.valueOf((String) data.get("role")));
@@ -233,17 +283,16 @@ public class UserService {
         // Handle Skills
         if (data.containsKey("skills")) {
             List<String> skillTitles = (List<String>) data.get("skills");
+            user.getSkills().clear();
             List<Skill> skills = skillTitles.stream().map(title -> {
                 Skill s = new Skill();
                 s.setTitle(title);
                 s.setUser(user);
                 return s;
             }).toList();
-            user.setSkills(skills);
+            user.getSkills().addAll(skills);
         }
 
-        // Handle Experience Level (as a simple experience record or user field if needed)
-        // For now, let's mark the stage as complete
         user.setRegistrationStage(4);
 
         return repo.save(user);
@@ -395,13 +444,16 @@ public class UserService {
 
     public ResponseEntity<?> uploadPhoto(MultipartFile file, User user) throws IOException {
         try {
-            Photo photo=photoService.createPhoto(file);
+            if (user.getPhoto() != null) {
+                photoService.deletePhoto(user.getPhoto());
+            }
+            Photo photo = photoService.createPhoto(file);
             photo.setUser(user);
             photoRepository.save(photo);
             return ResponseEntity.ok().body("Image uploaded successfully");
 
-        }catch (IOException  e){
-            throw new IOException("Could not upload photo"+e.getMessage());
+        } catch (IOException e) {
+            throw new IOException("Could not upload photo: " + e.getMessage());
         }
     }
     public ResponseEntity<?>deletePhoto(Photo photo)throws IOException{

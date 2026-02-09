@@ -1,15 +1,12 @@
-package SkillMatch.dto;
-
-import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 public record RegistrationStage3Request(
-        @NotBlank(message = "Company name is required")
         String companyName,
 
-        @NotBlank(message = "Industry is required")
         String industry,
 
-        @NotBlank(message = "Description is required")
-        String description
+        String description,
+        
+        List<String> skills
 ) {
 }

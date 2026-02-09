@@ -40,6 +40,12 @@ public class User implements UserDetails {
     @Column(nullable = true)
     private String location;
 
+    @Column(nullable = true)
+    private String profession;
+
+    @Column(nullable = true)
+    private String experienceLevel;
+
     @Column(nullable = false)
     @JsonIgnore
     private String password;
@@ -80,7 +86,7 @@ public class User implements UserDetails {
     @JsonIgnore
     private List<Experience> experiences = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Skill> skills = new ArrayList<>();
 

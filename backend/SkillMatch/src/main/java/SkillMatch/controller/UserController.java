@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -66,5 +68,14 @@ public class UserController {
             @RequestBody java.util.Map<String, Object> data) {
         User user = service.saveOnboardingData(id, data);
         return ResponseEntity.ok(ApiResponse.success("Onboarding data saved successfully", user));
+    }
+
+    @PostMapping("/{id}/photo")
+    public ResponseEntity<ApiResponse<String>> uploadPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        User user = service.getUserById(id);
+        service.uploadPhoto(file, user);
+        return ResponseEntity.ok(ApiResponse.success("Photo uploaded successfully"));
     }
 }

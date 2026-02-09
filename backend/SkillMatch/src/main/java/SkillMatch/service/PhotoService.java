@@ -38,6 +38,21 @@ public class PhotoService {
         }
     }
 
+    public Photo createPhotoFromBase64(String base64Data) throws IOException {
+        try {
+            Map photo = cloudinaryService.uploadBase64(base64Data);
+            String url = photo.get("url").toString();
+            String publicId = photo.get("public_id").toString();
+
+            Photo newPhoto = new Photo();
+            newPhoto.setUrl(url);
+            newPhoto.setPublicId(publicId);
+            return photoRepository.save(newPhoto);
+        } catch (Exception e) {
+            throw new IOException("Failed to Upload Photo from Base64: " + e.getMessage());
+        }
+    }
+
    public ResponseEntity<?> deletePhoto(Photo photo)throws IOException {
         cloudinaryService.deleteImage(photo.getPublicId());
         photoRepository.delete(photo);

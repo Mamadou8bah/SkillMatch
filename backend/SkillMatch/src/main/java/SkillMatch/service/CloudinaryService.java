@@ -29,6 +29,15 @@ public class CloudinaryService {
         return result;
     }
 
+    public Map<String, String> uploadBase64(String base64Data) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(base64Data, ObjectUtils.emptyMap());
+
+        Map<String, String> result = new HashMap<>();
+        result.put("url", uploadResult.get("url").toString());
+        result.put("public_id", uploadResult.get("public_id").toString());
+        return result;
+    }
+
     public String deleteImage(String publicId) throws IOException {
         Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         return result.get("result").toString();

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, Camera, User as UserIcon, Code, Palette, Wind, Wrench, Droplet, Sprout, Sparkles, Truck, Zap, Paintbrush, Hammer, Cpu, TrendingUp, Edit3 } from 'lucide-react';
 import { commonSkills } from '../data/skills';
+import { apiFetch } from '../utils/api';
 import '../styles/onboarding.css';
 
 export const Onboarding = () => {
@@ -131,15 +132,11 @@ export const Onboarding = () => {
         } else {
             // Finally save onboarding data
             try {
-                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${localStorage.getItem('userId')}/onboarding`, {
+                const response = await apiFetch(`/api/users/${localStorage.getItem('userId')}/onboarding`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
                     body: JSON.stringify({...formData, role: 'CANDIDATE'})
                 });
-                if (response.ok) {
+                if (response) {
                     localStorage.setItem('registrationStage', '4');
                     navigate('/');
                 }
@@ -286,6 +283,24 @@ export const Onboarding = () => {
                                 onChange={handlePhotoChange}
                             />
                             <p className="photo-hint">Click circle to upload photo</p>
+                            <button 
+                                className="skip-photo-btn"
+                                onClick={() => {
+                                    setFormData(prev => ({ ...prev, photo: null }));
+                                    setStep(step + 1);
+                                }}
+                                style={{
+                                    marginTop: '10px',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#667eea',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    textDecoration: 'underline'
+                                }}
+                            >
+                                Skip for now
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -362,7 +377,7 @@ export const Onboarding = () => {
                         className="btn-primary" 
                         onClick={handleNext}
                     >
-                        {step === 3 ? "Complete Profile" : "Continue"}
+                        {step === 4 ? "Complete Profile" : "Continue"}
                     </button>
                 </div>
             </div>
