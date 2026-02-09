@@ -6,3 +6,5 @@ node_modules
 .venv
 target
 *.log
+!backend/SkillMatch/src
+!backend/SkillMatch/pom.xml

@@ -1,0 +1,62 @@
+services:
+  # 1. Database (PostgreSQL)
+  - type: database
+    name: skillmatch-db
+    databaseName: skillmatchdb
+    user: postgres
+    plan: free
+
+  # 2. ML Engine (Python)
+  - type: web
+    name: skillmatch-ml
+    env: python
+    region: ohio
+    plan: free
+    rootDir: ml_engine
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300 --workers 1 --threads 2 --preload
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+  # 3. Backend (Java/Spring Boot via Docker)
+  - type: web
+    name: skillmatch-backend
+    env: docker
+    region: ohio
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/jobs/external
+    envVars:
+      - key: DB_URL
+        fromDatabase:
+          name: skillmatch-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: skillmatch-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: skillmatch-db
+          property: password
+      - key: ML_ENGINE_URL
+        value: https://skillmatch-ml.onrender.com/recommend
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JWT_SECRET
+        generateValue: true
+
+  # 4. Frontend (React Static Site)
+  - type: web
+    name: skillmatch-frontend
+    env: static
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishPath: build
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        value: https://skillmatch-backend.onrender.com

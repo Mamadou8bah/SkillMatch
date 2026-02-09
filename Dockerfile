@@ -3,8 +3,7 @@ FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
 # Copy the project files
-COPY backend/SkillMatch/pom.xml .
-COPY backend/SkillMatch/src ./src
+COPY backend/SkillMatch/ ./
 
 # Build the application
 RUN mvn clean package -DskipTests
@@ -15,6 +14,8 @@ WORKDIR /app
 
 # Copy the jar from the build stage
 COPY --from=build /app/target/SkillMatch-0.0.1-SNAPSHOT.jar skillmatch.jar
+
+ENV SPRING_PROFILES_ACTIVE=prod
 
 EXPOSE 8080
 
