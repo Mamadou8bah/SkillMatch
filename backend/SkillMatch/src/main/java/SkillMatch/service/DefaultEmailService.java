@@ -4,6 +4,7 @@ import SkillMatch.util.AbstractEmailContext;
 import com.resend.Resend;
 import com.resend.services.emails.model.SendEmailRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -11,6 +12,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultEmailService implements EmailService{
 
     private final SpringTemplateEngine templateEngine;
