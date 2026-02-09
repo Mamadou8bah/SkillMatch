@@ -22,19 +22,29 @@ MODEL_PATH = os.path.join(BASE_DIR, 'reranker_model.pkl')
 DB_PATH = os.path.join(BASE_DIR, 'interactions.db')
 
 # Initialize sentence transformer (Shared across instances)
-# MEMORY OPTIMIZATION: Use device='cpu' explicitly
+# LOAD MODEL AT STARTUP WITH 8-BIT QUANTIZATION
+print("Loading model 'all-MiniLM-L6-v2'...")
 model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 model.max_seq_length = 256 # Limit input length to save memory
+
+# Apply 8-bit quantization to reduce memory usage
+try:
+    print("Applying 8-bit quantization...")
+    model = torch.quantization.quantize_dynamic(
+        model, {torch.nn.Linear}, dtype=torch.qint8
+    )
+except Exception as e:
+    print(f"Quantization failed, using full precision: {e}")
+
+# GLOBAL EMBEDDING CACHE
+# Maps hash(text) or text -> embedding
+embedding_cache = {}
 
 class AIRecommender:
     def __init__(self):
         # LEVEL 3: Re-ranker (ML model)
         self.load_model()
         self._init_db()
-        
-        # PERFORMANCE: Embedding Caches
-        self.job_embeddings_cache = {} # job_id -> embedding
-        self.candidate_embeddings_cache = {} # candidate_id -> embedding
         
         # LEVEL 5: Personalization / Global preference weights (starting defaults)
         self.global_weights = {
@@ -44,6 +54,58 @@ class AIRecommender:
             "loc": 0.10,
             "recency": 0.05
         }
+
+    def _get_embedding(self, text):
+        """Get embedding from cache or compute it"""
+        if not text or not isinstance(text, str):
+            return np.zeros(384) # all-MiniLM-L6-v2 has 384 dimensions
+            
+        text = text.strip()
+        if text in embedding_cache:
+            return embedding_cache[text]
+            
+        # Cache management: limit size to 1000 items
+        if len(embedding_cache) > 1000:
+            embedding_cache.clear()
+            gc.collect()
+            
+        emb = model.encode([text], show_progress_bar=False)[0]
+        embedding_cache[text] = emb
+        return emb
+
+    def _get_batch_embeddings(self, texts):
+        """Get batch of embeddings efficiently"""
+        if not texts:
+            return np.array([])
+            
+        results = []
+        to_compute = []
+        indices_to_compute = []
+        
+        for i, text in enumerate(texts):
+            text = text.strip() if isinstance(text, str) else ""
+            if text in embedding_cache:
+                results.append(embedding_cache[text])
+            else:
+                results.append(None)
+                to_compute.append(text)
+                indices_to_compute.append(i)
+                
+        if to_compute:
+            # Batch size optimization
+            batch_size = 16 
+            computed_embs = model.encode(to_compute, batch_size=batch_size, show_progress_bar=False)
+            
+            # Update cache and results
+            if len(embedding_cache) + len(to_compute) > 1000:
+                embedding_cache.clear()
+                gc.collect()
+                
+            for i, emb in enumerate(computed_embs):
+                results[indices_to_compute[i]] = emb
+                embedding_cache[to_compute[i]] = emb
+                
+        return np.array(results)
 
     def _init_db(self):
         """Initialize SQLite DB for Level 4 persistence"""
@@ -60,39 +122,6 @@ class AIRecommender:
                 )
             ''')
             conn.commit()
-
-    def _get_cached_embeddings(self, df, text_col, cache):
-        """Helper to only encode what is not already in cache"""
-        ids = df['id'].tolist()
-        texts = df[text_col].fillna('').tolist()
-        
-        # MEMORY OPTIMIZATION: Clear cache if it gets too large (> 300 items)
-        if len(cache) > 300:
-            print("Cache limit reached, clearing...")
-            cache.clear()
-            gc.collect()
-            
-        final_embeddings = [None] * len(ids)
-        to_encode_indices = []
-        to_encode_texts = []
-        
-        for i, jid in enumerate(ids):
-            if jid in cache:
-                final_embeddings[i] = cache[jid]
-            else:
-                to_encode_indices.append(i)
-                to_encode_texts.append(texts[i])
-                
-        if to_encode_texts:
-            print(f"Encoding {len(to_encode_texts)} new items...")
-            # batch_size=8 is more memory friendly
-            new_embs = model.encode(to_encode_texts, batch_size=8, show_progress_bar=False)
-            for idx, emb in zip(to_encode_indices, new_embs):
-                final_embeddings[idx] = emb
-                cache[ids[idx]] = emb
-            gc.collect()
-                
-        return np.array(final_embeddings)
 
     def load_model(self):
         if os.path.exists(MODEL_PATH):
@@ -176,10 +205,11 @@ class AIRecommender:
 
         # 1. Retrieval Layer (Level 1 Semantic Search)
         user_bio = user_data.get('bio', '') or user_data.get('user_profile', '')
-        user_embedding = model.encode([user_bio])
+        user_embedding = self._get_embedding(user_bio).reshape(1, -1)
         
-        # PERFORMANCE: Use cached job embeddings
-        job_embeddings = self._get_cached_embeddings(jobs_df, 'description', self.job_embeddings_cache)
+        # PERFORMANCE: Use global embedding cache
+        job_texts = jobs_df['description'].fillna('').tolist()
+        job_embeddings = self._get_batch_embeddings(job_texts)
         
         semantic_scores = cosine_similarity(user_embedding, job_embeddings)[0]
 
@@ -242,21 +272,12 @@ class AIRecommender:
             u = data['user_data']
             j = data['job_data']
             
-            # Embeddings (Level 1) - Use Cache
-            u_id = u.get('id')
-            j_id = j.get('id')
+            # Embeddings (Level 1) - Use Cache via _get_embedding
+            u_bio = u.get('bio', '') or u.get('user_profile', '')
+            j_desc = j.get('description', '') or j.get('job_description', '')
             
-            if u_id in self.candidate_embeddings_cache:
-                u_emb = np.array([self.candidate_embeddings_cache[u_id]])
-            else:
-                u_emb = model.encode([u.get('bio', '')])
-                if u_id: self.candidate_embeddings_cache[u_id] = u_emb[0]
-                
-            if j_id in self.job_embeddings_cache:
-                j_emb = np.array([self.job_embeddings_cache[j_id]])
-            else:
-                j_emb = model.encode([j.get('description', '')])
-                if j_id: self.job_embeddings_cache[j_id] = j_emb[0]
+            u_emb = self._get_embedding(u_bio).reshape(1, -1)
+            j_emb = self._get_embedding(j_desc).reshape(1, -1)
 
             sem = float(cosine_similarity(u_emb, j_emb)[0][0])
             
@@ -356,12 +377,11 @@ def get_job_recommendations(user_profile, jobs_df):
 def get_candidate_recommendations(job_description, candidates_df):
     # Reverse logic for employers looking at candidates
     if candidates_df.empty: return []
-    job_embedding = model.encode([job_description])
+    job_embedding = recommender._get_embedding(job_description).reshape(1, -1)
     
-    # PERFORMANCE: Use cached candidate embeddings
-    candidate_embeddings = recommender._get_cached_embeddings(
-        candidates_df, 'profile', recommender.candidate_embeddings_cache
-    )
+    # PERFORMANCE: Use global embedding cache
+    candidate_texts = candidates_df['profile'].fillna('').tolist()
+    candidate_embeddings = recommender._get_batch_embeddings(candidate_texts)
     
     semantic_scores = cosine_similarity(job_embedding, candidate_embeddings)[0]
     
@@ -374,24 +394,17 @@ def get_connection_recommendations(user_data, others_df):
     """LEVEL 2-ish for Connections with Caching"""
     if others_df.empty: return []
     
-    # PERFORMANCE: Cache the source user as well
-    if isinstance(user_data, dict) and 'id' in user_data:
-        user_id = user_data['id']
-        if user_id in recommender.candidate_embeddings_cache:
-            user_embedding = np.array([recommender.candidate_embeddings_cache[user_id]])
-        else:
-            profile_text = user_data.get('bio', '') or user_data.get('user_profile', '')
-            user_embedding = model.encode([profile_text])
-            recommender.candidate_embeddings_cache[user_id] = user_embedding[0]
+    # Get source user embedding
+    if isinstance(user_data, dict):
+        profile_text = user_data.get('bio', '') or user_data.get('user_profile', '')
     else:
-        profile_text = user_data if isinstance(user_data, str) else user_data.get('bio', '')
-        user_embedding = model.encode([profile_text])
+        profile_text = user_data if isinstance(user_data, str) else ""
+        
+    user_embedding = recommender._get_embedding(profile_text).reshape(1, -1)
 
-    # PERFORMANCE: Use cached embeddings for others
-    # profiles are shared between connections and candidates
-    other_embeddings = recommender._get_cached_embeddings(
-        others_df, 'profile', recommender.candidate_embeddings_cache
-    )
+    # PERFORMANCE: Use global embedding cache for others
+    other_texts = others_df['profile'].fillna('').tolist()
+    other_embeddings = recommender._get_batch_embeddings(other_texts)
     
     cosine_sim = cosine_similarity(user_embedding, other_embeddings)[0]
     recommendations = [{"id": int(others_df.iloc[i]['id']), "score": float(cosine_sim[i])} 
