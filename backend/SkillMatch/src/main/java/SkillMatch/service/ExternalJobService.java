@@ -31,7 +31,7 @@ public class ExternalJobService {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 10000;
 
-    private static final String GAMJOBS_URL = "https://www.gamjobs.com/job-category/all-jobs/";
+    private static final String GAMJOBS_URL = "https://www.gamjobs.com/jobs/";
     private static final String WAVE_URL = "https://www.wave.com/en/careers/";
     private static final String IOM_GAMBIA_URL = "https://gambia.iom.int/vacancies";
     private static final String MOJ_GAMBIA_URL = "https://moj.gov.gm/vacancies";
@@ -45,11 +45,13 @@ public class ExternalJobService {
         List<JobResponseDTO> jobs = new ArrayList<>();
         try {
             Document doc = Jsoup.connect(GAMJOBS_URL)
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                    .header("Accept-Language", "en-US,en;q=0.9")
                     .userAgent(USER_AGENT)
                     .timeout(CONNECT_TIMEOUT_MS)
                     .get();
 
-            Elements jobElements = doc.select(".noo-job-item, .job-item, article.job_listing");
+            Elements jobElements = doc.select(".noo-job-item, .job-item, article.job_listing, .job-listing");
             log.info("Found {} candidate job elements on Gamjobs", jobElements.size());
 
             for (Element el : jobElements) {
@@ -139,7 +141,14 @@ public class ExternalJobService {
         log.info("Fetching jobs from IOM Gambia...");
         List<JobResponseDTO> jobs = new ArrayList<>();
         try {
-            Document doc = Jsoup.connect(IOM_GAMBIA_URL).userAgent(USER_AGENT).get();
+            Document doc = Jsoup.connect(IOM_GAMBIA_URL)
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.5")
+                    .header("Referer", "https://google.com")
+                    .userAgent(USER_AGENT)
+                    .followRedirects(true)
+                    .timeout(CONNECT_TIMEOUT_MS)
+                    .get();
             Elements rows = doc.select("table tr");
             for (Element row : rows) {
                 Elements cols = row.select("td");

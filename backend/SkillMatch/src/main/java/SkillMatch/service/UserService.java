@@ -179,7 +179,12 @@ public class UserService {
         user.setRegistrationStage(1);
 
         User savedUser = repo.save(user);
-        sendRegistrationConfirmationEmail(savedUser);
+        try {
+            sendRegistrationConfirmationEmail(savedUser);
+        } catch (Exception e) {
+            System.err.println("Failed to send confirmation email in Stage 1: " + e.getMessage());
+            // We still return the user so registration can proceed
+        }
         return savedUser;
     }
 

@@ -25,15 +25,17 @@ services:
     healthCheckPath: /api/jobs/external
     envVars:
       - key: SPRING_DATASOURCE_URL
-        value: "jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:6543/postgres?sslmode=require"
+        value: "jdbc:postgresql://ep-lucky-tooth-ag8q522u-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require"
       - key: SPRING_DATASOURCE_USERNAME
-        value: "postgres.zxlsjictybnqiiuklfba"
+        value: "neondb_owner"
       - key: SPRING_DATASOURCE_PASSWORD
-        value: "M@mad12.12"
+        value: "npg_p1TULS4juAeJ"
       - key: ML_ENGINE_URL
         value: https://skillmatch-ml.onrender.com/recommend
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: GROQ_API_KEY
+        sync: false
       - key: JWT_SECRET
         generateValue: true
 

@@ -55,11 +55,11 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private List<Token>tokens;
+    private List<Token>tokens = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private List<SecureToken>secureTokens;
+    private List<SecureToken>secureTokens = new ArrayList<>();
 
     private boolean accountVerified;
 
@@ -69,19 +69,19 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private Set<Application> applications;
+    private Set<Application> applications = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private List<Education> educations;
+    private List<Education> educations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private List<Experience> experiences;
+    private List<Experience> experiences = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
-    private List<Skill> skills;
+    private List<Skill> skills = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -29,6 +29,11 @@ public class GroqService {
     public List<String> structureJobDataBatch(List<String> rawDataList) {
         if (rawDataList == null || rawDataList.isEmpty()) return new ArrayList<>();
 
+        if (apiKey == null || apiKey.trim().isEmpty() || apiKey.contains("${")) {
+            log.warn("Groq API key is not configured. Skipping AI extraction.");
+            return new ArrayList<>();
+        }
+
         log.info("Structuring batch of {} jobs via Groq AI...", rawDataList.size());
         
         try {

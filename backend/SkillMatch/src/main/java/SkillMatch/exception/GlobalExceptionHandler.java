@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@lombok.extern.slf4j.Slf4j
 public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiResponse<Object>> error(String message, HttpStatus status) {
@@ -77,6 +78,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> internalError(Exception ex) {
-        return error("An internal server error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("Unhandled exception: ", ex);
+        return error("An internal server error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

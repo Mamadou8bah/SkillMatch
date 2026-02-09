@@ -25,25 +25,25 @@ public class DefaultEmailService implements EmailService{
 
     @Override
     public void sendMail(AbstractEmailContext email) {
-        Context context=new Context();
-        context.setVariables(email.getContext());
-        String emailContent=templateEngine.process(email.getTemplateLocation(),context);
-
-        Resend resend = new Resend(resendApiKey);
-
-        SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
-                .from(resendFrom)
-                .to(email.getTo())
-                .subject(email.getSubject())
-                .html(emailContent)
-                .build();
-
         try {
+            Context context=new Context();
+            context.setVariables(email.getContext());
+            String emailContent=templateEngine.process(email.getTemplateLocation(),context);
+
+            Resend resend = new Resend(resendApiKey);
+
+            SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
+                    .from(resendFrom)
+                    .to(email.getTo())
+                    .subject(email.getSubject())
+                    .html(emailContent)
+                    .build();
+
             resend.emails().send(sendEmailRequest);
             log.info("Email sent successfully to: {}", email.getTo());
         } catch (Exception e) {
             // Graceful degradation: Log error but do not throw exception to prevent request failure
-            log.error("EMAIL QUOTA HIT OR FAILURE: Failed to send email to {}. Error: {}", email.getTo(), e.getMessage());
+            log.error("EMAIL FAILURE: Failed to send email to {}. Error: {}", email.getTo(), e.getMessage());
             // In a free-tier environment, we cannot guarantee email delivery
         }
     }
