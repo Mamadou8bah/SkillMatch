@@ -16,7 +16,7 @@ public class Skill {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1024)
     private String title;
 
 

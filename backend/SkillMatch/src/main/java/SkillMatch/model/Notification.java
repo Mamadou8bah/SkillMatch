@@ -24,8 +24,11 @@ public class Notification {
     private String title;
     private String message;
     private String type; // job, message, event, info
-    private boolean isRead;
+    
+    @Builder.Default
+    private boolean isRead = false;
 
+    @Builder.Default
     @CreatedDate
     private LocalDateTime createdAt = LocalDateTime.now();
 

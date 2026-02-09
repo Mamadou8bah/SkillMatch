@@ -25,14 +25,17 @@ public class JobPost {
     private Long id;
     @Column(nullable = false)
     private String title;
-    @Column(nullable = false, length = 10000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
     
     private String externalId;
     private String companyName;
+    @Column(columnDefinition = "TEXT")
     private String companyLogo;
+    @Column(columnDefinition = "TEXT")
     private String jobUrl;
     private String source;
+    @Column(length = 1024)
     private String industry;
     private String jobType;
     
