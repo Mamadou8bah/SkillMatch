@@ -1,12 +1,5 @@
 services:
-  # 1. Database (PostgreSQL)
-  - type: database
-    name: skillmatch-db
-    databaseName: skillmatchdb
-    user: postgres
-    plan: free
-
-  # 2. ML Engine (Python)
+  # 1. ML Engine (Python)
   - type: web
     name: skillmatch-ml
     env: python
@@ -32,17 +25,11 @@ services:
     healthCheckPath: /api/jobs/external
     envVars:
       - key: DB_URL
-        fromDatabase:
-          name: skillmatch-db
-          property: connectionString
+        value: jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:6543/postgres
       - key: DB_USERNAME
-        fromDatabase:
-          name: skillmatch-db
-          property: user
+        value: postgres.zxlsjictybnqiiuklfba
       - key: DB_PASSWORD
-        fromDatabase:
-          name: skillmatch-db
-          property: password
+        value: M@mad12.12
       - key: ML_ENGINE_URL
         value: https://skillmatch-ml.onrender.com/recommend
       - key: SPRING_PROFILES_ACTIVE
