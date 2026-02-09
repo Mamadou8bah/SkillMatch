@@ -25,7 +25,7 @@ services:
     healthCheckPath: /api/jobs/external
     envVars:
       - key: DB_URL
-        value: jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:6543/postgres
+        value: jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:6543/postgres?sslmode=require
       - key: DB_USERNAME
         value: postgres.zxlsjictybnqiiuklfba
       - key: DB_PASSWORD
