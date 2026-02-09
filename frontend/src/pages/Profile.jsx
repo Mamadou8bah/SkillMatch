@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/Profile.css';
 import { useNavigate } from 'react-router-dom';
 import {
   User as UserIcon,
-  Settings,
   LogOut,
   ChevronRight,
-  Globe,
   Bell,
-  HelpCircle,
   Briefcase,
   Award,
   Plus,
   X,
-  Moon,
-  Volume2,
   Trash2,
   Camera
 } from 'lucide-react';
@@ -26,14 +21,6 @@ export const Profile = () => {
   const [activeView, setActiveView] = useState('main'); 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const validateEmail = (email) => {
-    return String(email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      );
-  };
 
   const [profileData, setProfileData] = useState({
     fullName: "",
@@ -79,11 +66,11 @@ export const Profile = () => {
       fetchSkills();
       fetchExperiences();
     }
-  }, [userId]);
+  }, [userId, fetchUserProfile, fetchSkills, fetchExperiences]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -103,11 +90,11 @@ export const Profile = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId, token]);
 
-  const fetchSkills = async () => {
+  const fetchSkills = useCallback(async () => {
     try {
-      const response = await fetch(`/api/skill/user/${userId}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/skill/user/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -117,11 +104,11 @@ export const Profile = () => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [userId, token]);
 
-  const fetchExperiences = async () => {
+  const fetchExperiences = useCallback(async () => {
     try {
-      const response = await fetch(`/api/experience/user/${userId}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/experience/user/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -131,7 +118,7 @@ export const Profile = () => {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [userId, token]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -152,7 +139,7 @@ export const Profile = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/users/${userId}/photo`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}/photo`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -181,7 +168,7 @@ export const Profile = () => {
     if (!profileData.mobile.trim()) return setError('Mobile number is required');
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -233,7 +220,7 @@ export const Profile = () => {
     }
 
     try {
-      const response = await fetch('/api/skill', {
+      const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/skill', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -255,7 +242,7 @@ export const Profile = () => {
   const handleRemoveSkill = async (id) => {
     if (!id) return;
     try {
-      const response = await fetch(`/api/skill/${id}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/skill/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -276,7 +263,7 @@ export const Profile = () => {
     if (!newExperience.description.trim()) return setError('Description is required');
 
     try {
-      const response = await fetch('/api/experience', {
+      const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/experience', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -304,7 +291,7 @@ export const Profile = () => {
 
   const handleDeleteExperience = async (id) => {
     try {
-      const response = await fetch(`/api/experience/${id}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/experience/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

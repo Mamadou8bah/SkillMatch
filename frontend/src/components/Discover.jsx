@@ -12,7 +12,7 @@ export const Discover = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch('http://localhost:8080/post', {
+    fetch('https://skillmatch-1-6nn0.onrender.com/post', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

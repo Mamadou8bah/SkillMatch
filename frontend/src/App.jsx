@@ -1,9 +1,8 @@
 import './App.css';
-import { Welcome } from './pages/Welcome';
 import { Onboarding } from './pages/Onboarding';
 import { Login } from './pages/Login';
 import { LandingIntro } from './pages/LandingIntro';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Main } from './pages/Main';
 import { Home } from './components/Home';
 import { Jobs } from './pages/Jobs';

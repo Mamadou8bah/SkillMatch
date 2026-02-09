@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://skillmatch-1-6nn0.onrender.com';
 
 export const apiFetch = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');

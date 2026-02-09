@@ -28,7 +28,7 @@ export const Conversation = () => {
         const fetchRecipient = async () => {
             try {
                 const token = localStorage.getItem('token')
-                const response = await fetch(`http://localhost:8080/api/users/${id}`, {
+                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const data = await response.json()
@@ -43,7 +43,7 @@ export const Conversation = () => {
         const fetchHistory = async () => {
             try {
                 const token = localStorage.getItem('token')
-                const response = await fetch(`http://localhost:8080/api/messages/conversation/${id}`, {
+                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/messages/conversation/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const data = await response.json()
@@ -60,7 +60,7 @@ export const Conversation = () => {
 
     // Setup WebSocket
     useEffect(() => {
-        const socket = new SockJS('http://localhost:8080/ws')
+        const socket = new SockJS('https://skillmatch-1-6nn0.onrender.com/ws')
         const client = new Client({
             webSocketFactory: () => socket,
             // debug: (str) => console.log(str),
@@ -93,7 +93,7 @@ export const Conversation = () => {
 
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch('http://localhost:8080/api/messages/send', {
+            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/messages/send', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

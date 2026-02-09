@@ -131,7 +131,7 @@ export const Onboarding = () => {
         } else {
             // Finally save onboarding data
             try {
-                const response = await fetch(`/api/users/${localStorage.getItem('userId')}/onboarding`, {
+                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${localStorage.getItem('userId')}/onboarding`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

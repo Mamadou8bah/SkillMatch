@@ -14,10 +14,6 @@ export const Login = () => {
     const [fullName, setFullName] = useState('')
     const [location, setLocation] = useState('')
     const [profession, setProfession] = useState('')
-    const [role, setRole] = useState('CANDIDATE') // Only Candidates now
-    const [companyName, setCompanyName] = useState('')
-    const [industry, setIndustry] = useState('')
-    const [description, setDescription] = useState('')
     const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', ''])
     const [photo, setPhoto] = useState(null)
     const [photoPreview, setPhotoPreview] = useState(null)
@@ -128,7 +124,7 @@ export const Login = () => {
         }
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -174,7 +170,7 @@ export const Login = () => {
         setIsLoading(true)
         setError('')
         try {
-            const response = await fetch('/api/auth/register/stage1', {
+            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage1', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fullName, email, password })
@@ -229,7 +225,7 @@ export const Login = () => {
         // Photo is optional, so we can proceed even if null
         setIsLoading(true)
         try {
-            const response = await fetch(`/api/auth/register/stage3/${userId}`, {
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ photo })
@@ -252,7 +248,7 @@ export const Login = () => {
         e.preventDefault()
         setIsLoading(true)
         try {
-            const response = await fetch(`/api/auth/register/stage4/${userId}`, {
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage3/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ skills })
@@ -279,7 +275,7 @@ export const Login = () => {
         setIsLoading(true)
         setError('')
         try {
-            const response = await fetch(`/api/auth/register/verify?token=${code}`)
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/verify?token=${code}`)
             const data = await response.json()
             if (data.success) {
                 alert('Account verified successfully! You can now log in.')
@@ -300,7 +296,7 @@ export const Login = () => {
         try {
             // Re-use stage 2 to trigger email resend or add a dedicated endpoint
             // For now, let's assume stage 2 re-triggers email or we add a simple resend
-            const response = await fetch(`/api/auth/register/resend-code?email=${email}`)
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/resend-code?email=${email}`)
             const data = await response.json()
             if (data.success) {
                 alert('A new code has been sent to your email.')

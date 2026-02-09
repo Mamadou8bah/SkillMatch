@@ -3,7 +3,6 @@ import '../styles/Main.css'
 import { NavLink, Outlet } from 'react-router-dom'
 
 export const Main = () => {
-  const [role, setRole] = useState(localStorage.getItem('userRole') || 'CANDIDATE')
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -17,14 +16,13 @@ export const Main = () => {
         const token = localStorage.getItem('token')
         if (!token) return
         try {
-          const response = await fetch('/api/users/profile', {
+          const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/users/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
           })
           const data = await response.json()
           if (data.success) {
             localStorage.setItem('userRole', data.data.role)
             localStorage.setItem('userId', data.data.id)
-            setRole(data.data.role)
           }
         } catch (err) {
           console.error("Failed to fetch profile", err)

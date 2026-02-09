@@ -18,31 +18,31 @@ export const Notifications = () => {
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/user/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setNotifications(data.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchNotifications();
   }, [userId]);
-
-  const fetchNotifications = async () => {
-    if (!userId) {
-      setIsLoading(false);
-      return;
-    }
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch(`/api/notifications/user/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setNotifications(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getTypeIcon = (type) => {
     switch (type) {
@@ -60,7 +60,7 @@ export const Notifications = () => {
   const markAsRead = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`/api/notifications/${id}/read`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -81,7 +81,7 @@ export const Notifications = () => {
     e.stopPropagation();
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`/api/notifications/${id}`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -100,7 +100,7 @@ export const Notifications = () => {
     if (!userId) return;
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`/api/notifications/user/${userId}/read-all`, {
+      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/user/${userId}/read-all`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

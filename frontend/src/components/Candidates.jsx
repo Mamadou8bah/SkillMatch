@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { User, MapPin, Briefcase, MessageSquare, UserPlus, Check, Users, Search, XCircle } from 'lucide-react'
+import { MapPin, MessageSquare, UserPlus, Users, Search } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
 
@@ -13,13 +13,12 @@ export const Candidates = () => {
     const [activeTab, setActiveTab] = useState('discover')
     const [searchQuery, setSearchQuery] = useState('')
     const myRole = localStorage.getItem('userRole')
-    const myId = localStorage.getItem('userId')
 
     const fetchData = async () => {
         setIsLoading(true)
         try {
             const token = localStorage.getItem('token')
-            const baseUrl = 'http://localhost:8080'
+            const baseUrl = 'https://skillmatch-1-6nn0.onrender.com'
             const headers = { 'Authorization': `Bearer ${token}` }
             const [usersRes, connRes, pendingRes, recRes] = await Promise.all([
                 fetch(`${baseUrl}/api/users/network`, { headers }),
@@ -51,7 +50,7 @@ export const Candidates = () => {
     const handleConnect = async (targetId) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/connections/request/${targetId}`, {
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/connections/request/${targetId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -67,7 +66,7 @@ export const Candidates = () => {
     const handleAccept = async (requestId) => {
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`http://localhost:8080/api/connections/accept/${requestId}`, {
+            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/connections/accept/${requestId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

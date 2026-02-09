@@ -63,7 +63,7 @@ registerRoute(
 
 // Cache API requests
 registerRoute(
-  ({ url }) => url.origin === 'http://localhost:8080' || url.pathname.startsWith('/api'),
+  ({ url }) => url.origin === 'https://skillmatch-1-6nn0.onrender.com' || url.pathname.startsWith('/api'),
   new StaleWhileRevalidate({
     cacheName: 'api-cache',
     plugins: [

@@ -12,7 +12,7 @@ export const ManageJobs = () => {
         const fetchMyJobs = async () => {
             try {
                 const token = localStorage.getItem('token')
-                const response = await fetch('http://localhost:8080/post/myjobs', {
+                const response = await fetch('https://skillmatch-1-6nn0.onrender.com/post/myjobs', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
                 const data = await response.json()

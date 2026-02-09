@@ -17,7 +17,7 @@ export const JobDetails = () => {
  
     useEffect(() => {
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:8080/post/${id}`, {
+        fetch(`https://skillmatch-1-6nn0.onrender.com/post/${id}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -42,7 +42,7 @@ export const JobDetails = () => {
     useEffect(() => {
         if (isOwner && job) {
             const token = localStorage.getItem('token');
-            fetch(`http://localhost:8080/api/apply/submitted/${id}`, {
+            fetch(`https://skillmatch-1-6nn0.onrender.com/api/apply/submitted/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             .then(res => res.json())
@@ -68,7 +68,7 @@ export const JobDetails = () => {
         setIsApplying(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8080/api/apply', {
+            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/apply', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -139,9 +139,8 @@ export const JobDetails = () => {
                     <div className="jd-logo">
                         <img src={job.employer?.logo || ''} alt="" />
                     </div>
-                    {isNew && <span className="jd-badge">NEW</span>}
                     <h1 className="jd-title">{job.title}</h1>
-                    <div className="jd-company">Source • <span>{job.source}</span></div>
+                    <div className="jd-company">Posted on <span>{job.source}</span></div>
                 </div>
                 <div className="md-tags-container">
                     <div className="jd-md">
