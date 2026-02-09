@@ -3,6 +3,7 @@ import '../styles/discover.css'
 import { JobCard } from './JobCard'
 import { Link } from 'react-router-dom'
 import Loader from './Loader'
+import { apiFetch } from '../utils/api'
 
 export const Discover = () => {
   const [search, setSearch] = useState('')
@@ -11,21 +12,37 @@ export const Discover = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    fetch('https://skillmatch-1-6nn0.onrender.com/post', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setJobsList(data.content || data);
-        setIsLoading(false);
-      })
-      .catch(err => {
+    const role = localStorage.getItem('userRole');
+    
+    const fetchJobs = async () => {
+      try {
+        const [allJobsData, recData] = await Promise.all([
+          apiFetch('/post'),
+          role !== 'EMPLOYER' ? apiFetch('/api/recommendations/jobs') : Promise.resolve(null)
+        ]);
+
+        let finalJobs = [];
+        const allJobs = allJobsData?.content || allJobsData || [];
+
+        if (recData && recData.success && Array.isArray(recData.data)) {
+          finalJobs = [...recData.data];
+          // Add other jobs that aren't in recommendations
+          const recIds = new Set(recData.data.map(j => j.id));
+          const others = allJobs.filter(j => !recIds.has(j.id));
+          finalJobs = [...finalJobs, ...others];
+        } else {
+          finalJobs = allJobs;
+        }
+
+        setJobsList(finalJobs);
+      } catch (err) {
         console.error('Error fetching jobs:', err);
+      } finally {
         setIsLoading(false);
-      });
+      }
+    };
+
+    fetchJobs();
   }, []);
 
   const tags = useMemo(() => {

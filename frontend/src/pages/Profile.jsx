@@ -306,7 +306,7 @@ export const Profile = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/');
+    navigate('/login');
   };
 
   const renderBackBtn = () => (

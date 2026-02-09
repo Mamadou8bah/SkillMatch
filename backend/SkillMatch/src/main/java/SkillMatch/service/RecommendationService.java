@@ -35,6 +35,7 @@ public class RecommendationService {
         if (allJobs.isEmpty()) return Collections.emptyList();
 
         Map<Long, Double> scores = new HashMap<>();
+        boolean mlSuccess = false;
         try {
             // Level 2/3: Pass structured data for better ML intelligence
             Map<String, Object> userData = new HashMap<>();
@@ -63,9 +64,19 @@ public class RecommendationService {
             List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/jobs", request, List.class);
             if (mlResults != null) {
                 mlResults.forEach(r -> scores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
+                mlSuccess = true;
             }
         } catch (Exception e) {
-            log.error("ML Engine recommendation failed (might be waking up): {}. Falling back to basic ranking.", e.getMessage());
+            log.error("ML Engine recommendation failed (might be waking up): {}. Falling back to manual ranking.", e.getMessage());
+        }
+
+        if (!mlSuccess) {
+            Set<String> candidateSkills = candidate.getSkills().stream()
+                    .map(s -> s.getTitle().toLowerCase().trim())
+                    .collect(Collectors.toSet());
+            for (JobPost job : allJobs) {
+                scores.put(job.getId(), calculateJobMatchScore(job, candidateSkills, candidate));
+            }
         }
 
         // Return top jobs based on ML engine scores
@@ -220,6 +231,7 @@ public class RecommendationService {
                 .collect(Collectors.toList());
 
         Map<Long, Double> semanticScores = new HashMap<>();
+        boolean mlSuccess = false;
         try {
             String jobNarrative = buildJobNarrative(job);
             List<Map<String, Object>> candData = allCandidates.stream().map(u -> {
@@ -236,6 +248,7 @@ public class RecommendationService {
             List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/candidates", request, List.class);
             if (mlResults != null) {
                 mlResults.forEach(r -> semanticScores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
+                mlSuccess = true;
             }
         } catch (Exception e) {
             log.error("ML Engine unavailable for candidates: {}", e.getMessage());
@@ -245,16 +258,22 @@ public class RecommendationService {
                 .map(s -> s.getTitle().toLowerCase().trim())
                 .collect(Collectors.toSet());
 
+        final boolean finalMlSuccess = mlSuccess;
         return allCandidates.stream()
                 .map(candidate -> {
-                    double semantic = semanticScores.getOrDefault(candidate.getId(), 0.0);
-                    double skillMatch = calculateSkillOverlap(
-                            candidate.getSkills().stream().map(s -> s.getTitle().toLowerCase().trim()).collect(Collectors.toSet()),
-                            job.getRequiredSkills()
-                    );
-                    double expFit = calculateExperienceFit(calculateTotalExperience(candidate), job.getTitle());
+                    double finalScore;
+                    if (finalMlSuccess) {
+                        double semantic = semanticScores.getOrDefault(candidate.getId(), 0.0);
+                        double skillMatch = calculateSkillOverlap(
+                                candidate.getSkills().stream().map(s -> s.getTitle().toLowerCase().trim()).collect(Collectors.toSet()),
+                                job.getRequiredSkills()
+                        );
+                        double expFit = calculateExperienceFit(calculateTotalExperience(candidate), job.getTitle());
 
-                    double finalScore = (0.5 * semantic) + (0.3 * (skillMatch / 100.0)) + (0.2 * (expFit / 100.0));
+                        finalScore = (0.5 * semantic) + (0.3 * (skillMatch / 100.0)) + (0.2 * (expFit / 100.0));
+                    } else {
+                        finalScore = calculateCandidateMatchScore(candidate, requiredSkills, job) / 100.0;
+                    }
                     return new UserMatch(candidate, finalScore * 100.0);
                 })
                 .filter(um -> um.getScore() > 10)

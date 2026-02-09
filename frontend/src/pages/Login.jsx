@@ -4,6 +4,7 @@ import { Eye, EyeOff, MapPin, Briefcase, Camera, Plus, X, Code, Palette, Trendin
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import Loader from '../components/Loader'
+import { apiFetch } from '../utils/api'
 
 export const Login = () => {
     const navigate = useNavigate()
@@ -124,12 +125,10 @@ export const Login = () => {
         }
 
         try {
-            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/auth/login', {
+            const data = await apiFetch('/api/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             })
-            const data = await response.json()
             if (data.success) {
                 localStorage.setItem('token', data.data.token)
                 localStorage.setItem('userId', data.data.userId)
@@ -170,12 +169,10 @@ export const Login = () => {
         setIsLoading(true)
         setError('')
         try {
-            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage1', {
+            const data = await apiFetch('/api/auth/register/stage1', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fullName, email, password })
             })
-            const data = await response.json()
             if (data.success) {
                 setUserId(data.data.id)
                 setRegStage(2)
@@ -204,12 +201,10 @@ export const Login = () => {
 
         setIsLoading(true)
         try {
-            const response = await fetch(`/api/auth/register/stage2/${userId}`, {
+            const data = await apiFetch(`/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ location, profession, role: 'CANDIDATE' })
             })
-            const data = await response.json()
             if (data.success) {
                 setRegStage(3)
             }
@@ -225,12 +220,10 @@ export const Login = () => {
         // Photo is optional, so we can proceed even if null
         setIsLoading(true)
         try {
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage2/${userId}`, {
+            const data = await apiFetch(`/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ photo })
             })
-            const data = await response.json()
             if (data.success) {
                 setRegStage(4)
             }
@@ -248,12 +241,10 @@ export const Login = () => {
         e.preventDefault()
         setIsLoading(true)
         try {
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/stage3/${userId}`, {
+            const data = await apiFetch(`/api/auth/register/stage3/${userId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ skills })
             })
-            const data = await response.json()
             if (data.success) {
                 setRegStage(5)
             }
@@ -275,8 +266,7 @@ export const Login = () => {
         setIsLoading(true)
         setError('')
         try {
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/verify?token=${code}`)
-            const data = await response.json()
+            const data = await apiFetch(`/api/auth/register/verify?token=${code}`)
             if (data.success) {
                 alert('Account verified successfully! You can now log in.')
                 setHasAccount(true)
@@ -296,8 +286,7 @@ export const Login = () => {
         try {
             // Re-use stage 2 to trigger email resend or add a dedicated endpoint
             // For now, let's assume stage 2 re-triggers email or we add a simple resend
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/auth/register/resend-code?email=${email}`)
-            const data = await response.json()
+            const data = await apiFetch(`/api/auth/register/resend-code?email=${email}`)
             if (data.success) {
                 alert('A new code has been sent to your email.')
             } else {
