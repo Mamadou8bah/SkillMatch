@@ -23,6 +23,7 @@ public class AdminController {
     private final JobPostService jobPostService;
 
     @GetMapping("/stats")
+    @org.springframework.cache.annotation.Cacheable(value = "adminStats", key = "'dashboard'")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", userService.countUsers());

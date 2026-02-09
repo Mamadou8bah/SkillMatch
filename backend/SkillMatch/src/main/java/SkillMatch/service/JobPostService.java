@@ -140,9 +140,9 @@ public class JobPostService {
         return post;
     }
 
-    @Scheduled(cron = "0 0 */6 * * *") // Every 6 hours
+    // Disabled @Scheduled to save free-tier resources. Admin must trigger manually.
     public void syncExternalJobs() {
-        log.info("Starting scheduled job sync...");
+        log.info("Starting manual job sync...");
         
         try {
             List<JobResponseDTO> gamjobs = externalJobService.fetchGamjobs();
@@ -179,18 +179,26 @@ public class JobPostService {
 
     private void saveExternalJobs(List<JobResponseDTO> jobs, String source) {
         log.info("Processing {} jobs from {}", jobs.size(), source);
-        int batchSize = 5;
+        // Reduced batch size for free-tier survival
+        int batchSize = 3; 
         for (int i = 0; i < jobs.size(); i += batchSize) {
             int end = Math.min(i + batchSize, jobs.size());
             List<JobResponseDTO> batch = jobs.subList(i, end);
             try {
+                // AI Quota survival: If Groq fails, fallback to raw data
                 List<JobResponseDTO> structuredBatch = externalJobService.structureBatchWithAI(batch);
-                for (JobResponseDTO dto : structuredBatch) {
-                    this.persistExternalJob(dto, source);
+                if (structuredBatch.isEmpty()) {
+                    log.warn("AI extraction failed/quota hit. Falling back to native metadata for source: {}", source);
+                    batch.forEach(dto -> this.persistExternalJob(dto, source));
+                } else {
+                    for (JobResponseDTO dto : structuredBatch) {
+                        this.persistExternalJob(dto, source);
+                    }
                 }
-                if (end < jobs.size()) Thread.sleep(1000); 
+                // Longer pause to respect free API rate limits and CPU
+                if (end < jobs.size()) Thread.sleep(5000); 
             } catch (Exception e) {
-                log.error("Batch error: {}", e.getMessage());
+                log.error("Batch processing fallback: {}", e.getMessage());
                 for (JobResponseDTO dto : batch) this.persistExternalJob(dto, source);
             }
         }

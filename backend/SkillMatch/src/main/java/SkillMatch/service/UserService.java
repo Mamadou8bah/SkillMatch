@@ -82,12 +82,11 @@ public class UserService {
     }
 
     public List<UserDTO>getUsers(){
-        List<User> users= repo.findAll();
-        List<UserDTO> userDTOS=new ArrayList<>();
-        for(User user:users){
-            userDTOS.add(new UserDTO(user.getFullName(),user.getRole().toString()));
-        }
-        return userDTOS;
+        return repo.findAll(org.springframework.data.domain.PageRequest.of(0, 50))
+                .getContent()
+                .stream()
+                .map(user -> new UserDTO(user.getFullName(), user.getRole().toString()))
+                .toList();
     }
 
     public List<User> getCandidates() {

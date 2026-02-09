@@ -61,9 +61,10 @@ public class GroqService {
             messages.add(Map.of("role", "user", "content", userContent.toString()));
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "llama-3.3-70b-versatile");
+            requestBody.put("model", "llama-3.1-8b-instant"); // Cheaper/Faster model for survival
             requestBody.put("messages", messages);
             requestBody.put("temperature", 0.1);
+            requestBody.put("max_tokens", 4000); // Protect against runaway output cost/latency
             requestBody.put("response_format", Map.of("type", "json_object"));
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);

@@ -38,8 +38,11 @@ public class DefaultEmailService implements EmailService{
 
         try {
             resend.emails().send(sendEmailRequest);
+            log.info("Email sent successfully to: {}", email.getTo());
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email via Resend: " + e.getMessage());
+            // Graceful degradation: Log error but do not throw exception to prevent request failure
+            log.error("EMAIL QUOTA HIT OR FAILURE: Failed to send email to {}. Error: {}", email.getTo(), e.getMessage());
+            // In a free-tier environment, we cannot guarantee email delivery
         }
     }
 }
