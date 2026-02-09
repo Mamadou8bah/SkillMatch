@@ -40,6 +40,27 @@
     justify-content: center;
 }
 
+.photo-upload-label {
+    position: absolute;
+    bottom: 5px;
+    right: calc(50% - 3.5rem);
+    background: var(--primary-color);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.photo-upload-label:hover {
+    transform: scale(1.1);
+}
+
 .profile-image-large {
     width: 7rem;
     height: 7rem;

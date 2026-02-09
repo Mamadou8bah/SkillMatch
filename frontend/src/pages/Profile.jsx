@@ -15,7 +15,8 @@ import {
   X,
   Moon,
   Volume2,
-  Trash2
+  Trash2,
+  Camera
 } from 'lucide-react';
 import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
@@ -135,6 +136,41 @@ export const Profile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size exceeds 5MB limit');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/users/${userId}/photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchUserProfile();
+      } else {
+        setError(data.message || 'Failed to upload photo');
+      }
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      setError('Error uploading photo');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -307,6 +343,25 @@ export const Profile = () => {
         </div>
         <div className="edit-form">
           {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
+          
+          <div className="edit-photo-section" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+            <div className="profile-avatar-container">
+              {profileData.photoUrl ? (
+                <img src={profileData.photoUrl} alt="Profile" className="profile-image-large" />
+              ) : (
+                <img 
+                  src="https://www.shutterstock.com/image-vector/default-avatar-social-media-display-600nw-2632690107.jpg" 
+                  alt="Default Avatar" 
+                  className="profile-image-large" 
+                />
+              )}
+              <label className="photo-upload-label">
+                <Camera size={20} />
+                <input type="file" onChange={handlePhotoChange} hidden accept="image/*" />
+              </label>
+            </div>
+          </div>
+
           <div className="form-group">
             <label>Full Name</label>
             <input type="text" name="fullName" value={profileData.fullName} onChange={handleInputChange} className="form-input" />
@@ -462,6 +517,10 @@ export const Profile = () => {
               className="profile-image-large" 
             />
           )}
+          <label className="photo-upload-label">
+            <Camera size={20} />
+            <input type="file" onChange={handlePhotoChange} hidden accept="image/*" />
+          </label>
         </div>
         <h1 className="profile-name">{profileData.fullName}</h1>
         <p className="profile-role">{profileData.profession || profileData.role}</p>
