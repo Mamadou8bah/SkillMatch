@@ -14,7 +14,7 @@ FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
 # Copy the jar from the build stage
-COPY --from=build /app/target/*.jar skillmatch.jar
+COPY --from=build /app/target/SkillMatch-0.0.1-SNAPSHOT.jar skillmatch.jar
 
 EXPOSE 8080
 
