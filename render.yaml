@@ -27,8 +27,8 @@ services:
     env: docker
     region: ohio
     plan: free
-    dockerContext: .
-    dockerfilePath: ./Dockerfile
+    dockerContext: backend/SkillMatch
+    dockerfilePath: Dockerfile
     healthCheckPath: /api/jobs/external
     envVars:
       - key: DB_URL
