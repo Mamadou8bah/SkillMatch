@@ -5,14 +5,18 @@ import SkillMatch.repository.JobPostRepo;
 import SkillMatch.repository.UserRepo;
 import SkillMatch.repository.UserInteractionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RecommendationService {
     private final JobPostRepo jobPostRepo;
     private final UserRepo userRepo;
@@ -20,7 +24,8 @@ public class RecommendationService {
     private final ConnectionService connectionService;
     private final org.springframework.web.client.RestTemplate restTemplate;
 
-    private static final String ML_ENGINE_URL = "http://localhost:5000/recommend";
+    @Value("${ml.engine.url}")
+    private String mlEngineUrl;
 
     /**
      * Recommends JobPosts for a Candidate based on weighted scoring.
@@ -29,57 +34,105 @@ public class RecommendationService {
         List<JobPost> allJobs = jobPostRepo.findAll();
         if (allJobs.isEmpty()) return Collections.emptyList();
 
-        Map<Long, Double> semanticScores = new HashMap<>();
+        Map<Long, Double> scores = new HashMap<>();
         try {
-            String userNarrative = buildUserNarrative(candidate);
+            // Level 2/3: Pass structured data for better ML intelligence
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("bio", buildUserProfileString(candidate));
+            userData.put("location", candidate.getLocation());
+            userData.put("experience_years", calculateTotalExperience(candidate));
+            userData.put("skills", candidate.getSkills().stream().map(Skill::getTitle).collect(Collectors.toList()));
+
             List<Map<String, Object>> jobsData = allJobs.stream().map(j -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", j.getId());
                 map.put("description", buildJobNarrative(j));
+                map.put("skills", j.getRequiredSkills() != null ?
+                    j.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()) :
+                    Collections.emptyList());
+                map.put("location", j.getLocationType()); // or actual location if available
+                map.put("postedAt", calculatePostedAgo(j.getPostedAt()));
                 return map;
             }).collect(Collectors.toList());
 
             Map<String, Object> request = new HashMap<>();
-            request.put("user_profile", userNarrative);
+            request.put("user_data", userData);
             request.put("jobs", jobsData);
 
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(ML_ENGINE_URL + "/jobs", request, List.class);
+            // ML Engine handles hybrid scoring and re-ranking
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/jobs", request, List.class);
             if (mlResults != null) {
-                mlResults.forEach(r -> semanticScores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
+                mlResults.forEach(r -> scores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
             }
         } catch (Exception e) {
-            System.err.println("ML Engine unavailable, semantic score will be 0: " + e.getMessage());
+            log.error("ML Engine recommendation failed (might be waking up): {}. Falling back to basic ranking.", e.getMessage());
         }
 
-        Set<String> candidateSkills = candidate.getSkills().stream()
-                .map(s -> s.getTitle().toLowerCase().trim())
-                .collect(Collectors.toSet());
-
-        double totalExp = calculateTotalExperience(candidate);
-
-        List<JobMatch> matchedJobs = allJobs.stream().map(job -> {
-                    double semantic = semanticScores.getOrDefault(job.getId(), 0.0);
-                    double skillMatch = calculateSkillOverlap(candidateSkills, job.getRequiredSkills());
-                    double expFit = calculateExperienceFit(totalExp, job.getTitle());
-                    double connBoost = calculateConnectionBoost(candidate, job);
-                    double recentInterest = calculateInterestScore(candidate, job);
-
-                    // FINAL WEIGHTED FORMULA
-                    double finalScore =
-                            (0.45 * semantic) +
-                                    (0.25 * (skillMatch / 100.0)) +
-                                    (0.15 * (expFit / 100.0)) +
-                                    (0.10 * (connBoost / 100.0)) +
-                                    (0.05 * (recentInterest / 100.0));
-
-                    return new JobMatch(job, finalScore * 100.0);
+        // Return top jobs based on ML engine scores
+        // We prioritize jobs with scores, then the rest by date
+        List<JobPost> sortedJobs = allJobs.stream()
+                .sorted((j1, j2) -> {
+                    Double s1 = scores.getOrDefault(j1.getId(), 0.0);
+                    Double s2 = scores.getOrDefault(j2.getId(), 0.0);
+                    int scoreCmp = Double.compare(s2, s1);
+                    if (scoreCmp != 0) return scoreCmp;
+                    // Fallback to date
+                    LocalDateTime d1 = j1.getPostedAt() != null ? j1.getPostedAt() : LocalDateTime.MIN;
+                    LocalDateTime d2 = j2.getPostedAt() != null ? j2.getPostedAt() : LocalDateTime.MIN;
+                    return d2.compareTo(d1);
                 })
-                .filter(jm -> jm.getScore() > 5)
-                .sorted(Comparator.comparingDouble(JobMatch::getScore).reversed())
-                .limit(20)
+                .limit(100)
                 .collect(Collectors.toList());
+        
+        return sortedJobs;
+    }
 
-        return matchedJobs.stream().map(JobMatch::getJob).collect(Collectors.toList());
+    /**
+     * Records a user interaction and skips ML sync if engine is down.
+     */
+    public void recordInteraction(User user, JobPost job, String type) {
+        UserInteraction interaction = UserInteraction.builder()
+                .user(user)
+                .jobPost(job)
+                .interactionType(type)
+                .build();
+        interactionRepo.save(interaction);
+
+        // Feedback loop to ML engine with full context for feature extraction
+        try {
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("bio", buildUserProfileString(user));
+            userData.put("skills", user.getSkills().stream().map(Skill::getTitle).collect(Collectors.toList()));
+            userData.put("experience_years", calculateTotalExperience(user));
+            userData.put("location", user.getLocation());
+
+            Map<String, Object> jobData = new HashMap<>();
+            jobData.put("description", buildJobNarrative(job));
+            jobData.put("skills", job.getRequiredSkills() != null ? 
+                    job.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()) : 
+                    Collections.emptyList());
+            jobData.put("required_experience", 2.0); // Simplified
+            jobData.put("location", job.getLocationType());
+            jobData.put("postedAt", calculatePostedAgo(job.getPostedAt()));
+
+            Map<String, Object> req = new HashMap<>();
+            req.put("user_id", user.getId());
+            req.put("job_id", job.getId());
+            req.put("type", type);
+            req.put("user_data", userData);
+            req.put("job_data", jobData);
+            
+            restTemplate.postForObject(mlEngineUrl.replace("/recommend", "/track/interaction"), req, Map.class);
+        } catch (Exception e) {
+            log.warn("Could not sync interaction to ML engine: {}", e.getMessage());
+        }
+    }
+
+    private String calculatePostedAgo(java.time.LocalDateTime postedAt) {
+        if (postedAt == null) return "1d";
+        long hours = ChronoUnit.HOURS.between(postedAt, java.time.LocalDateTime.now());
+        if (hours < 24) return hours + "h";
+        return (hours / 24) + "d";
     }
 
     private String buildUserNarrative(User user) {
@@ -116,7 +169,7 @@ public class RecommendationService {
         StringBuilder sb = new StringBuilder();
         sb.append(job.getTitle()).append(". ");
         sb.append(job.getDescription()).append(". ");
-        if (!job.getRequiredSkills().isEmpty()) {
+        if (job.getRequiredSkills() != null && !job.getRequiredSkills().isEmpty()) {
             sb.append("Required skills: ")
                     .append(job.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.joining(", ")));
         }
@@ -180,12 +233,12 @@ public class RecommendationService {
             request.put("job_description", jobNarrative);
             request.put("candidates", candData);
 
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(ML_ENGINE_URL + "/candidates", request, List.class);
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/candidates", request, List.class);
             if (mlResults != null) {
                 mlResults.forEach(r -> semanticScores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
             }
         } catch (Exception e) {
-            System.err.println("ML Engine unavailable: " + e.getMessage());
+            log.error("ML Engine unavailable for candidates: {}", e.getMessage());
         }
 
         Set<String> requiredSkills = job.getRequiredSkills().stream()
@@ -258,7 +311,7 @@ public class RecommendationService {
                 return m;
             }).collect(Collectors.toList()));
 
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(ML_ENGINE_URL + "/similar-users", reqBody, List.class);
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/similar-users", reqBody, List.class);
             if (mlResults != null) {
                 for (Map<String, Object> res : mlResults) {
                     Long oid = Long.valueOf(res.get("id").toString());
@@ -270,7 +323,7 @@ public class RecommendationService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("ML Connection recommendation failed: " + e.getMessage());
+            log.error("ML Connection recommendation failed: {}", e.getMessage());
         }
 
         for (User potential : others) {
@@ -377,13 +430,15 @@ public class RecommendationService {
     }
 
 
-    @lombok.Value
+    @lombok.Data
+    @lombok.AllArgsConstructor
     private static class JobMatch {
         JobPost job;
         double score;
     }
 
-    @lombok.Value
+    @lombok.Data
+    @lombok.AllArgsConstructor
     private static class UserMatch {
         User user;
         double score;

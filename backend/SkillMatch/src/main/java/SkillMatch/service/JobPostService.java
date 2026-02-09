@@ -7,16 +7,23 @@ import SkillMatch.model.User;
 import SkillMatch.model.UserInteraction;
 import SkillMatch.repository.JobPostRepo;
 import SkillMatch.repository.UserInteractionRepository;
+import SkillMatch.model.Skill;
+import SkillMatch.util.LocationType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JobPostService {
 
 
@@ -39,23 +47,12 @@ public class JobPostService {
     }
 
     public List<JobResponseDTO> getJobPost(int pageNo, int readCount) {
-        // Fetch DB jobs
-        Pageable pageable= PageRequest.of(pageNo, readCount);
-        Page<JobPost> page=repo.findAll(pageable);
-        List<JobPost> dbPosts = page.getContent();
-
-        List<JobResponseDTO> mergedList = new ArrayList<>();
-
-        // Map DB jobs to DTO
-        mergedList.addAll(dbPosts.stream()
+        // Fetch DB jobs (including synced external ones)
+        Pageable pageable = PageRequest.of(pageNo, readCount);
+        Page<JobPost> page = repo.findAll(pageable);
+        
+        return page.getContent().stream()
                 .map(this::convertToResponseDTO)
-                .collect(Collectors.toList()));
-
-        // Fetch API jobs
-        mergedList.addAll(externalJobService.fetchRemoteJobs());
-
-        // Sort by pubDate descending
-        return mergedList.stream()
                 .sorted(Comparator.comparing(JobResponseDTO::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
@@ -66,13 +63,18 @@ public class JobPostService {
                 .title(jobPost.getTitle())
                 .description(jobPost.getDescription())
                 .employer(JobResponseDTO.EmployerInfo.builder()
-                        .name(jobPost.getEmployer() != null ? jobPost.getEmployer().getCompanyName() : "N/A")
-                        .logo(jobPost.getEmployer() != null ? jobPost.getEmployer().getPictureUrl() : "")
+                        .name(jobPost.getCompanyName() != null ? jobPost.getCompanyName() : (jobPost.getEmployer() != null ? jobPost.getEmployer().getCompanyName() : "N/A"))
+                        .logo(jobPost.getCompanyLogo() != null ? jobPost.getCompanyLogo() : (jobPost.getEmployer() != null ? jobPost.getEmployer().getPictureUrl() : ""))
                         .build())
                 .locationType(jobPost.getLocationType() != null ? jobPost.getLocationType().name() : "N/A")
-                .salary(String.valueOf(jobPost.getSalary()))
+                .salary(jobPost.getSalary())
+                .url(jobPost.getJobUrl())
                 .postedAt(jobPost.getPostedAt())
-                .source("Own")
+                .source(jobPost.getSource() != null ? jobPost.getSource() : "Own")
+                .type(jobPost.getJobType())
+                .industry(jobPost.getIndustry())
+                .requirements(jobPost.getRequirements())
+                .skills(jobPost.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()))
                 .build();
     }
 
@@ -131,6 +133,99 @@ public class JobPostService {
         return post;
     }
 
+    @Scheduled(cron = "0 0 */6 * * *") // Every 6 hours
+    public void syncExternalJobs() {
+        log.info("Starting scheduled job sync...");
+        
+        try {
+            List<JobResponseDTO> gamjobs = externalJobService.fetchGamjobs();
+            saveExternalJobs(gamjobs, "Gamjobs");
+        } catch (Exception e) { log.error("Gamjobs sync failed", e); }
 
+        try {
+            List<JobResponseDTO> waveJobs = externalJobService.fetchWaveJobs();
+            saveExternalJobs(waveJobs, "Wave");
+        } catch (Exception e) { log.error("Wave sync failed", e); }
 
+        try {
+            List<JobResponseDTO> iomJobs = externalJobService.fetchIomGambiaJobs();
+            saveExternalJobs(iomJobs, "IOMGambia");
+        } catch (Exception e) { log.error("IOM sync failed", e); }
+
+        try {
+            List<JobResponseDTO> mojJobs = externalJobService.fetchMojJobs();
+            saveExternalJobs(mojJobs, "MOJGambia");
+        } catch (Exception e) { log.error("MOJ sync failed", e); }
+
+        try {
+            List<JobResponseDTO> unJobs = externalJobService.fetchUnJobs();
+            saveExternalJobs(unJobs, "UNJobs");
+        } catch (Exception e) { log.error("UNJobs sync failed", e); }
+
+        try {
+            List<JobResponseDTO> primeforgeJobs = externalJobService.fetchPrimeforgeJobs();
+            saveExternalJobs(primeforgeJobs, "Primeforge");
+        } catch (Exception e) { log.error("Primeforge sync failed", e); }
+        
+        log.info("Sync completed.");
+    }
+
+    private void saveExternalJobs(List<JobResponseDTO> jobs, String source) {
+        log.info("Processing {} jobs from {}", jobs.size(), source);
+        int batchSize = 5;
+        for (int i = 0; i < jobs.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, jobs.size());
+            List<JobResponseDTO> batch = jobs.subList(i, end);
+            try {
+                List<JobResponseDTO> structuredBatch = externalJobService.structureBatchWithAI(batch);
+                for (JobResponseDTO dto : structuredBatch) {
+                    this.persistExternalJob(dto, source);
+                }
+                if (end < jobs.size()) Thread.sleep(1000); 
+            } catch (Exception e) {
+                log.error("Batch error: {}", e.getMessage());
+                for (JobResponseDTO dto : batch) this.persistExternalJob(dto, source);
+            }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void persistExternalJob(JobResponseDTO dto, String source) {
+        try {
+            JobPost post = new JobPost();
+            post.setExternalId(dto.getId()); 
+            post.setTitle(dto.getTitle());
+            post.setDescription(dto.getDescription());
+            post.setCompanyName(dto.getEmployer() != null ? dto.getEmployer().getName() : "N/A");
+            post.setCompanyLogo(dto.getEmployer() != null ? dto.getEmployer().getLogo() : "");
+            post.setJobUrl(dto.getUrl());
+            post.setSource(source);
+            post.setIndustry(dto.getIndustry());
+            post.setJobType(dto.getType());
+            post.setLocationType(mapToLocationType(dto.getLocationType()));
+            post.setSalary(dto.getSalary() != null ? dto.getSalary() : "N/A");
+            post.setPostedAt(dto.getPostedAt() != null ? dto.getPostedAt() : LocalDateTime.now());
+
+            List<Skill> skills = new ArrayList<>();
+            if (dto.getSkills() != null) {
+                for (String sn : dto.getSkills()) {
+                    Skill s = new Skill(); s.setTitle(sn); s.setJobPost(post); skills.add(s);
+                }
+            }
+            post.setRequiredSkills(skills);
+            repo.saveAndFlush(post);
+        } catch (DataIntegrityViolationException e) {
+            log.info("Job already exists: {}", dto.getTitle());
+        } catch (Exception e) {
+            log.error("Persist error: {}", e.getMessage());
+        }
+    }
+
+    private LocationType mapToLocationType(String loc) {
+        if (loc == null) return LocationType.ONSITE;
+        String l = loc.toLowerCase();
+        if (l.contains("remote")) return LocationType.REMOTE;
+        if (l.contains("hybrid")) return LocationType.HYBRID;
+        return LocationType.ONSITE;
+    }
 }
