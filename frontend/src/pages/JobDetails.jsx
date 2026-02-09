@@ -99,8 +99,6 @@ export const JobDetails = () => {
         })
     }
     
-    const isNew = job.postedAt && (new Date() - new Date(job.postedAt)) < 24 * 60 * 60 * 1000;
-    
     return (
         <div className='jd-page'>
             <div className="jd-upper">

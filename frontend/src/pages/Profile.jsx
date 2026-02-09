@@ -60,14 +60,6 @@ export const Profile = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserProfile();
-      fetchSkills();
-      fetchExperiences();
-    }
-  }, [userId, fetchUserProfile, fetchSkills, fetchExperiences]);
-
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}`, {
@@ -119,6 +111,14 @@ export const Profile = () => {
       console.error(e);
     }
   }, [userId, token]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+      fetchSkills();
+      fetchExperiences();
+    }
+  }, [userId, fetchUserProfile, fetchSkills, fetchExperiences]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
