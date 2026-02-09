@@ -1,12 +1,11 @@
 import React from 'react'
 import '../styles/jobs.css'
 import { Link, Outlet } from 'react-router-dom'
-import { useState, useEffect, useMemo } from 'react'
-import jobs from '../data/jobs'
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 export const Jobs = () => {
-  const [role, setRole] = useState(localStorage.getItem('userRole') || 'CANDIDATE')
+  const [role] = useState(localStorage.getItem('userRole') || 'CANDIDATE')
 
   return (
     <div className='jobs-page'>

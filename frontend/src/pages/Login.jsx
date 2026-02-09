@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
-import { Eye, EyeOff, Building, User as UserIcon, MapPin, Briefcase, FileText, Camera, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
+import { Eye, EyeOff, MapPin, Briefcase, Camera, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import Loader from '../components/Loader'

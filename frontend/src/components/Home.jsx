@@ -13,7 +13,6 @@ export const Home = () => {
     const [notificationCount, setNotificationCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const userId = localStorage.getItem('userId');
-    const token = localStorage.getItem('token');
 
     useEffect(() => {
         if (userId) {
