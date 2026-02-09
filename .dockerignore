@@ -1,0 +1,8 @@
+.git
+.github
+frontend
+ml_engine
+node_modules
+.venv
+target
+*.log

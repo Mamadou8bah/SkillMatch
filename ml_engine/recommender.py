@@ -9,10 +9,12 @@ import os
 import joblib
 import json
 import sqlite3
+import gc
 from datetime import datetime
 
 # MEMORY OPTIMIZATION: Limit torch threads
 torch.set_num_threads(1)
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Path Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +24,7 @@ DB_PATH = os.path.join(BASE_DIR, 'interactions.db')
 # Initialize sentence transformer (Shared across instances)
 # MEMORY OPTIMIZATION: Use device='cpu' explicitly
 model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+model.max_seq_length = 256 # Limit input length to save memory
 
 class AIRecommender:
     def __init__(self):
@@ -63,10 +66,11 @@ class AIRecommender:
         ids = df['id'].tolist()
         texts = df[text_col].fillna('').tolist()
         
-        # MEMORY OPTIMIZATION: Clear cache if it gets too large (> 1000 items)
-        if len(cache) > 1000:
+        # MEMORY OPTIMIZATION: Clear cache if it gets too large (> 300 items)
+        if len(cache) > 300:
             print("Cache limit reached, clearing...")
             cache.clear()
+            gc.collect()
             
         final_embeddings = [None] * len(ids)
         to_encode_indices = []
@@ -81,10 +85,12 @@ class AIRecommender:
                 
         if to_encode_texts:
             print(f"Encoding {len(to_encode_texts)} new items...")
-            new_embs = model.encode(to_encode_texts)
+            # batch_size=8 is more memory friendly
+            new_embs = model.encode(to_encode_texts, batch_size=8, show_progress_bar=False)
             for idx, emb in zip(to_encode_indices, new_embs):
                 final_embeddings[idx] = emb
                 cache[ids[idx]] = emb
+            gc.collect()
                 
         return np.array(final_embeddings)
 

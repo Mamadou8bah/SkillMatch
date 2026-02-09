@@ -2,9 +2,13 @@ from flask import Flask, request, jsonify
 import pandas as pd
 import torch
 import os
+import gc
 
-# MEMORY OPTIMIZATION: Limit torch threads
+# MEMORY OPTIMIZATION: Limit torch threads and parallelism
 torch.set_num_threads(1)
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["MALLOC_ARENA_MAX"] = "2"
 
 from recommender import recommender, get_job_recommendations, get_candidate_recommendations, get_connection_recommendations
 
@@ -34,6 +38,11 @@ def recommend_jobs():
         
     jobs_df = pd.DataFrame(jobs_data)
     recommendations = get_job_recommendations(user_input, jobs_df)
+    
+    # Clean up
+    del jobs_df
+    gc.collect()
+    
     return jsonify(recommendations)
 
 @app.route('/recommend/candidates', methods=['POST'])
@@ -47,6 +56,11 @@ def recommend_candidates():
         
     candidates_df = pd.DataFrame(candidates_data)
     recommendations = get_candidate_recommendations(job_description, candidates_df)
+    
+    # Clean up
+    del candidates_df
+    gc.collect()
+    
     return jsonify(recommendations)
 
 @app.route('/track/interaction', methods=['POST'])
@@ -55,6 +69,7 @@ def track_interaction():
     data = request.json
     # Expected: { "user_id": 1, "job_id": 5, "type": "CLICK", "features": [0.8, 0.5, ...] }
     success = recommender.record_interaction(data)
+    gc.collect()
     return jsonify({"status": "success" if success else "failed"})
 
 @app.route('/config/weights', methods=['GET', 'POST'])
@@ -78,6 +93,11 @@ def recommend_similar_users():
         
     others_df = pd.DataFrame(others_data)
     recommendations = get_connection_recommendations(user_profile, others_df)
+    
+    # Clean up
+    del others_df
+    gc.collect()
+    
     return jsonify(recommendations)
 
 if __name__ == '__main__':
