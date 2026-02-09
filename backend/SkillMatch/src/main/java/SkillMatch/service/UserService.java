@@ -174,6 +174,7 @@ public class UserService {
         user.setFullName(request.fullName());
         user.setEmail(request.email().trim().toLowerCase());
         user.setPassword(encoder.encode(request.password()));
+        user.setRole(Role.CANDIDATE); // Default role
         user.setActive(true);
         user.setAccountVerified(false);
         user.setRegistrationStage(1);
