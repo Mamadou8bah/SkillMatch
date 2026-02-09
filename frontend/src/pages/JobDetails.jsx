@@ -185,12 +185,7 @@ export const JobDetails = () => {
             </div>
             <div className="jd-content">
                 <div className="jd-description">
-                    {
-                        job.source == 'own' && (
-                                 <h3>Job Description</h3>
-                        )
-                    }
-               
+                    <h3>Role Overview</h3>
                     <div 
                         className="description-text"
                         dangerouslySetInnerHTML={{ __html: job.description }}

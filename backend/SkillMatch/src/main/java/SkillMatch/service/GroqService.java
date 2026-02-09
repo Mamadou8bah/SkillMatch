@@ -47,16 +47,16 @@ public class GroqService {
 
             List<Map<String, String>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content", 
-                "You are an expert job data extraction assistant. Extract details from the provided text for EACH job. " +
+                "You are an expert job data extraction assistant. Your mission is to standardize ALL job posts into a unified 3-part format: Overview, Requirements, and Skills.\n\n" +
                 "DATA QUALITY RULES:\n" +
-                "1. TITLE: Must be a specific job title. If the input is 'View Details', 'Apply', or generic placeholders, RETURN an empty object for that job.\n" +
-                "2. DESCRIPTION: Create a CONCISE 1-2 paragraph summary of the role. REMOVE noise like 'How to apply', 'Deadline', 'Apply here', phone numbers, emails, or organization history boilerplate.\n" +
-                "3. REQUIREMENTS: Extract specific qualifications/years of experience into this array.\n" +
-                "4. SKILLS: Extract specific industry skills or tools (e.g., 'Java', 'Marketing', 'Excel') into this array.\n" +
+                "1. TITLE: Specific job title only.\n" +
+                "2. DESCRIPTION (OVERVIEW): Provide a high-level summary of the role and the company's purpose. Strip out application instructions, deadlines, and contact info. Start directly with the role's purpose.\n" +
+                "3. REQUIREMENTS: Systematically extract ALL qualifications, experience, and educational needs into this JSON array. Do not include them in the description.\n" +
+                "4. SKILLS: Extract ALL technical tools, soft skills, and specific industry competencies into this JSON array.\n" +
                 "5. FORMAT: You MUST return a JSON array of objects with these exact keys: " +
-                "\"title\", \"description\", \"requirements\" (array), \"skills\" (array), \"industry\", \"type\", \"level\", \"salary\". " +
-                "If a field is missing, use an empty string or empty array. " +
-                "ONLY return the JSON array code block. No explanation."));
+                "\"title\", \"description\", \"requirements\" (array), \"skills\" (array), \"industry\", \"type\", \"level\", \"salary\".\n\n" +
+                "If a job input is a placeholder (like 'View Details'), return an empty object for that entry. " +
+                "ONLY return the JSON array code block."));
             
             messages.add(Map.of("role", "user", "content", userContent.toString()));
 

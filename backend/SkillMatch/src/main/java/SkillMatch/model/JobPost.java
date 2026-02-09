@@ -25,17 +25,32 @@ public class JobPost {
     private Long id;
     @Column(nullable = false)
     private String title;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10000)
     private String description;
+    
+    private String externalId;
+    private String companyName;
+    private String companyLogo;
+    private String jobUrl;
+    private String source;
+    private String industry;
+    private String jobType;
+    
+    @ElementCollection
+    private List<String> requirements;
+
     @ManyToOne
     @JoinColumn(name = "employer_id")
     private Employer employer;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private LocationType locationType;
+
     @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Skill> requiredSkills;
-    private double salary;
+    
+    private String salary;
 
     @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL)
     private Set<Application> applications;

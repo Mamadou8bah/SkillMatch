@@ -112,8 +112,11 @@ public class JobPostService {
         if (newPost.getDescription() != null) {
             oldPost.setDescription(newPost.getDescription());
         }
-        if (newPost.getSalary() != 0) {
+        if (newPost.getSalary() != null) {
             oldPost.setSalary(newPost.getSalary());
+        }
+        if (newPost.getRequirements() != null) {
+            oldPost.setRequirements(newPost.getRequirements());
         }
         if (newPost.getRequiredSkills() != null) {
             oldPost.setRequiredSkills(newPost.getRequiredSkills());
@@ -204,6 +207,7 @@ public class JobPostService {
             post.setJobType(dto.getType());
             post.setLocationType(mapToLocationType(dto.getLocationType()));
             post.setSalary(dto.getSalary() != null ? dto.getSalary() : "N/A");
+            post.setRequirements(dto.getRequirements());
             post.setPostedAt(dto.getPostedAt() != null ? dto.getPostedAt() : LocalDateTime.now());
 
             List<Skill> skills = new ArrayList<>();

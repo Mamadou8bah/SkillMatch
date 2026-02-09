@@ -60,4 +60,10 @@ public class JobPostController {
         service.deletePost(id);
         return ResponseEntity.ok("Post Deleted");
     }
+
+    @PostMapping("/sync")
+    public ResponseEntity<?> syncJobs() {
+        service.syncExternalJobs();
+        return ResponseEntity.ok("Sync Started in Background");
+    }
 }
