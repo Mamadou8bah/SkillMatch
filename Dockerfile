@@ -2,9 +2,9 @@
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
-# Try to copy from either root or nested path to be safe
-COPY pom.xml* backend/SkillMatch/pom.xml* ./ 
-COPY src* backend/SkillMatch/src* ./src/
+# Copy the project files
+COPY backend/SkillMatch/pom.xml ./
+COPY backend/SkillMatch/src ./src/
 
 # Build the application
 RUN mvn clean package -DskipTests

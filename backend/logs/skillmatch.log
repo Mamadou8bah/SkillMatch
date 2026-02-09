@@ -15329,3 +15329,99 @@ Caused by: org.postgresql.util.PSQLException: ERROR: update or delete on table "
 	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java)
 	at org.hibernate.sql.exec.internal.StandardJdbcMutationExecutor.execute(StandardJdbcMutationExecutor.java:90)
 	... 48 common frames omitted
+2026-02-09 03:08:11.094 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:08:11.094 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:08:11.174 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:08:11.414 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:08:11.415 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:08:11.416 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:08:11.483 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:08:11.511 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:08:11.517 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:08:11.520 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:08:11.572 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:08:11.572 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:08:11.573 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:08:11.662 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:08:11.693 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:08:11.699 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:08:53.541 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/17
+2026-02-09 03:08:53.542 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/17
+2026-02-09 03:08:53.548 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/17
+2026-02-09 03:08:53.607 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/17
+2026-02-09 03:08:53.608 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/17", parameters={}
+2026-02-09 03:08:53.608 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:08:53.751 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:08:53.756 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=17, title=Transportation Services Provider, description=The Medical Research Counc (truncated)...]
+2026-02-09 03:08:53.758 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:08:53.765 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/17
+2026-02-09 03:08:53.816 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/17
+2026-02-09 03:08:53.816 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/17", parameters={}
+2026-02-09 03:08:53.817 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:08:53.835 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:08:53.837 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=17, title=Transportation Services Provider, description=The Medical Research Counc (truncated)...]
+2026-02-09 03:08:53.839 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:02.759 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:09:02.763 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:09:02.770 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:09:02.801 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:09:02.801 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:09:02.802 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:09:02.857 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:02.904 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:09:02.913 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:09:02.919 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:02.965 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:09:02.966 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:09:02.966 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:09:03.042 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:03.082 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:09:03.089 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:11.220 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/18
+2026-02-09 03:09:11.225 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/18
+2026-02-09 03:09:11.235 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/18
+2026-02-09 03:09:11.262 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/18
+2026-02-09 03:09:11.262 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/18", parameters={}
+2026-02-09 03:09:11.263 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:09:11.276 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:11.277 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=18, title=Procurement Of Environment & Sanitary Materials, description=CARITAS GAM (truncated)...]
+2026-02-09 03:09:11.278 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:11.279 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/18
+2026-02-09 03:09:11.297 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/18
+2026-02-09 03:09:11.298 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/18", parameters={}
+2026-02-09 03:09:11.298 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:09:11.307 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:11.309 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=18, title=Procurement Of Environment & Sanitary Materials, description=CARITAS GAM (truncated)...]
+2026-02-09 03:09:11.311 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:28.881 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:09:28.890 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post
+2026-02-09 03:09:28.903 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:09:28.926 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:09:28.926 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:09:28.927 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:09:28.973 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:28.996 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:09:29.000 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post
+2026-02-09 03:09:29.001 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:09:29.020 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post
+2026-02-09 03:09:29.021 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post", parameters={}
+2026-02-09 03:09:29.021 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPost(int, int)
+2026-02-09 03:09:29.105 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:09:29.143 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [[JobResponseDTO(id=46, title=Primeforge, description=<p>At <a href="http://www.primeforge.io">Primef (truncated)...]
+2026-02-09 03:09:29.150 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:11:16.613 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/32
+2026-02-09 03:11:16.613 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing OPTIONS /post/32
+2026-02-09 03:11:16.681 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/32
+2026-02-09 03:11:17.052 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/32
+2026-02-09 03:11:17.058 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/32", parameters={}
+2026-02-09 03:11:17.061 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:11:17.232 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:11:17.235 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=32, title=Project Manager, description=The United Nations Office for Project Servi (truncated)...]
+2026-02-09 03:11:17.245 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
+2026-02-09 03:11:17.252 DEBUG o.s.security.web.FilterChainProxy [- ] - Securing GET /post/32
+2026-02-09 03:11:17.287 DEBUG o.s.security.web.FilterChainProxy [- ] - Secured GET /post/32
+2026-02-09 03:11:17.287 DEBUG o.s.web.servlet.DispatcherServlet [- ] - GET "/post/32", parameters={}
+2026-02-09 03:11:17.288 DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping [- ] - Mapped to SkillMatch.controller.JobPostController#getJobPostById(long)
+2026-02-09 03:11:17.336 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/yaml]
+2026-02-09 03:11:17.337 DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor [- ] - Writing [JobResponseDTO(id=32, title=Project Manager, description=The United Nations Office for Project Servi (truncated)...]
+2026-02-09 03:11:17.339 DEBUG o.s.web.servlet.DispatcherServlet [- ] - Completed 200 OK
