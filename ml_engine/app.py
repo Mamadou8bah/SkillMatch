@@ -24,8 +24,9 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "service": "SkillMatch ML Engine",
-        "model": "all-MiniLM-L6-v2",
-        "quantization": "8-bit"
+        "mode": "External-API",
+        "provider": "HuggingFace-Inference",
+        "model": "all-MiniLM-L6-v2"
     }), 200
 
 @app.route('/embeddings', methods=['POST'])
@@ -41,9 +42,10 @@ def get_embeddings():
             texts = [texts]
             
         embeddings = recommender._get_batch_embeddings(texts)
+        model_name = "text-embedding-3-small" if os.getenv("OPENAI_API_KEY") else "all-MiniLM-L6-v2"
         return jsonify({
             "embeddings": embeddings.tolist(),
-            "model": "all-MiniLM-L6-v2"
+            "model": model_name
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

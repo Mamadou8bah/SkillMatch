@@ -21,30 +21,54 @@ MODEL_PATH = os.path.join(BASE_DIR, 'reranker_model.pkl')
 DB_PATH = os.path.join(BASE_DIR, 'interactions.db')
 
 # Hugging Face Inference API configuration
-# model: all-MiniLM-L6-v2 (384 dims)
 HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
-HF_TOKEN = os.getenv("HF_API_TOKEN") # Optional but recommended for higher rate limits
+HF_TOKEN = os.getenv("HF_API_TOKEN") 
+
+# OpenAI Configuration (Alternative)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+
+def call_openai_api(texts):
+    """Helper for OpenAI embeddings"""
+    if not OPENAI_API_KEY:
+        return None
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/embeddings",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            json={"input": texts, "model": OPENAI_EMBEDDING_MODEL}
+        )
+        if response.status_code == 200:
+            return np.array([item["embedding"] for item in response.json()["data"]])
+    except:
+        pass
+    return None
 
 def call_hf_api(texts):
     """Helper to call Hugging Face Inference API for embeddings"""
+    # Prefer OpenAI if key is present for reliability
+    if OPENAI_API_KEY:
+        return call_openai_api(texts)
+        
     headers = {}
     if HF_TOKEN:
         headers["Authorization"] = f"Bearer {HF_TOKEN}"
     
-    # Hugging Face Inference API expects {"inputs": ["text1", "text2"]}
-    response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts})
-    
-    if response.status_code == 200:
-        return np.array(response.json())
-    elif response.status_code == 503:
-        # Model is loading, wait and retry once
-        print("HF Model is loading, waiting 5s...")
-        time.sleep(5)
-        response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts})
+    try:
+        response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts}, timeout=10)
+        
         if response.status_code == 200:
             return np.array(response.json())
+        elif response.status_code == 503:
+            print("HF Model is loading, waiting 5s...")
+            time.sleep(5)
+            response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts}, timeout=15)
+            if response.status_code == 200:
+                return np.array(response.json())
+    except Exception as e:
+        print(f"HF API Timeout/Error: {e}")
             
-    print(f"HF API Error: {response.status_code} - {response.text}")
+    print(f"Embedding API Error: {response.status_code if 'response' in locals() else 'Unknown'}")
     return None
 
 # GLOBAL EMBEDDING CACHE
@@ -68,8 +92,11 @@ class AIRecommender:
 
     def _get_embedding(self, text):
         """Get embedding from cache or compute it"""
+        # Determine dimension (384 for MiniLM, 1536 for OpenAI small)
+        dim = 1536 if OPENAI_API_KEY else 384
+        
         if not text or not isinstance(text, str):
-            return np.zeros(384) # all-MiniLM-L6-v2 has 384 dimensions
+            return np.zeros(dim)
             
         text = text.strip()
         if text in embedding_cache:
@@ -86,7 +113,7 @@ class AIRecommender:
             embedding_cache[text] = emb
             return emb
         
-        return np.zeros(384)
+        return np.zeros(dim)
 
     def _get_batch_embeddings(self, texts):
         """Get batch of embeddings efficiently"""
@@ -116,20 +143,18 @@ class AIRecommender:
                     gc.collect()
                     
                 for i, emb in enumerate(computed_embs):
-                    original_idx = indices_to_compute[i]
-                    text = to_compute[i]
-                    embedding_cache[text] = emb
-                    results[original_idx] = emb
+                    if i < len(indices_to_compute):
+                        original_idx = indices_to_compute[i]
+                        text = to_compute[i]
+                        embedding_cache[text] = emb
+                        results[original_idx] = emb
             else:
                 # Fallback to zeros if API fails
+                dim = 1536 if OPENAI_API_KEY else 384
                 for i in indices_to_compute:
-                    results[i] = np.zeros(384)
+                    results[i] = np.zeros(dim)
                 embedding_cache.clear()
                 gc.collect()
-                
-            for i, emb in enumerate(computed_embs):
-                results[indices_to_compute[i]] = emb
-                embedding_cache[to_compute[i]] = emb
                 
         return np.array(results)
 
