@@ -39,6 +39,7 @@ export const Profile = () => {
     email: "",
     role: "",
     location: "",
+    profession: "",
     mobile: "",
     photoUrl: ""
   });
@@ -91,6 +92,7 @@ export const Profile = () => {
           email: data.data.email || '',
           role: data.data.role || '',
           location: data.data.location || '',
+          profession: data.data.profession || '',
           mobile: data.data.mobile || '',
           photoUrl: data.data.photo?.url || ''
         });
@@ -139,6 +141,7 @@ export const Profile = () => {
     setError('');
     if (!profileData.fullName.trim()) return setError('Full Name is required');
     if (!profileData.location.trim()) return setError('Location is required');
+    if (!profileData.profession.trim()) return setError('Profession is required');
     if (!profileData.mobile.trim()) return setError('Mobile number is required');
 
     try {
@@ -313,6 +316,10 @@ export const Profile = () => {
             <input type="text" name="location" value={profileData.location} onChange={handleInputChange} className="form-input" />
           </div>
           <div className="form-group">
+            <label>Profession</label>
+            <input type="text" name="profession" value={profileData.profession} onChange={handleInputChange} className="form-input" />
+          </div>
+          <div className="form-group">
             <label>Mobile</label>
             <input type="text" name="mobile" value={profileData.mobile} onChange={handleInputChange} className="form-input" />
           </div>
@@ -457,7 +464,7 @@ export const Profile = () => {
           )}
         </div>
         <h1 className="profile-name">{profileData.fullName}</h1>
-        <p className="profile-role">{profileData.role}</p>
+        <p className="profile-role">{profileData.profession || profileData.role}</p>
         <button className="edit-profile-btn" onClick={() => setActiveView('edit')}>Edit Profile</button>
       </div>
 

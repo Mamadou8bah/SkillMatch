@@ -13,6 +13,7 @@ export const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
     const [location, setLocation] = useState('')
+    const [profession, setProfession] = useState('')
     const [role, setRole] = useState('CANDIDATE') // Only Candidates now
     const [companyName, setCompanyName] = useState('')
     const [industry, setIndustry] = useState('')
@@ -200,12 +201,17 @@ export const Login = () => {
             return
         }
 
+        if (profession.trim().length < 2) {
+            setError('Please enter your profession')
+            return
+        }
+
         setIsLoading(true)
         try {
             const response = await fetch(`/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ location, role: 'CANDIDATE' })
+                body: JSON.stringify({ location, profession, role: 'CANDIDATE' })
             })
             const data = await response.json()
             if (data.success) {
@@ -386,7 +392,7 @@ export const Login = () => {
                     </div>
                     <p className="welcome-back">
                         {regStage === 1 ? 'Create account' : 
-                         regStage === 2 ? 'Where are you?' : 
+                         regStage === 2 ? 'About you' : 
                          regStage === 3 ? 'Profile Photo' :
                          regStage === 4 ? 'What are your skills?' :
                          'Verify Identity'}
@@ -444,6 +450,18 @@ export const Login = () => {
                                     placeholder='Location (City, Country)' 
                                 />
                             </div>
+                            <div className={focused === 'profession' ? 'input-div focused' : 'input-div'}>
+                                <label><Briefcase size={20} /></label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={profession} 
+                                    onChange={(e) => setProfession(e.target.value)} 
+                                    onFocus={() => setFocused('profession')} 
+                                    onBlur={() => setFocused('')} 
+                                    placeholder='Profession (e.g. Software Engineer)' 
+                                />
+                            </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
                                 {isLoading ? <Loader size="small" /> : 'Next Step'}
                             </button>
@@ -488,9 +506,6 @@ export const Login = () => {
                                     <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
                                 </label>
                             </div>
-                            <p style={{ textAlign: 'center', color: '#666', fontSize: '0.9rem' }}>
-                                A professional photo increases your chances of getting hired.
-                            </p>
                             <button type="submit" className="login-button" disabled={isLoading}>
                                 {isLoading ? <Loader size="small" /> : (photo ? 'Save & Continue' : 'Skip for now')}
                             </button>

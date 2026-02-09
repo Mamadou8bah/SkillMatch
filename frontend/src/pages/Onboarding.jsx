@@ -16,6 +16,7 @@ export const Onboarding = () => {
         skills: [],
         experience: '',
         location: '',
+        profession: '',
         photo: null
     });
 
@@ -109,9 +110,15 @@ export const Onboarding = () => {
             return;
         }
 
-        if (step === 2 && !formData.location.trim()) {
-            setError('Please specify your preferred work location.');
-            return;
+        if (step === 2) {
+            if (!formData.location.trim()) {
+                setError('Please specify your preferred work location.');
+                return;
+            }
+            if (!formData.profession.trim()) {
+                setError('Please specify your profession.');
+                return;
+            }
         }
 
         if (step === 3 && !formData.experience) {
@@ -213,17 +220,30 @@ export const Onboarding = () => {
             )
         },
         {
-            title: "Set your location",
-            subtitle: "Where would you like to work?",
+            title: "Your details",
+            subtitle: "Tell us about yourself to complete your profile.",
             content: (
                 <div className="onboarding-input-group">
-                    <input 
-                        type="text" 
-                        placeholder="e.g. Lagos, Nigeria / Remote"
-                        value={formData.location}
-                        onChange={(e) => setFormData({...formData, location: e.target.value})}
-                        style={{ width: '100%' }}
-                    />
+                    <div style={{ marginBottom: '20px' }}>
+                        <p className="section-label">Your Profession</p>
+                        <input 
+                            type="text" 
+                            placeholder="e.g. Graphic Designer, Web Developer"
+                            value={formData.profession}
+                            onChange={(e) => setFormData({...formData, profession: e.target.value})}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                    <div>
+                        <p className="section-label">Preferred Work Location</p>
+                        <input 
+                            type="text" 
+                            placeholder="e.g. Lagos, Nigeria / Remote"
+                            value={formData.location}
+                            onChange={(e) => setFormData({...formData, location: e.target.value})}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
                 </div>
             )
         },
