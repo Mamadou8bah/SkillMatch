@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
             UserAlreadyExistException.class,
             DuplicateApplicationException.class
     })
-    public ResponseEntity<ApiResponse<Object>> conflict(RuntimeException ex) {
+    public ResponseEntity<ApiResponse<Object>> conflict(Exception ex) {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
             InvalidTokenException.class,
             TokenExpiredException.class
     })
-    public ResponseEntity<ApiResponse<Object>> unauthorized(RuntimeException ex) {
+    public ResponseEntity<ApiResponse<Object>> unauthorized(Exception ex) {
         return error(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
             UnknownIdentifierException.class,
             IllegalArgumentException.class
     })
-    public ResponseEntity<ApiResponse<Object>> badRequest(RuntimeException ex) {
+    public ResponseEntity<ApiResponse<Object>> badRequest(Exception ex) {
         return error(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
