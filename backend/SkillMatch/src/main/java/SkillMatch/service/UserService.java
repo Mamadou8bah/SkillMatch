@@ -77,6 +77,10 @@ public class UserService {
     private final PhotoRepository photoRepository;
 
 
+    public long countUsers() {
+        return repo.count();
+    }
+
     public List<UserDTO>getUsers(){
         List<User> users= repo.findAll();
         List<UserDTO> userDTOS=new ArrayList<>();

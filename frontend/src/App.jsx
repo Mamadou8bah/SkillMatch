@@ -14,6 +14,7 @@ import { Messages } from './pages/Messages';
 import { Conversation } from './components/Conversation';
 import { Candidates } from './components/Candidates';
 import { Notifications } from './pages/Notifications';
+import { AdminDashboard } from './pages/AdminDashboard';
 
 import { ManageJobs } from './components/ManageJobs';
 import InstallPrompt from './components/InstallPrompt';
@@ -74,6 +75,7 @@ function App() {
         <Route path="/intro" element={<LandingIntro />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/*" element={<AdminDashboard />} />
 
 
         <Route path="/" element={<AuthGuard />} >

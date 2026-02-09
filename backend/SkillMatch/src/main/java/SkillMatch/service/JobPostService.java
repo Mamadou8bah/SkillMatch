@@ -39,6 +39,10 @@ public class JobPostService {
     private final UserInteractionRepository interactionRepo;
     private final ExternalJobService externalJobService;
 
+    public long countJobs() {
+        return repo.count();
+    }
+
     public JobPost addJob(JobPost jobPost){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
