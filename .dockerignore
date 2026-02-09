@@ -4,7 +4,6 @@ frontend/
 ml_engine/
 node_modules/
 .venv/
-backend/SkillMatch/target/
-backend/SkillMatch/logs/
-backend/logs//
+**/target/
+**/logs/
 *.log
