@@ -2,8 +2,10 @@
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
-# Copy the project files
-COPY backend/SkillMatch/ ./
+# Copy the pom.xml and source code
+# We copy them explicitly to ensure they are at the root of /app
+COPY backend/SkillMatch/pom.xml ./
+COPY backend/SkillMatch/src ./src
 
 # Build the application
 RUN mvn clean package -DskipTests

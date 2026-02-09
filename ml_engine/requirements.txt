@@ -1,11 +1,9 @@
---extra-index-url https://download.pytorch.org/whl/cpu
 flask
 pandas
 scikit-learn
 numpy
 python-dotenv
-sentence-transformers
-torch
+requests
 gunicorn
 joblib
-# groq moved to backend as requested
+# torch and sentence-transformers removed for API-based embeddings to save memory

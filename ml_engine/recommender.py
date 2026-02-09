@@ -1,7 +1,5 @@
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.linear_model import LogisticRegression
-import torch
 import pandas as pd
 import numpy as np
 import re
@@ -10,10 +8,11 @@ import joblib
 import json
 import sqlite3
 import gc
+import requests
+import time
 from datetime import datetime
 
-# MEMORY OPTIMIZATION: Limit torch threads
-torch.set_num_threads(1)
+# MEMORY OPTIMIZATION
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Path Configuration
@@ -21,20 +20,32 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'reranker_model.pkl')
 DB_PATH = os.path.join(BASE_DIR, 'interactions.db')
 
-# Initialize sentence transformer (Shared across instances)
-# LOAD MODEL AT STARTUP WITH 8-BIT QUANTIZATION
-print("Loading model 'all-MiniLM-L6-v2'...")
-model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
-model.max_seq_length = 256 # Limit input length to save memory
+# Hugging Face Inference API configuration
+# model: all-MiniLM-L6-v2 (384 dims)
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+HF_TOKEN = os.getenv("HF_API_TOKEN") # Optional but recommended for higher rate limits
 
-# Apply 8-bit quantization to reduce memory usage
-try:
-    print("Applying 8-bit quantization...")
-    model = torch.quantization.quantize_dynamic(
-        model, {torch.nn.Linear}, dtype=torch.qint8
-    )
-except Exception as e:
-    print(f"Quantization failed, using full precision: {e}")
+def call_hf_api(texts):
+    """Helper to call Hugging Face Inference API for embeddings"""
+    headers = {}
+    if HF_TOKEN:
+        headers["Authorization"] = f"Bearer {HF_TOKEN}"
+    
+    # Hugging Face Inference API expects {"inputs": ["text1", "text2"]}
+    response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts})
+    
+    if response.status_code == 200:
+        return np.array(response.json())
+    elif response.status_code == 503:
+        # Model is loading, wait and retry once
+        print("HF Model is loading, waiting 5s...")
+        time.sleep(5)
+        response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts})
+        if response.status_code == 200:
+            return np.array(response.json())
+            
+    print(f"HF API Error: {response.status_code} - {response.text}")
+    return None
 
 # GLOBAL EMBEDDING CACHE
 # Maps hash(text) or text -> embedding
@@ -69,9 +80,13 @@ class AIRecommender:
             embedding_cache.clear()
             gc.collect()
             
-        emb = model.encode([text], show_progress_bar=False)[0]
-        embedding_cache[text] = emb
-        return emb
+        computed_embs = call_hf_api([text])
+        if computed_embs is not None:
+            emb = computed_embs[0]
+            embedding_cache[text] = emb
+            return emb
+        
+        return np.zeros(384)
 
     def _get_batch_embeddings(self, texts):
         """Get batch of embeddings efficiently"""
@@ -92,12 +107,23 @@ class AIRecommender:
                 indices_to_compute.append(i)
                 
         if to_compute:
-            # Batch size optimization
-            batch_size = 16 
-            computed_embs = model.encode(to_compute, batch_size=batch_size, show_progress_bar=False)
+            computed_embs = call_hf_api(to_compute)
             
             # Update cache and results
-            if len(embedding_cache) + len(to_compute) > 1000:
+            if computed_embs is not None:
+                if len(embedding_cache) + len(to_compute) > 1000:
+                    embedding_cache.clear()
+                    gc.collect()
+                    
+                for i, emb in enumerate(computed_embs):
+                    original_idx = indices_to_compute[i]
+                    text = to_compute[i]
+                    embedding_cache[text] = emb
+                    results[original_idx] = emb
+            else:
+                # Fallback to zeros if API fails
+                for i in indices_to_compute:
+                    results[i] = np.zeros(384)
                 embedding_cache.clear()
                 gc.collect()
                 

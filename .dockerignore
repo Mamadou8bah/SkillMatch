@@ -1,10 +1,10 @@
 .git
 .github
-frontend
-ml_engine
-node_modules
-.venv
-target
+frontend/
+ml_engine/
+node_modules/
+.venv/
+backend/SkillMatch/target/
+backend/SkillMatch/logs/
+backend/logs//
 *.log
-!backend/SkillMatch/src
-!backend/SkillMatch/pom.xml
