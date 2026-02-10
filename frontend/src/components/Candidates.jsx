@@ -122,7 +122,7 @@ export const Candidates = () => {
                             />
                             <div className="user-card-info">
                                 <h3>{user.fullName}</h3>
-                                <span className="user-card-role">{user.role || 'Member'}</span>
+                                <span className="user-card-role">{user.profession}</span>
                                 <div className="user-card-location">
                                     <MapPin size={14} />
                                     <span>{user.location || 'Remote'}</span>

@@ -37,7 +37,6 @@ public class JobPost {
     private String source;
     @Column(length = 1024)
     private String industry;
-    private String jobType;
     
     @ElementCollection
     private List<String> requirements;

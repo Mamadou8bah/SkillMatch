@@ -11,4 +11,10 @@ public interface JobPostRepo extends JpaRepository<JobPost,Long> {
     List<JobPost> findByTitleContainingIgnoreCase(String title);
 
     List<JobPost> findByEmployerId(Long employerId);
+
+    boolean existsByExternalId(String externalId);
+
+    boolean existsByJobUrl(String jobUrl);
+
+    void deleteByPostedAtBefore(java.time.LocalDateTime dateTime);
 }

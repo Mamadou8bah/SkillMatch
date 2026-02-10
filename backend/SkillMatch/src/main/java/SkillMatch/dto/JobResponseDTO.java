@@ -21,7 +21,6 @@ public class JobResponseDTO {
     private String salary;
     private String url;
     private String industry;
-    private String type;
     private List<String> skills;
     private List<String> requirements;
     private LocalDateTime postedAt;

@@ -85,18 +85,23 @@ public class ExternalJobService {
             Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content");
             String description = (descEl != null) ? descEl.html().trim() : "";
 
+            String logo = firstAttr(doc, "src", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img");
+            if (logo != null && !logo.startsWith("http")) {
+                logo = doc.baseUri().substring(0, doc.baseUri().indexOf("/", 10)) + logo;
+            }
+
             return JobResponseDTO.builder()
                     .id(jobUrl)
                     .title(title)
                     .description(description)
                     .employer(JobResponseDTO.EmployerInfo.builder()
                             .name(company != null ? company : "N/A")
+                            .logo(logo != null ? logo : "")
                             .build())
                     .locationType(location)
                     .url(jobUrl)
                     .postedAt(parseGamjobsDate(postedText))
                     .source("Gamjobs")
-                    .type(type)
                     .build();
         } catch (Exception e) {
             log.error("Error fetching Gamjobs detail: {}", jobUrl, e);
@@ -158,7 +163,10 @@ public class ExternalJobService {
                     );
 
                     jobs.add(JobResponseDTO.builder().id(pdfUrl).title(title).description(description)
-                            .employer(JobResponseDTO.EmployerInfo.builder().name("IOM Gambia").build())
+                            .employer(JobResponseDTO.EmployerInfo.builder()
+                                    .name("IOM Gambia")
+                                    .logo("https://gambia.iom.int/sites/g/files/tmzbdl141/files/iom_logo.png")
+                                    .build())
                             .locationType("ONSITE").url(pdfUrl).postedAt(LocalDateTime.now()).source("IOMGambia").build());
                 }
             }
@@ -171,6 +179,7 @@ public class ExternalJobService {
         List<JobResponseDTO> jobs = new ArrayList<>();
         try {
             Document doc = Jsoup.connect(MOJ_GAMBIA_URL).userAgent(USER_AGENT).get();
+            String siteLogo = firstAttr(doc, "src", ".logo img", "img[src*=logo]", "header img");
             Elements links = doc.select("a[href*=.pdf], .entry-content a");
             for (Element link : links) {
                 String title = link.text().trim();
@@ -178,7 +187,10 @@ public class ExternalJobService {
                 if (title.length() > 5 && !title.equalsIgnoreCase("View Details") && (url.toLowerCase().endsWith(".pdf") || title.toLowerCase().contains("vacancy"))) {
                     String description = String.format("<div class='moj-job-container'><h3>Ministry of Justice - Vacancy</h3><p><strong>Position:</strong> %s</p><p>Please download the official PDF for details.</p></div>", title);
                     jobs.add(JobResponseDTO.builder().id(url).title(title).description(description)
-                            .employer(JobResponseDTO.EmployerInfo.builder().name("Ministry of Justice, The Gambia").build())
+                            .employer(JobResponseDTO.EmployerInfo.builder()
+                                    .name("Ministry of Justice, The Gambia")
+                                    .logo(siteLogo != null ? siteLogo : "")
+                                    .build())
                             .locationType("ONSITE").url(url).postedAt(LocalDateTime.now()).source("MOJGambia").build());
                 }
             }
@@ -195,14 +207,35 @@ public class ExternalJobService {
             for (Element el : jobElements) {
                 Element titleLink = el.selectFirst("a.jtitle");
                 if (titleLink == null) continue;
-                String title = titleLink.text().trim();
                 String jobUrl = titleLink.absUrl("href");
-                jobs.add(JobResponseDTO.builder().id(jobUrl).title(title).description(el.html())
-                        .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").build())
-                        .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build());
+                
+                JobResponseDTO detail = fetchUnJobDetail(jobUrl);
+                if (detail != null) {
+                    jobs.add(detail);
+                } else {
+                    // Fallback to list data if detail fetch fails
+                    String title = titleLink.text().trim();
+                    jobs.add(JobResponseDTO.builder().id(jobUrl).title(title).description(el.html())
+                            .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").build())
+                            .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build());
+                }
+                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
             }
         } catch (Exception e) { log.error("Error UNJobs", e); }
         return jobs;
+    }
+
+    private JobResponseDTO fetchUnJobDetail(String jobUrl) {
+        try {
+            Document doc = Jsoup.connect(jobUrl).userAgent(USER_AGENT).get();
+            String title = firstText(doc, "h1", "h2", ".jtitle");
+            Element content = doc.selectFirst("#job-details, .job_description, article");
+            String logo = firstAttr(doc, "src", ".logo img", "img[src*=logo]");
+            return JobResponseDTO.builder()
+                    .id(jobUrl).title(title).description(content != null ? content.html() : doc.body().html())
+                    .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").logo(logo != null ? logo : "").build())
+                    .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build();
+        } catch (Exception e) { return null; }
     }
 
     public List<JobResponseDTO> fetchPrimeforgeJobs() {
@@ -226,8 +259,9 @@ public class ExternalJobService {
             Document doc = Jsoup.connect(jobUrl).userAgent(USER_AGENT).get();
             String title = firstText(doc, "h1");
             Element descriptionEl = doc.selectFirst("div.description, .job-details");
+            String logo = firstAttr(doc, "src", ".company-logo img", ".logo img");
             return JobResponseDTO.builder().id(jobUrl).title(title).description(descriptionEl != null ? descriptionEl.html() : doc.body().html())
-                    .employer(JobResponseDTO.EmployerInfo.builder().name("Primeforge").build())
+                    .employer(JobResponseDTO.EmployerInfo.builder().name("Primeforge").logo(logo != null ? logo : "").build())
                     .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("Primeforge").build();
         } catch (Exception e) { return null; }
     }
@@ -235,8 +269,11 @@ public class ExternalJobService {
     public List<JobResponseDTO> structureBatchWithAI(List<JobResponseDTO> dtos) {
         if (dtos == null || dtos.isEmpty()) return new ArrayList<>();
         List<String> rawDataList = dtos.stream()
-            .map(dto -> String.format("Title: %s\nDescription: %s\nSource: %s", 
-                dto.getTitle(), Jsoup.parse(dto.getDescription()).text(), dto.getSource()))
+            .map(dto -> String.format("Title: %s\nEmployer: %s\nDescription: %s\nSource: %s", 
+                dto.getTitle(), 
+                dto.getEmployer() != null ? dto.getEmployer().getName() : "Unknown",
+                Jsoup.parse(dto.getDescription()).text(), 
+                dto.getSource()))
             .collect(Collectors.toList());
 
         List<String> jsonResults = groqService.structureJobDataBatch(rawDataList);
@@ -252,7 +289,6 @@ public class ExternalJobService {
             if (node.has("title")) dto.setTitle(node.get("title").asText());
             if (node.has("description")) dto.setDescription(node.get("description").asText());
             if (node.has("industry")) dto.setIndustry(node.get("industry").asText());
-            if (node.has("type")) dto.setType(node.get("type").asText());
             if (node.has("salary")) dto.setSalary(node.get("salary").asText());
             if (node.has("requirements") && node.get("requirements").isArray()) {
                 List<String> reqs = new ArrayList<>();
@@ -271,6 +307,19 @@ public class ExternalJobService {
         for (String selector : selectors) {
             Element el = doc.selectFirst(selector);
             if (el != null && !el.text().isBlank()) return el.text().trim();
+        }
+        return null;
+    }
+
+    private String firstAttr(Document doc, String attribute, String... selectors) {
+        for (String selector : selectors) {
+            Element el = doc.selectFirst(selector);
+            if (el != null) {
+                String val = el.attr(attribute);
+                if (val != null && !val.isBlank()) {
+                    return el.absUrl(attribute); // Use absUrl to get fully qualified URL
+                }
+            }
         }
         return null;
     }

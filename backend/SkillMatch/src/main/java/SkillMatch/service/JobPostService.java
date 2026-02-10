@@ -75,7 +75,6 @@ public class JobPostService {
                 .url(jobPost.getJobUrl())
                 .postedAt(jobPost.getPostedAt())
                 .source(jobPost.getSource() != null ? jobPost.getSource() : "Own")
-                .type(jobPost.getJobType())
                 .industry(jobPost.getIndustry())
                 .requirements(jobPost.getRequirements())
                 .skills(jobPost.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()))
@@ -207,6 +206,16 @@ public class JobPostService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void persistExternalJob(JobResponseDTO dto, String source) {
         try {
+            // Check if job already exists by URL or External ID
+            if (dto.getUrl() != null && repo.existsByJobUrl(dto.getUrl())) {
+                log.info("Job already exists by URL: {}", dto.getUrl());
+                return;
+            }
+            if (dto.getId() != null && repo.existsByExternalId(dto.getId())) {
+                log.info("Job already exists by External ID: {}", dto.getId());
+                return;
+            }
+
             JobPost post = new JobPost();
             post.setExternalId(dto.getId()); 
             post.setTitle(dto.getTitle());
@@ -216,7 +225,6 @@ public class JobPostService {
             post.setJobUrl(dto.getUrl());
             post.setSource(source);
             post.setIndustry(dto.getIndustry());
-            post.setJobType(dto.getType());
             post.setLocationType(mapToLocationType(dto.getLocationType()));
             post.setSalary(dto.getSalary() != null ? dto.getSalary() : "N/A");
             post.setRequirements(dto.getRequirements());
@@ -243,5 +251,14 @@ public class JobPostService {
         if (l.contains("remote")) return LocationType.REMOTE;
         if (l.contains("hybrid")) return LocationType.HYBRID;
         return LocationType.ONSITE;
+    }
+
+    @Scheduled(cron = "0 0 0 * * *") // Run every day at midnight
+    @Transactional
+    public void deleteOldJobs() {
+        LocalDateTime fifteenDaysAgo = LocalDateTime.now().minusDays(15);
+        log.info("Started automatic cleanup of jobs older than 15 days (before {})", fifteenDaysAgo);
+        repo.deleteByPostedAtBefore(fifteenDaysAgo);
+        log.info("Finished automatic cleanup.");
     }
 }
