@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @AllArgsConstructor
@@ -27,6 +29,7 @@ public class Skill {
 
     @ManyToOne
     @JoinColumn(name = "job_post_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonBackReference
     private JobPost jobPost;
 

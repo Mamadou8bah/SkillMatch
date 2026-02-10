@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -43,6 +45,8 @@ public class JobPost {
     private String industry;
     
     @ElementCollection
+    @CollectionTable(name = "job_post_requirements", joinColumns = @JoinColumn(name = "job_post_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<String> requirements;
 
     @ManyToOne
@@ -59,9 +63,13 @@ public class JobPost {
     
     private String salary;
 
-    @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Application> applications;
+
+    @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<UserInteraction> interactions;
 
     @Column(nullable = false,updatable = false)
     @CreatedDate
