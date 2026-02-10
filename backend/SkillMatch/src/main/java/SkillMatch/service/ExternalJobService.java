@@ -1,4 +1,4 @@
-﻿package SkillMatch.service;
+package SkillMatch.service;
 
 import SkillMatch.dto.JobResponseDTO;
 import com.fasterxml.jackson.databind.JsonNode;
