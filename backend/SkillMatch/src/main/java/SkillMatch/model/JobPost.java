@@ -32,13 +32,14 @@ public class JobPost {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
     
+    @Column(unique = true)
     private String externalId;
     private String companyName;
     @Column(columnDefinition = "TEXT")
     private String companyLogo;
     @Column(columnDefinition = "TEXT")
     private String companyWebsite;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", unique = true)
     private String jobUrl;
     private String source;
     @Column(length = 1024)

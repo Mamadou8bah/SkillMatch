@@ -183,11 +183,28 @@ public class JobPostService {
 
     private void saveExternalJobs(List<JobResponseDTO> jobs, String source) {
         log.info("Processing {} jobs from {}", jobs.size(), source);
+        
+        // Pre-filter: Remove jobs that already exist in the database to save AI tokens
+        List<JobResponseDTO> newJobs = jobs.stream()
+            .filter(dto -> {
+                boolean existsByUrl = dto.getUrl() != null && repo.existsByJobUrl(dto.getUrl());
+                boolean existsById = dto.getId() != null && repo.existsByExternalId(dto.getId());
+                return !existsByUrl && !existsById;
+            })
+            .collect(Collectors.toList());
+
+        if (newJobs.isEmpty()) {
+            log.info("No new jobs to process for source: {}", source);
+            return;
+        }
+
+        log.info("Identified {} new unique jobs for processing", newJobs.size());
+
         // Reduced batch size for free-tier survival
         int batchSize = 3; 
-        for (int i = 0; i < jobs.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, jobs.size());
-            List<JobResponseDTO> batch = jobs.subList(i, end);
+        for (int i = 0; i < newJobs.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, newJobs.size());
+            List<JobResponseDTO> batch = newJobs.subList(i, end);
             try {
                 // AI Quota survival: If Gemini fails, fallback to raw data
                 List<JobResponseDTO> structuredBatch = externalJobService.structureBatchWithAI(batch);
@@ -200,7 +217,7 @@ public class JobPostService {
                     }
                 }
                 // Longer pause to respect free API rate limits and CPU
-                if (end < jobs.size()) Thread.sleep(5000); 
+                if (end < newJobs.size()) Thread.sleep(5000); 
             } catch (Exception e) {
                 log.error("Batch processing fallback: {}", e.getMessage());
                 for (JobResponseDTO dto : batch) this.persistExternalJob(dto, source);

@@ -28,6 +28,11 @@ export const apiFetch = async (endpoint, options = {}) => {
     if (response.status === 204) return null;
     
     const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error(data.message || 'API request failed');
+    }
+    
     return data;
 };
 

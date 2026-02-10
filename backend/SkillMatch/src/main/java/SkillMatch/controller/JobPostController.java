@@ -64,6 +64,9 @@ public class JobPostController {
     @PostMapping("/sync")
     public ResponseEntity<?> syncJobs() {
         service.syncExternalJobs();
-        return ResponseEntity.ok("Sync Started in Background");
+        return ResponseEntity.ok().body(new java.util.HashMap<String, String>() {{
+            put("message", "Sync Started in Background");
+            put("status", "success");
+        }});
     }
 }
