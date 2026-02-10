@@ -78,6 +78,31 @@ export const Discover = () => {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
 
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      
+      if (page > 3) pages.push('...');
+      
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+      
+      if (page < totalPages - 2) pages.push('...');
+      
+      if (!pages.includes(totalPages)) pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const paginated = useMemo(() => {
     const start = (page - 1) * pageSize
     return filtered.slice(start, start + pageSize)
@@ -131,8 +156,18 @@ export const Discover = () => {
               <path d="M669.6 849.6c8.8 8 22.4 7.2 30.4-1.6s7.2-22.4-1.6-30.4l-309.6-280c-8-7.2-8-17.6 0-24.8l309.6-270.4c8.8-8 9.6-21.6 2.4-30.4-8-8.8-21.6-9.6-30.4-2.4L360.8 480.8c-27.2 24-28 64-0.8 88.8l309.6 280z" fill="currentColor" />
             </svg>
           </button>
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button key={i} className={"page-btn" + (page === i + 1 ? ' active' : '')} onClick={() => setPage(i + 1)}>{i + 1}</button>
+          {getPageNumbers().map((p, i) => (
+            p === '...' ? (
+              <span key={`ellipsis-${i}`} className="pagination-ellipsis">...</span>
+            ) : (
+              <button 
+                key={p} 
+                className={"page-btn" + (page === p ? ' active' : '')} 
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            )
           ))}
           <button
             className="page-btn next-btn"

@@ -135,6 +135,13 @@
     border-color: var(--primary-color);
 }
 
+.pagination-ellipsis {
+    color: var(--text-secondary);
+    padding: 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .page-btn:disabled{
     opacity: 0.5;
     cursor: not-allowed;
