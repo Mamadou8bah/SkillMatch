@@ -69,11 +69,6 @@ public class GeminiService {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("contents", Collections.singletonList(content));
 
-            // Optional: specify response mime type to encourage JSON
-            Map<String, Object> generationConfig = new HashMap<>();
-            generationConfig.put("responseMimeType", "application/json");
-            requestBody.put("generationConfig", generationConfig);
-
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
             String url = GEMINI_API_URL + apiKey;
             String response = restTemplate.postForObject(url, entity, String.class);
