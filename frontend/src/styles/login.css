@@ -1,16 +1,26 @@
+.back-button {
+    margin-bottom: 2rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
 .back-button button {
     background-color: transparent;
     border: none;
     cursor: pointer;
     font-size: 1rem;
     color: var(--text-color);
-
 }
 
 .login-page {
-    margin-left: 1rem;
-    margin-top: 1rem;
     color: var(--text-color);
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .welcome-back {
@@ -26,6 +36,7 @@
     max-width: 400px;
     font-weight: 300;
     margin-bottom: 2rem;
+    overflow-wrap: break-word;
 }
 
 .input-div {
@@ -303,6 +314,16 @@
     100% { transform: scale(1); }
 }
 
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
 .skills-grid::-webkit-scrollbar {
     width: 6px;
 }
@@ -320,3 +341,71 @@
 .skills-grid::-webkit-scrollbar-thumb:hover {
     background: #aaa;
 }
+
+/* Mobile Responsiveness for Verify Identity and Auth Pages */
+@media screen and (max-width: 480px) {
+    .login-form, .signup-form {
+        margin: 1.2rem;
+        padding-top: 1rem;
+    }
+
+    .welcome-back {
+        font-size: 1.75rem;
+    }
+
+    .welcome-subheading {
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        max-width: 100%;
+    }
+
+    .verification-code-container {
+        gap: 8px;
+        margin: 2rem 0;
+    }
+
+    .code-input {
+        width: 42px !important;
+        height: 54px;
+        font-size: 1.25rem;
+        border-radius: 8px !important;
+    }
+
+    .resend-container {
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+    }
+
+    .login-button {
+        height: 3rem;
+        font-size: 0.95rem;
+    }
+
+    .signup-link {
+        margin-top: 3rem;
+    }
+
+    .skills-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+        max-height: 250px;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    .verification-code-container {
+        gap: 6px;
+    }
+
+    .code-input {
+        width: 38px !important;
+        height: 50px;
+        font-size: 1.15rem;
+        border-radius: 6px !important;
+    }
+
+    .welcome-back {
+        font-size: 1.5rem;
+    }
+}
+

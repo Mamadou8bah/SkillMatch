@@ -139,7 +139,7 @@ public class RecommendationService {
             req.put("user_data", userData);
             req.put("job_data", jobData);
             
-            restTemplate.postForObject(mlEngineUrl.replace("/recommend", "/track/interaction"), req, Map.class);
+            restTemplate.postForObject(mlEngineUrl + "/track/interaction", req, Map.class);
         } catch (Exception e) {
             log.warn("Could not sync interaction to ML engine: {}", e.getMessage());
         }

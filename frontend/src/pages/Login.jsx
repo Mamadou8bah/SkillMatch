@@ -506,15 +506,7 @@ export const Login = () => {
 
                     {regStage === 4 && (
                         <form onSubmit={handleStage4} style={{ width: '100%' }}>
-                            <div className="skills-grid" style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                                gap: '10px', 
-                                marginBottom: '1.5rem',
-                                maxHeight: '300px',
-                                overflowY: 'auto',
-                                padding: '5px'
-                            }}>
+                            <div className="skills-grid">
                                 {diverseSkills.map((skill, idx) => (
                                     <div 
                                         key={idx}
@@ -615,6 +607,8 @@ export const Login = () => {
                                         onChange={(e) => handleCodeChange(index, e.target.value)}
                                         onKeyDown={(e) => handleKeyDown(index, e)}
                                         className="code-input"
+                                        inputMode="numeric"
+                                        pattern="\d*"
                                     />
                                 ))}
                             </div>
