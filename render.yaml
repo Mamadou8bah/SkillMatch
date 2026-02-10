@@ -34,7 +34,7 @@ services:
         value: https://skillmatch-r3lo.onrender.com/recommend
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: GROQ_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: JWT_SECRET
         generateValue: true

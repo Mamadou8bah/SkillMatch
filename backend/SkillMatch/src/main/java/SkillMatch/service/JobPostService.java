@@ -189,7 +189,7 @@ public class JobPostService {
             int end = Math.min(i + batchSize, jobs.size());
             List<JobResponseDTO> batch = jobs.subList(i, end);
             try {
-                // AI Quota survival: If Groq fails, fallback to raw data
+                // AI Quota survival: If Gemini fails, fallback to raw data
                 List<JobResponseDTO> structuredBatch = externalJobService.structureBatchWithAI(batch);
                 if (structuredBatch.isEmpty()) {
                     log.warn("AI extraction failed/quota hit. Falling back to native metadata for source: {}", source);

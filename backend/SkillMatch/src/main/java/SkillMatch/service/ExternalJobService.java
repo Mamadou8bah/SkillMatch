@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExternalJobService {
 
-    private final GroqService groqService;
+    private final GeminiService geminiService;
     private final ObjectMapper objectMapper;
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
@@ -339,7 +339,7 @@ public class ExternalJobService {
                 dto.getSource()))
             .collect(Collectors.toList());
 
-        List<String> jsonResults = groqService.structureJobDataBatch(rawDataList);
+        List<String> jsonResults = geminiService.structureJobDataBatch(rawDataList);
         for (int i = 0; i < dtos.size() && i < jsonResults.size(); i++) {
             applyJsonToDto(dtos.get(i), jsonResults.get(i));
         }
