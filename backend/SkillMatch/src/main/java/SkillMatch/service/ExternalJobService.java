@@ -135,7 +135,10 @@ public class ExternalJobService {
             Element content = doc.selectFirst("article, main, .content");
             return JobResponseDTO.builder()
                     .id(jobUrl).title(title).description(content != null ? content.html() : doc.body().html())
-                    .employer(JobResponseDTO.EmployerInfo.builder().name("Wave").logo("https://www.wave.com/favicon.ico").build())
+                    .employer(JobResponseDTO.EmployerInfo.builder()
+                            .name("Wave")
+                            .logo("https://play-lh.googleusercontent.com/NgAdQMq9Mu2NTJredx6COxScVB3tp153h_bVKQTXUt9Aou0Lz1PfffaQt5jFN9jlBfo")
+                            .build())
                     .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("Wave").build();
         } catch (Exception e) { return null; }
     }
