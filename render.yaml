@@ -31,7 +31,7 @@ services:
       - key: SPRING_DATASOURCE_PASSWORD
         value: "npg_p1TULS4juAeJ"
       - key: ML_ENGINE_URL
-        value: https://skillmatch-ml.onrender.com/recommend
+        value: https://skillmatch-r3lo.onrender.com/recommend
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: GROQ_API_KEY

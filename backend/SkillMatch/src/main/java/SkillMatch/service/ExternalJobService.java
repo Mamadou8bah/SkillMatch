@@ -29,11 +29,11 @@ public class ExternalJobService {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 15000;
 
-    private static final String GAMJOBS_URL = "https://www.gamjobs.com/job-category/all-jobs/";
+    private static final String GAMJOBS_URL = "https://gamjobs.com/jobs/";
     private static final String WAVE_URL = "https://www.wave.com/en/careers/";
-    private static final String IOM_GAMBIA_URL = "https://gambia.iom.int/vacancies";
+    private static final String IOM_GAMBIA_URL = "https://gambia.iom.int/careers";
     private static final String MOJ_GAMBIA_URL = "https://moj.gov.gm/vacancies";
-    private static final String UNJOBS_GAMBIA_URL = "https://unjobs.org/where/gmb";
+    private static final String UNJOBS_GAMBIA_URL = "https://unjobs.org/duty_stations/gambia";
     private static final String PRIMEFORGE_URL = "https://primeforge.io/careers";
     
     private static final DateTimeFormatter GAMJOBS_DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);

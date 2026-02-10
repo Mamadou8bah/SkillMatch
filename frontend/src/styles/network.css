@@ -26,11 +26,11 @@
     gap: 20px;
     margin-bottom: 24px;
     border-bottom: 1px solid var(--border-color);
-    padding: 0 10px;
+    padding: 0;
 }
 
 .network-tab {
-    padding: 12px 0;
+    padding: 12px 4px;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -38,9 +38,8 @@
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
     background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
+    border: none;
+    outline: none;
 }
 
 .network-tab:hover {
@@ -52,146 +51,172 @@
     border-bottom-color: var(--primary-color);
 }
 
-.network-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-    width: 100%;
+.tab-badge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
-.user-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
+.network-list {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.user-list-item {
+    display: flex;
     align-items: center;
-    text-align: center;
+    justify-content: space-between;
+    background: var(--card-bg);
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
     transition: all 0.2s ease;
     width: 100%;
-    position: relative;
-    padding: 0 0 16px 0;
     box-sizing: border-box;
 }
 
-.user-card::before {
-    content: "";
-    display: block;
-    width: 100%;
-    height: 60px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
-    opacity: 0.8;
+.user-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-color);
 }
 
-.user-card:hover {
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    transform: translateY(-4px);
-}
-
-.user-card-avatar {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-top: -45px;
-    border: 4px solid var(--card-bg);
-    z-index: 1;
-    background: white;
-}
-
-.user-card-info {
-    padding: 12px 16px;
-    width: 100%;
-    box-sizing: border-box;
+.user-info-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     flex: 1;
 }
 
-.user-card-info h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 8px 0 4px;
-    color: var(--text-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.user-list-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--secondary-color);
+    flex-shrink: 0;
 }
 
-.user-card-role {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 8px;
-    line-height: 1.2;
-    min-height: 32px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.user-card-location {
+.user-name-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    margin-bottom: 12px;
+    gap: 8px;
 }
 
-.user-card-actions {
-    padding: 0 16px;
-    width: 100%;
-    box-sizing: border-box;
+.user-name-row h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.pro-badge {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #c7d2fe;
+}
+
+.user-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.separator {
+    color: var(--border-color);
+    font-weight: 200;
+}
+
+.user-profession {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.user-actions-section {
+    display: flex;
+    gap: 10px;
 }
 
 .action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
     padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
+    min-width: 90px;
+}
+
+@media (max-width: 768px) {
+    .user-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .user-actions-section {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .action-btn {
+        flex: 1;
+    }
 }
 
 .btn-primary {
-    background: transparent;
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    border: none;
 }
 
 .btn-primary:hover {
-    background: rgba(79, 70, 229, 0.05);
-    border-width: 2px;
-    padding: 7px 15px;
+    filter: brightness(1.1);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb, 74, 144, 226), 0.3);
 }
 
-.btn-secondary {
+.btn-outline {
     background: transparent;
+    border: 1.5px solid var(--primary-color);
     color: var(--primary-color);
-    border: 1px solid var(--primary-color);
 }
 
-.btn-secondary:hover {
-    background: rgba(79, 70, 229, 0.05);
-    border-width: 2px;
-    padding: 7px 15px;
+.btn-outline:hover {
+    background: rgba(var(--primary-rgb, 74, 144, 226), 0.05);
 }
 
+/* Re-using some structures for pending requests */
 .pending-request-card {
     display: flex;
     align-items: center;
     gap: 16px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    padding: 16px;
+    padding: 16px 20px;
     border-radius: 12px;
     margin-bottom: 12px;
 }
@@ -202,48 +227,50 @@
 
 .pending-request-info h4 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
 .pending-request-info p {
     margin: 2px 0 0;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
 }
 
 .pending-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
 .accept-btn {
     background: var(--primary-color);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 8px 20px;
+    border-radius: 20px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .decline-btn {
     background: none;
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 8px 20px;
+    border-radius: 20px;
     cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-secondary);
-}
-
-.empty-state svg {
-    margin-bottom: 16px;
-    opacity: 0.5;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
 }
 
 .network-search {

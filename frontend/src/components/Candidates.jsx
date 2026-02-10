@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, MessageSquare, UserPlus, Users, Search } from 'lucide-react'
+import { MapPin, MessageSquare, UserPlus, Users, Search, Clock } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
+import BASE_URL from '../utils/api'
 
 export const Candidates = () => {
     const [users, setUsers] = useState([])
@@ -12,19 +13,20 @@ export const Candidates = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('discover')
     const [searchQuery, setSearchQuery] = useState('')
+    const [processingId, setProcessingId] = useState(null)
     const myRole = localStorage.getItem('userRole')
+    const myId = localStorage.getItem('userId')
 
     const fetchData = async () => {
         setIsLoading(true)
         try {
             const token = localStorage.getItem('token')
-            const baseUrl = 'https://skillmatch-1-6nn0.onrender.com'
             const headers = { 'Authorization': `Bearer ${token}` }
             const [usersRes, connRes, pendingRes, recRes] = await Promise.all([
-                fetch(`${baseUrl}/api/users/network`, { headers }),
-                fetch(`${baseUrl}/api/connections`, { headers }),
-                fetch(`${baseUrl}/api/connections/pending`, { headers }),
-                fetch(`${baseUrl}/api/recommendations/connections`, { headers })
+                fetch(`${BASE_URL}/api/users/network`, { headers }),
+                fetch(`${BASE_URL}/api/connections`, { headers }),
+                fetch(`${BASE_URL}/api/connections/pending`, { headers }),
+                fetch(`${BASE_URL}/api/recommendations/connections`, { headers })
             ])
             
             const usersData = await usersRes.json()
@@ -48,34 +50,52 @@ export const Candidates = () => {
     }, [])
 
     const handleConnect = async (targetId) => {
+        setProcessingId(targetId)
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/connections/request/${targetId}`, {
+            const response = await fetch(`${BASE_URL}/api/connections/request/${targetId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             })
             const data = await response.json()
             if (data.success) {
-                fetchData()
+                await fetchData()
+            } else {
+                alert(data.message || 'Failed to send connection request')
             }
         } catch (err) {
             console.error('Failed to send request', err)
+            alert('A network error occurred. Please try again.')
+        } finally {
+            setProcessingId(null)
         }
     }
 
     const handleAccept = async (requestId) => {
+        setProcessingId(requestId)
         try {
             const token = localStorage.getItem('token')
-            const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/connections/accept/${requestId}`, {
+            const response = await fetch(`${BASE_URL}/api/connections/accept/${requestId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             })
             const data = await response.json()
             if (data.success) {
-                fetchData()
+                await fetchData()
+            } else {
+                alert(data.message || 'Failed to accept request')
             }
         } catch (err) {
             console.error('Failed to accept request', err)
+            alert('A network error occurred. Please try again.')
+        } finally {
+            setProcessingId(null)
         }
     }
 
@@ -88,19 +108,14 @@ export const Candidates = () => {
         return connections.some(c => c.id === userId)
     }
 
-    const renderUserGrid = (userList) => {
-        if (userList.length === 0) {
-            return (
-                <div className="empty-state">
-                    <Users size={48} />
-                    <p>No users found in this section.</p>
-                </div>
-            )
-        }
+    const hasPendingRequest = (userId) => {
+        return pendingRequests.some(r => r.requester.id === userId)
+    }
 
+    const renderUserList = (userList) => {
         if (userList.length === 0) {
             return (
-                <div className="no-jobs-container" style={{ gridColumn: '1 / -1' }}>
+                <div className="no-jobs-container">
                     <p className="no-jobs-title">No members found</p>
                     <p className="no-jobs-text">Try adjusting your filters or check back later.</p>
                 </div>
@@ -108,37 +123,66 @@ export const Candidates = () => {
         }
 
         return (
-            <div className="network-grid">
+            <div className="network-list">
                 {userList.map(user => {
                     const connected = isUserConnected(user.id)
-                    const canMessage = (myRole === 'EMPLOYER' && user.role === 'CANDIDATE') || connected
-
+                    const isTargetCandidate = user.role === 'CANDIDATE' || !user.role || user.role === 'USER'
+                    const isPending = hasPendingRequest(user.id)
+                    const isProcessing = processingId === user.id
+                    
                     return (
-                        <div key={user.id} className="user-card">
-                            <img 
-                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random&size=128`} 
-                                alt={user.fullName} 
-                                className="user-card-avatar" 
-                            />
-                            <div className="user-card-info">
-                                <h3>{user.fullName}</h3>
-                                <span className="user-card-role">{user.profession}</span>
-                                <div className="user-card-location">
-                                    <MapPin size={14} />
-                                    <span>{user.location || 'Remote'}</span>
+                        <div key={user.id} className="user-list-item">
+                            <div className="user-info-section">
+                                <img 
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random&size=128`} 
+                                    alt={user.fullName} 
+                                    className="user-list-avatar" 
+                                />
+                                <div className="user-details">
+                                    <div className="user-name-row">
+                                        <h3>{user.fullName}</h3>
+                                        {user.profession?.includes('Senior') && <span className="pro-badge">PRO</span>}
+                                    </div>
+                                    <div className="user-meta-row">
+                                        <MapPin size={14} />
+                                        <span>{user.location || 'Gambia'}</span>
+                                        <span className="separator">•</span>
+                                        <span className="user-profession">{user.profession || 'Professional'}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="user-card-actions">
-                                {connected || canMessage ? (
+                            
+                            <div className="user-actions-section">
+                                {connected ? (
                                     <Link to={`/messages/${user.id}`} className="action-btn btn-primary">
-                                        <MessageSquare size={18} />
+                                        <MessageSquare size={16} style={{ marginRight: '8px' }} />
                                         <span>Message</span>
                                     </Link>
-                                ) : (
-                                    <button onClick={() => handleConnect(user.id)} className="action-btn btn-secondary">
-                                        <UserPlus size={18} />
-                                        <span>Connect</span>
+                                ) : isPending ? (
+                                    <button className="action-btn btn-outline" disabled>
+                                        <Clock size={16} style={{ marginRight: '8px' }} />
+                                        <span>Pending</span>
                                     </button>
+                                ) : (
+                                    <>
+                                        <button 
+                                            onClick={() => handleConnect(user.id)} 
+                                            className="action-btn btn-primary"
+                                            disabled={isProcessing}
+                                        >
+                                            {isProcessing ? '...' : (
+                                                <>
+                                                    <UserPlus size={16} style={{ marginRight: '8px' }} />
+                                                    <span>{myRole === 'EMPLOYER' ? 'Hire' : 'Connect'}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                        <button 
+                                            className="action-btn btn-outline"
+                                        >
+                                            <span>Follow</span>
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -151,8 +195,8 @@ export const Candidates = () => {
     return (
         <div className='network-container'>
             <div className="network-header">
-                <h2>Network</h2>
-                <p>Grow your professional community on SkillMatch</p>
+                <h2>Connections</h2>
+                <p>Build your professional community on SkillMatch</p>
             </div>
 
             <div className="network-tabs">
@@ -174,14 +218,12 @@ export const Candidates = () => {
                 >
                     Connections ({connections.length})
                 </button>
-                {pendingRequests.length > 0 && (
-                    <button 
-                        className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('pending')}
-                    >
-                        Pending ({pendingRequests.length})
-                    </button>
-                )}
+                <button 
+                    className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pending')}
+                >
+                    Requests {pendingRequests.length > 0 && <span className="tab-badge">{pendingRequests.length}</span>}
+                </button>
             </div>
 
             {activeTab === 'discover' && (
@@ -206,9 +248,9 @@ export const Candidates = () => {
                     <Loader />
                 ) : (
                     <>
-                        {activeTab === 'discover' && renderUserGrid(filteredUsers)}
-                        {activeTab === 'suggestions' && renderUserGrid(recommendations)}
-                        {activeTab === 'connections' && renderUserGrid(connections)}
+                        {activeTab === 'discover' && renderUserList(filteredUsers)}
+                        {activeTab === 'suggestions' && renderUserList(recommendations)}
+                        {activeTab === 'connections' && renderUserList(connections)}
                         {activeTab === 'pending' && (
                             <div className="pending-list">
                                 {pendingRequests.length === 0 ? (
