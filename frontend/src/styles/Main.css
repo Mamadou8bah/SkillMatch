@@ -27,6 +27,10 @@
     padding-bottom: 90px;
 }
 
+.admin-layout .element {
+    padding-bottom: 0;
+}
+
 
 .nav-link {
     display: flex;

@@ -96,7 +96,8 @@ export const Login = () => {
 
     useEffect(() => {
         if (localStorage.getItem('token')) {
-            navigate('/');
+            const role = localStorage.getItem('userRole');
+            navigate(role === 'ADMIN' ? '/admin' : '/');
             return;
         }
 
@@ -141,7 +142,8 @@ export const Login = () => {
                 localStorage.setItem('userRole', data.data.role)
                 localStorage.setItem('registrationStage', data.data.registrationStage)
                 
-                const from = locationState.state?.from?.pathname || '/';
+                const role = data.data.role;
+                const from = locationState.state?.from?.pathname || (role === 'ADMIN' ? '/admin' : '/');
                 navigate(from, { replace: true })
             } else {
                 setError(data.message)

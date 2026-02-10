@@ -17,11 +17,11 @@ export const JobCard = ({ job }) => {
                 <div className="jc-header">
                         <div className="jc-company-info">
                                 <div className="jc-ci-logo">
-                                        <img src={job.employer?.logo || job.company_logo ||''} alt={`${job.employer?.name} logo`} />
+                                        <img src={job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''} alt={`${job.employer?.name || job.employer?.companyName || job.companyName || 'Company'} logo`} />
                                 </div>
                                 <div className="jc-ci-text">
                                         <h3>{job.title}</h3>
-                                        <p>{job.company_name || 'Company'}</p>
+                                        <p>{job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company'}</p>
                                 </div>
                         </div>
                         <div className="jc-bookmark">

@@ -28,10 +28,10 @@ export const PopularJobCard = ({ job }) => {
             <div className="pjc-header">
                 <div className="pjc-company-info">
                     <div className="pjc-ci-logo">
-                        <img src={job.employer?.logo || ''} alt={`${job.employer?.name} logo`} />
+                        <img src={job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''} alt={`${job.employer?.name || job.employer?.companyName || job.companyName || 'Company'} logo`} />
                     </div>
                     <div className="pjc-ci-text">
-                        <h3>{job.employer?.name || 'Company'}</h3>
+                        <h3>{job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company'}</h3>
                         <p>{job.locationType}</p>
                     </div>
                 </div>

@@ -59,13 +59,17 @@ const AdminOverview = () => {
                         display: 'flex', 
                         alignItems: 'center', 
                         gap: '8px', 
-                        background: '#007bff', 
+                        background: 'var(--primary-color)', 
                         color: 'white', 
                         padding: '0.75rem 1.25rem', 
-                        borderRadius: '8px',
+                        borderRadius: '12px',
                         fontWeight: '600',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        border: 'none',
+                        transition: 'opacity 0.2s'
                     }}
+                    onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                    onMouseOut={(e) => e.target.style.opacity = '1'}
                 >
                     <RefreshCw size={18} className={isScraping ? 'spin' : ''} />
                     {isScraping ? 'Scraping...' : 'Scrape Jobs Now'}
@@ -73,7 +77,7 @@ const AdminOverview = () => {
             </div>
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-icon" style={{ backgroundColor: '#e7f1ff', color: '#007bff' }}>
+                    <div className="stat-icon" style={{ backgroundColor: 'var(--primary-transparent)', color: 'var(--primary-color)' }}>
                         <Users size={24} />
                     </div>
                     <div className="stat-info">
@@ -82,7 +86,7 @@ const AdminOverview = () => {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon" style={{ backgroundColor: '#fff4e5', color: '#ffa940' }}>
+                    <div className="stat-icon" style={{ backgroundColor: 'var(--primary-transparent)', color: 'var(--primary-color)' }}>
                         <Briefcase size={24} />
                     </div>
                     <div className="stat-info">
@@ -91,7 +95,7 @@ const AdminOverview = () => {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon" style={{ backgroundColor: '#e6ffed', color: '#28a745' }}>
+                    <div className="stat-icon" style={{ backgroundColor: 'var(--primary-transparent)', color: 'var(--primary-color)' }}>
                         <LayoutDashboard size={24} />
                     </div>
                     <div className="stat-info">
@@ -100,7 +104,7 @@ const AdminOverview = () => {
                     </div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon" style={{ backgroundColor: '#fff1f0', color: '#ff4d4f' }}>
+                    <div className="stat-icon" style={{ backgroundColor: 'rgba(255, 77, 79, 0.1)', color: '#ff4d4f' }}>
                         <Bell size={24} />
                     </div>
                     <div className="stat-info">
@@ -192,7 +196,14 @@ const UserManagement = () => {
                             placeholder="Search users..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid #ddd' }} 
+                            style={{ 
+                                padding: '0.5rem 0.5rem 0.5rem 2.5rem', 
+                                borderRadius: '8px', 
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--card-bg)',
+                                color: 'var(--text-color)',
+                                width: '250px'
+                            }} 
                         />
                     </div>
                 </div>
@@ -301,14 +312,32 @@ const JobManagement = () => {
                             placeholder="Search jobs..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid #ddd' }} 
+                            style={{ 
+                                padding: '0.5rem 0.5rem 0.5rem 2.5rem', 
+                                borderRadius: '8px', 
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--card-bg)',
+                                color: 'var(--text-color)',
+                                width: '250px'
+                            }} 
                         />
                     </div>
                     <button 
                         onClick={handleScrape} 
                         disabled={isScraping}
                         className="btn-primary" 
-                        style={{ background: '#28a745', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+                        style={{ 
+                            background: 'var(--primary-color)', 
+                            color: 'white', 
+                            border: 'none', 
+                            padding: '0.5rem 1rem', 
+                            borderRadius: '8px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '5px', 
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                        }}
                     >
                         <RefreshCw size={16} className={isScraping ? 'spin' : ''} />
                         {isScraping ? 'Scraping...' : 'Scrape Jobs'}
@@ -385,7 +414,7 @@ const AdminSettings = () => {
                 </div>
 
                 <div>
-                    <button className="btn-primary" style={{ background: '#007bff', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px' }}>
+                    <button className="btn-primary" style={{ background: 'var(--primary-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '12px', fontWeight: 'bold' }}>
                         Save Configurations
                     </button>
                 </div>
@@ -413,8 +442,8 @@ export const AdminDashboard = () => {
         <div className="admin-dashboard">
             <aside className="admin-sidebar">
                 <div className="admin-logo">
-                    <Briefcase size={32} />
-                    <span>SkillMatch Admin</span>
+                    <Briefcase size={32} color="var(--primary-color)" />
+                    <span style={{ color: 'var(--primary-color)' }}>SkillMatch Admin</span>
                 </div>
                 <nav className="admin-nav">
                     <NavLink to="/admin" end className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
@@ -435,7 +464,7 @@ export const AdminDashboard = () => {
                     </NavLink>
                 </nav>
                 <div style={{ marginTop: 'auto' }}>
-                    <button onClick={handleLogout} className="admin-nav-item" style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left' }}>
+                    <button onClick={handleLogout} className="admin-nav-item" style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px', padding: '0.75rem 1rem', borderRadius: '12px' }}>
                         <LogOut size={20} />
                         <p>Logout</p>
                     </button>
@@ -445,10 +474,10 @@ export const AdminDashboard = () => {
                 <header className="admin-header">
                     <h1>Admin Dashboard</h1>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <button className="action-btn"><Bell size={20} /></button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <img src="https://ui-avatars.com/api/?name=Admin+User" alt="Admin" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                            <span>System Admin</span>
+                        <button className="action-btn" style={{ background: 'var(--hover-color)', padding: '10px', borderRadius: '50%' }}><Bell size={20} /></button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', padding: '5px 15px', borderRadius: '30px', border: '1px solid var(--border-color)' }}>
+                            <img src="https://ui-avatars.com/api/?name=Admin+User&background=ff8c00&color=fff" alt="Admin" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                            <span style={{ fontWeight: '600' }}>System Admin</span>
                         </div>
                     </div>
                 </header>

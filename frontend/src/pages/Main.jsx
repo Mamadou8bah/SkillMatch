@@ -3,6 +3,8 @@ import '../styles/Main.css'
 import { NavLink, Outlet } from 'react-router-dom'
 
 export const Main = () => {
+  const userRole = localStorage.getItem('userRole')
+  const isAdmin = userRole === 'ADMIN'
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -11,7 +13,7 @@ export const Main = () => {
     }
 
     // If we don't have the role in localStorage, fetch it from profile
-    if (!localStorage.getItem('userRole')) {
+    if (!userRole) {
       const fetchProfile = async () => {
         const token = localStorage.getItem('token')
         if (!token) return
@@ -23,6 +25,8 @@ export const Main = () => {
           if (data.success) {
             localStorage.setItem('userRole', data.data.role)
             localStorage.setItem('userId', data.data.id)
+            // Reload to apply layout changes if role was missing
+            window.location.reload()
           }
         } catch (err) {
           console.error("Failed to fetch profile", err)
@@ -30,15 +34,16 @@ export const Main = () => {
       }
       fetchProfile()
     }
-  }, [])
+  }, [userRole])
 
   return (
-    <div className="main-container">
+    <div className={`main-container ${isAdmin ? 'admin-layout' : ''}`}>
       <div className="element">
         <Outlet />
       </div>
-      <div className="nav-bar">
-        <NavLink to='/' end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+      {!isAdmin && (
+        <div className="nav-bar">
+          <NavLink to='/' end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
             <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
@@ -98,16 +103,8 @@ export const Main = () => {
           </svg>
           <p>Profile</p>
         </NavLink>
-
-        {localStorage.getItem('userRole') === 'ADMIN' && (
-          <NavLink to='/admin' className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 15V17M12 7V13M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-            </svg>
-            <p>Admin</p>
-          </NavLink>
-        )}
       </div>
+      )}
     </div>
   )
 }

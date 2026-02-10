@@ -177,11 +177,6 @@ public class JobPostService {
             List<JobResponseDTO> unJobs = externalJobService.fetchUnJobs();
             saveExternalJobs(unJobs, "UNJobs");
         } catch (Exception e) { log.error("UNJobs sync failed", e); }
-
-        try {
-            List<JobResponseDTO> primeforgeJobs = externalJobService.fetchPrimeforgeJobs();
-            saveExternalJobs(primeforgeJobs, "Primeforge");
-        } catch (Exception e) { log.error("Primeforge sync failed", e); }
         
         log.info("Sync completed.");
     }
@@ -232,6 +227,7 @@ public class JobPostService {
             post.setDescription(dto.getDescription());
             post.setCompanyName(dto.getEmployer() != null ? dto.getEmployer().getName() : "N/A");
             post.setCompanyLogo(dto.getEmployer() != null ? dto.getEmployer().getLogo() : "");
+            post.setCompanyWebsite(dto.getEmployer() != null ? dto.getEmployer().getWebsite() : "");
             post.setJobUrl(dto.getUrl());
             post.setSource(source);
             post.setIndustry(dto.getIndustry());

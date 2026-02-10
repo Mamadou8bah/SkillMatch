@@ -35,6 +35,8 @@ public class JobPost {
     @Column(columnDefinition = "TEXT")
     private String companyLogo;
     @Column(columnDefinition = "TEXT")
+    private String companyWebsite;
+    @Column(columnDefinition = "TEXT")
     private String jobUrl;
     private String source;
     @Column(length = 1024)

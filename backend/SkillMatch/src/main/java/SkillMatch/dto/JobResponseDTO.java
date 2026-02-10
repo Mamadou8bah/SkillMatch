@@ -33,5 +33,6 @@ public class JobResponseDTO {
     public static class EmployerInfo {
         private String name;
         private String logo;
+        private String website;
     }
 }

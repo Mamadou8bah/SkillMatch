@@ -94,8 +94,8 @@ export const JobDetails = () => {
         e.stopPropagation()
         toggleBookmark({
             ...job,
-            company: job.employer?.name || 'Company',
-            companyLogo: job.employer?.logo || ''
+            company: job.employer?.name || job.employer?.companyName || job.companyName || 'Company',
+            companyLogo: job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''
         })
     }
     
@@ -135,10 +135,10 @@ export const JobDetails = () => {
                 </div>
                 <div className="jd-info">
                     <div className="jd-logo">
-                        <img src={job.employer?.logo || ''} alt="" />
+                        <img src={job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''} alt="" />
                     </div>
                     <h1 className="jd-title">{job.title}</h1>
-                    <div className="jd-company">Posted on <span>{job.source}</span></div>
+                    <div className="jd-company">{job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company'} • <span>{job.source}</span></div>
                 </div>
                 <div className="md-tags-container">
                     <div className="jd-md">
