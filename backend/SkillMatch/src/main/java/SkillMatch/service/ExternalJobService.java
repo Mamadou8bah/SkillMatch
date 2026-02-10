@@ -26,8 +26,8 @@ public class ExternalJobService {
     private final GroqService groqService;
     private final ObjectMapper objectMapper;
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
-    private static final int CONNECT_TIMEOUT_MS = 15000;
+    private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+    private static final int CONNECT_TIMEOUT_MS = 60000;
 
     private static final String GAMJOBS_URL = "https://gamjobs.com/jobs/";
     private static final String WAVE_URL = "https://www.wave.com/en/careers/";
@@ -49,6 +49,9 @@ public class ExternalJobService {
                     .header("Sec-Ch-Ua", "\"Not A(Brand\";v=\"99\", \"Google Chrome\";v=\"121\", \"Chromium\";v=\"121\"")
                     .header("Sec-Ch-Ua-Mobile", "?0")
                     .header("Sec-Ch-Ua-Platform", "\"Windows\"")
+                    .header("Referer", "https://www.google.com/")
+                    .header("DNT", "1")
+                    .header("Upgrade-Insecure-Requests", "1")
                     .followRedirects(true)
                     .ignoreHttpErrors(false)
                     .timeout(CONNECT_TIMEOUT_MS)
@@ -76,7 +79,7 @@ public class ExternalJobService {
                 String url = link.absUrl("href");
                 JobResponseDTO detail = fetchGamjobsJobDetail(url);
                 if (detail != null) jobs.add(detail);
-                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                try { Thread.sleep(2000 + new Random().nextInt(2000)); } catch (InterruptedException ignored) {}
             }
         }
         return jobs;
@@ -219,7 +222,7 @@ public class ExternalJobService {
                         .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").build())
                         .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build());
             }
-            try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            try { Thread.sleep(2000 + new Random().nextInt(2000)); } catch (InterruptedException ignored) {}
         }
         return jobs;
     }

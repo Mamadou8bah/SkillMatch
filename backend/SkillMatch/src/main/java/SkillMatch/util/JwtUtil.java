@@ -15,7 +15,8 @@ import java.util.Date;
 public class JwtUtil {
 
     private final Key key;
-    private final long EXPIRATION_TIME = 86400000; // 1 day in ms
+    @Value("${token.validity.minutes:10080}")
+    private long tokenValidityInMinutes;
 
     @Autowired
     private TokenRepo repo;
@@ -34,7 +35,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + (tokenValidityInMinutes * 60 * 1000)))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }

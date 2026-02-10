@@ -44,7 +44,13 @@ public class RecommendationService {
             userData.put("experience_years", calculateTotalExperience(candidate));
             userData.put("skills", candidate.getSkills().stream().map(Skill::getTitle).collect(Collectors.toList()));
 
-            List<Map<String, Object>> jobsData = allJobs.stream().map(j -> {
+            // Limit jobs sent to ML to top 100 recent/relevant ones to prevent 502/timeout
+            List<JobPost> mlJobs = allJobs.stream()
+                .sorted(Comparator.comparing(JobPost::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(100)
+                .collect(Collectors.toList());
+
+            List<Map<String, Object>> jobsData = mlJobs.stream().map(j -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", j.getId());
                 map.put("description", buildJobNarrative(j));
@@ -228,6 +234,7 @@ public class RecommendationService {
     public List<User> recommendCandidates(JobPost job) {
         List<User> allCandidates = userRepo.findAll().stream()
                 .filter(u -> u.getRole() != null && (u.getRole().name().equals("CANDIDATE") || u.getRole().name().equals("USER")))
+                .limit(100) // Limit candidates for ML processing
                 .collect(Collectors.toList());
 
         Map<Long, Double> semanticScores = new HashMap<>();
@@ -305,6 +312,7 @@ public class RecommendationService {
 
         List<User> others = userRepo.findAll().stream()
                 .filter(u -> !myConnIds.contains(u.getId()))
+                .limit(100) // Limit total candidates to prevent ML engine overload
                 .collect(Collectors.toList());
 
         Set<String> mySkills = user.getSkills().stream()
@@ -319,11 +327,13 @@ public class RecommendationService {
                 .map(ex -> ex.getCompanyName().toLowerCase().trim())
                 .collect(Collectors.toSet());
 
-        // 5. ML Similarity (AI matching on profiles) - Fallback to current heuristic if ML fails
+        // 5. ML Similarity (AI matching on profiles) - Use a subset for ML to ensure low latency
         try {
+            List<User> mlCandidates = others.size() > 50 ? others.subList(0, 50) : others;
+            
             Map<String, Object> reqBody = new HashMap<>();
             reqBody.put("user_profile", buildUserProfileString(user));
-            reqBody.put("others", others.stream().map(u -> {
+            reqBody.put("others", mlCandidates.stream().map(u -> {
                 Map<String, Object> m = new HashMap<>();
                 m.put("id", u.getId());
                 m.put("profile", buildUserProfileString(u));

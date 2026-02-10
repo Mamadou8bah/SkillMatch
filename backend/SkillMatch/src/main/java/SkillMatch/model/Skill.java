@@ -1,5 +1,6 @@
 package SkillMatch.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,6 +27,7 @@ public class Skill {
 
     @ManyToOne
     @JoinColumn(name = "job_post_id")
+    @JsonBackReference
     private JobPost jobPost;
 
 

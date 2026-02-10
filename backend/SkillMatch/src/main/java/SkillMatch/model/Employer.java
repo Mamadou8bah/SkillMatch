@@ -1,5 +1,6 @@
 package SkillMatch.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,6 +33,7 @@ public class Employer {
     @JoinColumn(name = "user_id")
     private User user;
     @OneToMany(mappedBy = "employer",cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonIgnore
     private List<JobPost>jobPosts;
 
 

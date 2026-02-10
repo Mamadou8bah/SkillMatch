@@ -1,6 +1,8 @@
 package SkillMatch.model;
 
 import SkillMatch.util.LocationType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,11 +52,13 @@ public class JobPost {
     private LocationType locationType;
 
     @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Skill> requiredSkills;
     
     private String salary;
 
     @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Application> applications;
 
     @Column(nullable = false,updatable = false)

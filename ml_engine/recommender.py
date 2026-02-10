@@ -134,10 +134,26 @@ class AIRecommender:
                 indices_to_compute.append(i)
                 
         if to_compute:
-            computed_embs = call_hf_api(to_compute)
+            # BATCHING: Process in smaller chunks to avoid API timeouts and payload limits
+            chunk_size = 20
+            all_computed = []
             
-            # Update cache and results
-            if computed_embs is not None:
+            for i in range(0, len(to_compute), chunk_size):
+                chunk = to_compute[i : i + chunk_size]
+                computed_chunk = call_hf_api(chunk)
+                if computed_chunk is not None:
+                    # Handle cases where API might return a list instead of array
+                    if isinstance(computed_chunk, list):
+                        computed_chunk = np.array(computed_chunk)
+                    all_computed.append(computed_chunk)
+                else:
+                    # Fill with zeros if a chunk fails
+                    dim = 1536 if OPENAI_API_KEY else 384
+                    all_computed.append(np.zeros((len(chunk), dim)))
+            
+            if all_computed:
+                computed_embs = np.vstack(all_computed)
+                
                 if len(embedding_cache) + len(to_compute) > 1000:
                     embedding_cache.clear()
                     gc.collect()
