@@ -80,6 +80,16 @@ export const Login = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
 
+    // Auto-clear error messages after 5 seconds
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError('');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
     const validateEmail = (email) => {
         return String(email)
             .toLowerCase()

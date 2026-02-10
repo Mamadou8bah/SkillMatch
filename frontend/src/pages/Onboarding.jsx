@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, Camera, User as UserIcon, Code, Palette, Wind, Wrench, Droplet, Sprout, Sparkles, Truck, Zap, Paintbrush, Hammer, Cpu, TrendingUp, Edit3 } from 'lucide-react';
 import { commonSkills } from '../data/skills';
@@ -12,6 +12,17 @@ export const Onboarding = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [error, setError] = useState('');
     const [photoPreview, setPhotoPreview] = useState(null);
+
+    // Auto-clear error messages after 5 seconds
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError('');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
     const [formData, setFormData] = useState({
         role: localStorage.getItem('userRole') || 'CANDIDATE',
         skills: [],

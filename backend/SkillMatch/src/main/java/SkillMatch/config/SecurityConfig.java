@@ -31,30 +31,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/register/verify",
                                 "/",
+                                "/api/auth/**",
                                 "/employers",
                                 "/ws/**",
-                                "/api/auth/password-reset/request",
-                                "/api/auth/password-reset/validate/*",
-                                "/api/auth/password-reset/confirm",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/actuator/health",
-                                "/api/auth/register/**",
-                                "api/auth/register/verify/**",
-                                "register/verify/**"
+                                "/actuator/health"
                         ).permitAll()
-                        .requestMatchers("/post/add").hasAnyRole("EMPLOYER", "ADMIN")
+                        .requestMatchers("/post/add", "/post/sync").hasAnyRole("EMPLOYER", "ADMIN")
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/user/**", "/experience/**", "/education/**", "/skill/**",
                                 "/candidates/**", "/post/**", "/api/apply/**").authenticated()
                         .anyRequest().authenticated()
                 )
-
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(authenticationProvider)
@@ -62,12 +54,20 @@ public class SecurityConfig {
     }
 
     @Bean
-                public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
-                        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-                        configuration.setAllowedOriginPatterns(java.util.Arrays.asList(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        
+        // Clean and split origins
+        List<String> origins = java.util.Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+        
+        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // Cache preflight for 1 hour
         
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
