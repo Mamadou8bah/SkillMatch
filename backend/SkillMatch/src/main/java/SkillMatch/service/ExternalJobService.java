@@ -343,7 +343,7 @@ public class ExternalJobService {
         } catch (Exception e) { return LocalDateTime.now(); }
     }
 
-    private String firstText(Document doc, String... selectors) {
+    private String firstText(Element doc, String... selectors) {
         for (String selector : selectors) {
             Element el = doc.selectFirst(selector);
             if (el != null && !el.text().isBlank()) return el.text().trim();
@@ -351,7 +351,7 @@ public class ExternalJobService {
         return null;
     }
 
-    private String firstAttr(Document doc, String attribute, String... selectors) {
+    private String firstAttr(Element doc, String attribute, String... selectors) {
         for (String selector : selectors) {
             Element el = doc.selectFirst(selector);
             if (el != null) {
