@@ -24,7 +24,7 @@ public class JobResponseDTO {
     private List<String> skills;
     private List<String> requirements;
     private LocalDateTime postedAt;
-    private String source; // "Jobicy" or "Own"
+    private String source; 
 
     @Data
     @Builder

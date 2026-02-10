@@ -60,8 +60,8 @@ export const JobDetails = () => {
     }
 
     const handleApply = async () => {
-        if (job.url && job.source !== 'Own') {
-            window.open(job.url, '_blank', 'noopener,noreferrer');
+        if (job.jobUrl && job.source !== 'Own') {
+            window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
             return;
         }
 
