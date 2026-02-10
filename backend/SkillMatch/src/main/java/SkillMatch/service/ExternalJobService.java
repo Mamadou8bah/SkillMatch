@@ -106,17 +106,23 @@ public class ExternalJobService {
 
                 log.info("Processing Gamjobs link: {}", url);
                 
-                // Extract list-view data first (often more reliable/consistent)
-                String listLogo = firstAttr(el, "src", ".item-featured img", ".company-logo img", "img.job-logo");
+                // Extract list-view data first (often more reliable/consistent as it's localized to the job item)
+                String listLogo = firstAttr(el, "src", ".item-featured img", ".company-logo img", ".job-company-logo img", "img.job-logo", "img.company-logo");
                 String listCompany = firstText(el, ".job-company", ".company", ".employer");
                 Element compUrlEl = el.selectFirst(".job-company a, a[href*=/employers/]");
                 String listCompUrl = compUrlEl != null ? compUrlEl.absUrl("href") : "";
 
                 JobResponseDTO detail = fetchGamjobsJobDetail(url);
                 if (detail != null) {
-                    // Merge list data if detail is missing them
+                    // Merge list data if detail is missing them or found a generic site logo
                     if (detail.getEmployer() != null) {
-                        if (detail.getEmployer().getLogo().isEmpty() && listLogo != null) detail.getEmployer().setLogo(listLogo);
+                        String detailLogo = detail.getEmployer().getLogo();
+                        boolean isGenericLogo = detailLogo.contains("logo.png") || detailLogo.contains("gamjobs") && detailLogo.contains("logo");
+                        
+                        if ((detailLogo.isEmpty() || isGenericLogo) && listLogo != null && !listLogo.isEmpty()) {
+                            detail.getEmployer().setLogo(listLogo);
+                        }
+                        
                         if (detail.getEmployer().getWebsite().isEmpty() && !listCompUrl.isEmpty()) detail.getEmployer().setWebsite(listCompUrl);
                         if (detail.getEmployer().getName().equals("N/A") && listCompany != null) detail.getEmployer().setName(listCompany);
                     }
@@ -158,10 +164,21 @@ public class ExternalJobService {
         Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content, #content, .description");
         String description = (descEl != null) ? descEl.html().trim() : "";
 
-        String logo = firstAttr(doc, "src", ".item-featured img", "img.company-logo", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img", ".employer-logo img", ".employer-profile img");
+        // Refined logo extraction: Prioritize job-specific containers and avoid site-wide logos/sidebars
+        // We avoid ".item-featured" and generic ".logo" here because they often pick up the wrong company from "Recommended" sidebars
+        String logo = firstAttr(doc, "src", 
+            ".job-company-logo img", 
+            ".employer-logo img", 
+            ".company-logo img", 
+            ".job-header img.company-logo",
+            ".job-details img.company-logo",
+            "img[itemprop=logo]",
+            ".job-company img",
+            ".employer-profile img"
+        );
         
         // If logo missing or looks like a placeholder, attempt one-level-deep extraction from employer profile
-        if ((logo == null || logo.isBlank() || logo.contains("placeholder")) && !companyUrl.isBlank()) {
+        if ((logo == null || logo.isBlank() || logo.contains("placeholder") || logo.contains("gamjobs")) && !companyUrl.isBlank()) {
             try {
                 Document compDoc = safelyFetchDocument(companyUrl, jobUrl);
                 if (compDoc != null) {
