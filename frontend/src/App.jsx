@@ -29,11 +29,11 @@ function App() {
   useEffect(() => {
     const fadeTimer = setTimeout(() => {
       setFadeSplash(true);
-    }, 5000); // Start fading after 5s
+    }, 3000); // Start fading after 3s
 
     const removeTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 5500); // Remove from DOM after 5.5s total
+    }, 3500); // Remove from DOM after 3.5s total
 
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);

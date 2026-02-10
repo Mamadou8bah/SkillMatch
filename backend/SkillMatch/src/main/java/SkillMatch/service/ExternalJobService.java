@@ -26,15 +26,19 @@ public class ExternalJobService {
     private final GroqService groqService;
     private final ObjectMapper objectMapper;
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
     private static final int CONNECT_TIMEOUT_MS = 60000;
 
     private static final String GAMJOBS_URL = "https://gamjobs.com/jobs/";
     private static final String WAVE_URL = "https://www.wave.com/en/careers/";
     private static final String IOM_GAMBIA_URL = "https://gambia.iom.int/careers";
-    private static final String MOJ_GAMBIA_URL = "https://moj.gov.gm/vacancies";
+    private static final String MOJ_GAMBIA_URL = "https://moj.gov.gm/vcancies/";
     private static final String UNJOBS_GAMBIA_URL = "https://unjobs.org/duty_stations/gambia";
     private static final String PRIMEFORGE_URL = "https://primeforge.io/careers";
+
+    // Fallback Logos
+    private static final String UNJOBS_LOGO = "https://media.licdn.com/dms/image/v2/C4E0BAQHQ1DD92ZSnkA/company-logo_200_200/company-logo_200_200/0/1670422173816?e=2147483647&v=beta&t=ZVwp-54BrQBhzPgiggGGnLE_iGE99WwvOdcFMKkRqIU";
+    private static final String PRIMEFORGE_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUx1cUx18cy3Mwx1sYtsKMpmI0wy7wy2skhW1UZAAAaAAMePTkvyrstt6oaAAAkcGkcIiIdLCobFhcmhHsuwLIx1MQjaGEhVVAnjYMgT0osrKAfR0MiYVsaEBIbGRslenEaDA4qo5cVpGRrAAAAs0lEQVR4AdXORRbDMAxFUcmkMJd5/5tsBWWY987+eYlt+DfojOflrlBaiCYh+BSvAlfK8kLkZeWxzhtbGXFsu14M+ej81Juu5Qg4EzQvFm6GMDMIDEm4Zb6imS4m0U9rETbF1gHyEpPXBzViyKPz09Aoe9B2N+zZ7kCA9XGv6zjXmM9TdZHIc2xqWdUMNLbOMwCJFdmySKA0IpjfcUbZU8xzi7bjdJt+djrN4AGSNq1E8KfOuiMOz2CDJscAAAAASUVORK5CYII=";
     
     private static final DateTimeFormatter GAMJOBS_DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);
 
@@ -46,12 +50,12 @@ public class ExternalJobService {
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Cache-Control", "no-cache")
                     .header("Pragma", "no-cache")
-                    .header("Sec-Ch-Ua", "\"Not A(Brand\";v=\"99\", \"Google Chrome\";v=\"121\", \"Chromium\";v=\"121\"")
-                    .header("Sec-Ch-Ua-Mobile", "?0")
-                    .header("Sec-Ch-Ua-Platform", "\"Windows\"")
                     .header("Referer", "https://www.google.com/")
-                    .header("DNT", "1")
                     .header("Upgrade-Insecure-Requests", "1")
+                    .header("Sec-Fetch-Dest", "document")
+                    .header("Sec-Fetch-Mode", "navigate")
+                    .header("Sec-Fetch-Site", "none")
+                    .header("Sec-Fetch-User", "?1")
                     .followRedirects(true)
                     .ignoreHttpErrors(false)
                     .timeout(CONNECT_TIMEOUT_MS)
@@ -68,17 +72,34 @@ public class ExternalJobService {
         log.info("Fetching jobs from Gamjobs...");
         List<JobResponseDTO> jobs = new ArrayList<>();
         Document doc = safelyFetchDocument(GAMJOBS_URL);
-        if (doc == null) return jobs;
+        if (doc == null) {
+            log.warn("Gamjobs landing page returned null. Check if blocked.");
+            return jobs;
+        }
 
-        Elements jobElements = doc.select(".noo-job-item, .job-item, article.job_listing");
+        Elements jobElements = doc.select(".noo-job-item, .job-item, article.job_listing, .job_listing, .job-list-item");
         log.info("Found {} candidate job elements on Gamjobs", jobElements.size());
 
         for (Element el : jobElements) {
-            Element link = el.selectFirst("a[href*=/job/]");
+            Element link = el.selectFirst("a[href*=/jobs/], a[href*=/job/]");
             if (link != null) {
                 String url = link.absUrl("href");
+                if (url.contains("/employers/") || url.contains("/job-category/") || url.contains("/job-location/")) continue;
+
                 JobResponseDTO detail = fetchGamjobsJobDetail(url);
-                if (detail != null) jobs.add(detail);
+                if (detail != null) {
+                    jobs.add(detail);
+                } else {
+                    String title = link.text().trim();
+                    String company = firstText(el, ".company", ".job-company");
+                    jobs.add(JobResponseDTO.builder()
+                            .id(url).title(title).description("Details available at source.")
+                            .employer(JobResponseDTO.EmployerInfo.builder()
+                                    .name(company != null ? company : "Unknown")
+                                    .logo("")
+                                    .build())
+                            .locationType("ONSITE").url(url).postedAt(LocalDateTime.now()).source("Gamjobs").build());
+                }
                 try { Thread.sleep(2000 + new Random().nextInt(2000)); } catch (InterruptedException ignored) {}
             }
         }
@@ -89,17 +110,17 @@ public class ExternalJobService {
         Document doc = safelyFetchDocument(jobUrl);
         if (doc == null) return null;
 
-        Element titleEl = doc.selectFirst("h1.entry-title, h1.page-title, h1");
+        Element titleEl = doc.selectFirst("h1.entry-title, h1.page-title, h1, .job-title");
         String title = (titleEl != null) ? titleEl.text().trim() : "Unknown Title";
 
-        String company = firstText(doc, ".company", ".job-company", ".job-company span");
-        String location = firstText(doc, ".job-location", ".location", ".job_listing-location");
-        String postedText = firstText(doc, ".job-date__posted", "time.entry-date", "time", ".date-posted");
+        String company = firstText(doc, ".company", ".job-company", ".job-company span", "a[href*=/employers/]");
+        String location = firstText(doc, ".job-location", ".location", ".job_listing-location", "a[href*=/job-location/]");
+        String postedText = firstText(doc, ".job-date__posted", "time.entry-date", "time", ".date-posted", ".posted-date");
         
-        Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content");
+        Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content, #content");
         String description = (descEl != null) ? descEl.html().trim() : "";
 
-        String logo = firstAttr(doc, "src", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img");
+        String logo = firstAttr(doc, "src", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img", "header img");
         return JobResponseDTO.builder()
                 .id(jobUrl).title(title).description(description)
                 .employer(JobResponseDTO.EmployerInfo.builder()
@@ -149,9 +170,9 @@ public class ExternalJobService {
         Document doc = safelyFetchDocument(IOM_GAMBIA_URL);
         if (doc == null) return jobs;
 
-        Elements rows = doc.select("table tr");
+        Elements rows = doc.select("table tr, .view-content tr");
         for (Element row : rows) {
-            Elements cols = row.select("td");
+            Elements cols = row.select("td, th");
             if (cols.size() >= 4) {
                 Element titleLink = cols.get(0).selectFirst("a");
                 if (titleLink == null) continue;
@@ -181,14 +202,17 @@ public class ExternalJobService {
         log.info("Fetching jobs from MOJ Gambia...");
         List<JobResponseDTO> jobs = new ArrayList<>();
         Document doc = safelyFetchDocument(MOJ_GAMBIA_URL);
-        if (doc == null) return jobs;
+        if (doc == null) {
+            doc = safelyFetchDocument("https://moj.gov.gm/category/contract-job/");
+            if (doc == null) return jobs;
+        }
 
         String siteLogo = firstAttr(doc, "src", ".logo img", "img[src*=logo]", "header img");
-        Elements links = doc.select("a[href*=.pdf], .entry-content a");
+        Elements links = doc.select("a[href*=.pdf], .entry-content a, article h2 a, h3 a");
         for (Element link : links) {
             String title = link.text().trim();
             String url = link.absUrl("href");
-            if (title.length() > 5 && (url.toLowerCase().endsWith(".pdf") || title.toLowerCase().contains("vacancy"))) {
+            if (title.length() > 5 && (url.toLowerCase().contains(".pdf") || title.toLowerCase().contains("vacancy") || title.toLowerCase().contains("recruitment"))) {
                 String description = String.format("<div class='moj-job-container'><h3>Ministry of Justice - Vacancy</h3><p><strong>Position:</strong> %s</p></div>", title);
                 jobs.add(JobResponseDTO.builder().id(url).title(title).description(description)
                         .employer(JobResponseDTO.EmployerInfo.builder()
@@ -219,7 +243,10 @@ public class ExternalJobService {
             } else {
                 String title = titleLink.text().trim();
                 jobs.add(JobResponseDTO.builder().id(jobUrl).title(title).description(el.html())
-                        .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").build())
+                        .employer(JobResponseDTO.EmployerInfo.builder()
+                                .name("United Nations / NGO")
+                                .logo(UNJOBS_LOGO)
+                                .build())
                         .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build());
             }
             try { Thread.sleep(2000 + new Random().nextInt(2000)); } catch (InterruptedException ignored) {}
@@ -236,7 +263,9 @@ public class ExternalJobService {
         String logo = firstAttr(doc, "src", ".logo img", "img[src*=logo]");
         return JobResponseDTO.builder()
                 .id(jobUrl).title(title).description(content != null ? content.html() : doc.body().html())
-                .employer(JobResponseDTO.EmployerInfo.builder().name("United Nations / NGO").logo(logo != null ? logo : "").build())
+                .employer(JobResponseDTO.EmployerInfo.builder()
+                        .name("United Nations / NGO")
+                        .logo(logo != null ? logo : UNJOBS_LOGO).build())
                 .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("UNJobs").build();
     }
 
@@ -264,7 +293,9 @@ public class ExternalJobService {
         Element descriptionEl = doc.selectFirst("div.description, .job-details");
         String logo = firstAttr(doc, "src", ".company-logo img", ".logo img");
         return JobResponseDTO.builder().id(jobUrl).title(title).description(descriptionEl != null ? descriptionEl.html() : doc.body().html())
-                .employer(JobResponseDTO.EmployerInfo.builder().name("Primeforge").logo(logo != null ? logo : "").build())
+                .employer(JobResponseDTO.EmployerInfo.builder()
+                        .name("Primeforge")
+                        .logo(logo != null ? logo : PRIMEFORGE_LOGO).build())
                 .locationType("ONSITE").url(jobUrl).postedAt(LocalDateTime.now()).source("Primeforge").build();
     }
 
