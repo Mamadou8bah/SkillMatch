@@ -95,12 +95,17 @@ export const Login = () => {
     };
 
     useEffect(() => {
+        if (localStorage.getItem('token')) {
+            navigate('/');
+            return;
+        }
+
         if (locationState.state?.mode === 'signup') {
             setHasAccount(false)
         } else if (locationState.state?.mode === 'login') {
             setHasAccount(true)
         }
-    }, [locationState])
+    }, [locationState, navigate])
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -119,7 +124,8 @@ export const Login = () => {
             localStorage.setItem('userId', 'test-user-id');
             localStorage.setItem('userRole', 'CANDIDATE');
             localStorage.setItem('registrationStage', '4');
-            navigate('/');
+            const from = locationState.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
             setIsLoading(false);
             return;
         }
@@ -135,7 +141,8 @@ export const Login = () => {
                 localStorage.setItem('userRole', data.data.role)
                 localStorage.setItem('registrationStage', data.data.registrationStage)
                 
-                navigate('/')
+                const from = locationState.state?.from?.pathname || '/';
+                navigate(from, { replace: true })
             } else {
                 setError(data.message)
             }

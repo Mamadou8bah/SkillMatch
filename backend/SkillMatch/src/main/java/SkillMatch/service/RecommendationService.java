@@ -67,7 +67,7 @@ public class RecommendationService {
             request.put("jobs", jobsData);
 
             // ML Engine handles hybrid scoring and re-ranking
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/jobs", request, List.class);
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/recommend/jobs", request, List.class);
             if (mlResults != null) {
                 mlResults.forEach(r -> scores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
                 mlSuccess = true;
@@ -252,7 +252,7 @@ public class RecommendationService {
             request.put("job_description", jobNarrative);
             request.put("candidates", candData);
 
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/candidates", request, List.class);
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/recommend/candidates", request, List.class);
             if (mlResults != null) {
                 mlResults.forEach(r -> semanticScores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
                 mlSuccess = true;
@@ -340,7 +340,7 @@ public class RecommendationService {
                 return m;
             }).collect(Collectors.toList()));
 
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/similar-users", reqBody, List.class);
+            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/recommend/similar-users", reqBody, List.class);
             if (mlResults != null) {
                 for (Map<String, Object> res : mlResults) {
                     Long oid = Long.valueOf(res.get("id").toString());

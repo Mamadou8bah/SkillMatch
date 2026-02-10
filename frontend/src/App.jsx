@@ -2,7 +2,7 @@ import './App.css';
 import { Onboarding } from './pages/Onboarding';
 import { Login } from './pages/Login';
 import { LandingIntro } from './pages/LandingIntro';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Main } from './pages/Main';
 import { Home } from './components/Home';
 import { Jobs } from './pages/Jobs';
@@ -75,7 +75,6 @@ function App() {
         <Route path="/intro" element={<LandingIntro />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/admin/*" element={<AdminDashboard />} />
 
 
         <Route path="/" element={<AuthGuard />} >
@@ -83,6 +82,7 @@ function App() {
           <Route path="about" element={<div>About</div>} />
           <Route path="profile" element={<Profile />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="messages/:id" element={<Conversation />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="candidates" element={<Candidates />} />
           <Route path="jobs" element={<Jobs />}>
@@ -90,9 +90,9 @@ function App() {
             <Route path="discover" element={<Discover />} />
             <Route path="bookmarks" element={<Bookmarks />} />
           </Route>
+          <Route path="jobs/:id" element={<JobDetails />} />
+          <Route path="admin/*" element={<AdminDashboard />} />
         </Route>
-        <Route path="/jobs/:id" element={<JobDetails />} />
-        <Route path="/messages/:id" element={<Conversation />} />
       </Routes>
       </div>
     </>
@@ -100,10 +100,12 @@ function App() {
 }
 
 const AuthGuard = () => {
+  const location = useLocation();
   const isAuthenticated = !!localStorage.getItem('token');
 
   if (!isAuthenticated) {
-    return <LandingIntro />;
+    // Redirect to login but save the current location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Main />;

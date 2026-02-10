@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/onboarding.css';
 import introImg1 from '../assets/ChatGPT Image Oct 19, 2025, 05_08_56 PM.png';
@@ -7,6 +7,12 @@ import introImg2 from '../assets/Gemini_Generated_Image_1k8ta1k8ta1k8ta1.png';
 export const LandingIntro = () => {
     const [step, setStep] = useState(1);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (localStorage.getItem('token')) {
+            navigate('/', { replace: true });
+        }
+    }, [navigate]);
 
     const handleNext = () => {
         if (step < 3) {

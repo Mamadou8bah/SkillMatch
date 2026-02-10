@@ -12,6 +12,18 @@ export const apiFetch = async (endpoint, options = {}) => {
     
     const response = await fetch(url, { ...options, headers });
     
+    // Check for unauthorized access
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userId');
+        // Redirect to login if not already there
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/intro')) {
+            window.location.href = '/login';
+        }
+        throw new Error('Unauthorized');
+    }
+    
     // For 204 No Content
     if (response.status === 204) return null;
     

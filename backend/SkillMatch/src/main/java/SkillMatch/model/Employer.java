@@ -31,6 +31,7 @@ public class Employer {
     private String pictureUrl;
     @OneToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
     @OneToMany(mappedBy = "employer",cascade = CascadeType.ALL,orphanRemoval = true)
     @JsonIgnore
