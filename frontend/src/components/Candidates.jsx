@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, MessageSquare, UserPlus, Users, Search, Clock } from 'lucide-react'
+import { MapPin, MessageSquare, UserPlus, Search, Clock } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
 import BASE_URL from '../utils/api'
@@ -15,7 +15,6 @@ export const Candidates = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [processingId, setProcessingId] = useState(null)
     const myRole = localStorage.getItem('userRole')
-    const myId = localStorage.getItem('userId')
 
     const fetchData = async () => {
         setIsLoading(true)
@@ -126,7 +125,6 @@ export const Candidates = () => {
             <div className="network-list">
                 {userList.map(user => {
                     const connected = isUserConnected(user.id)
-                    const isTargetCandidate = user.role === 'CANDIDATE' || !user.role || user.role === 'USER'
                     const isPending = hasPendingRequest(user.id)
                     const isProcessing = processingId === user.id
                     
