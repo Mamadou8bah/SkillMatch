@@ -200,8 +200,8 @@ public class JobPostService {
 
         log.info("Identified {} new unique jobs for processing", newJobs.size());
 
-        // Reduced batch size for free-tier survival
-        int batchSize = 3; 
+        // Increased batch size to 10 for better efficiency (sending multiple jobs to AI at once)
+        int batchSize = 6; 
         for (int i = 0; i < newJobs.size(); i += batchSize) {
             int end = Math.min(i + batchSize, newJobs.size());
             List<JobResponseDTO> batch = newJobs.subList(i, end);
@@ -216,8 +216,11 @@ public class JobPostService {
                         this.persistExternalJob(dto, source);
                     }
                 }
-                // Longer pause to respect free API rate limits and CPU
-                if (end < newJobs.size()) Thread.sleep(5000); 
+                // Longer pause to respect Gemini Free Tier limits (15s between batches)
+                if (end < newJobs.size()) {
+                    log.info("Batch completed. Pausing 15s to respect AI quota...");
+                    Thread.sleep(15000); 
+                }
             } catch (Exception e) {
                 log.error("Batch processing fallback: {}", e.getMessage());
                 for (JobResponseDTO dto : batch) this.persistExternalJob(dto, source);
