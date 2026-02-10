@@ -43,18 +43,24 @@ public class ExternalJobService {
     private static final DateTimeFormatter GAMJOBS_DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH);
 
     private Document safelyFetchDocument(String url) {
+        return safelyFetchDocument(url, "https://www.google.com/");
+    }
+
+    private Document safelyFetchDocument(String url, String referer) {
         try {
+            // Modern Chrome User Agent
+            String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+            
             return Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
+                    .userAgent(ua)
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Cache-Control", "no-cache")
-                    .header("Pragma", "no-cache")
-                    .header("Referer", "https://www.google.com/")
+                    .header("Referer", referer != null ? referer : "https://www.google.com/")
                     .header("Upgrade-Insecure-Requests", "1")
                     .header("Sec-Fetch-Dest", "document")
                     .header("Sec-Fetch-Mode", "navigate")
-                    .header("Sec-Fetch-Site", "none")
+                    .header("Sec-Fetch-Site", "same-origin")
                     .header("Sec-Fetch-User", "?1")
                     .followRedirects(true)
                     .ignoreHttpErrors(false)
@@ -77,21 +83,30 @@ public class ExternalJobService {
             return jobs;
         }
 
-        Elements jobElements = doc.select(".noo-job-item, .job-item, article.job_listing, .job_listing, .job-list-item");
+        // Expanded selectors for Gamjobs
+        Elements jobElements = doc.select("article, .noo-job-item, .job-item, .job_listing, .job-list-item, .loop-item, div.item-job");
         log.info("Found {} candidate job elements on Gamjobs", jobElements.size());
 
+        if (jobElements.isEmpty()) {
+            // Fallback: search for potential job links directly
+            jobElements = doc.select("h3 a[href*=/jobs/], h2 a[href*=/jobs/], .job-title a");
+            log.info("Fallback search found {} potential job links on Gamjobs", jobElements.size());
+        }
+
         for (Element el : jobElements) {
-            Element link = el.selectFirst("a[href*=/jobs/], a[href*=/job/]");
+            Element link = el.tagName().equals("a") ? el : el.selectFirst("a[href*=/jobs/], a[href*=/job/]");
             if (link != null) {
                 String url = link.absUrl("href");
-                if (url.contains("/employers/") || url.contains("/job-category/") || url.contains("/job-location/")) continue;
+                if (url.contains("/employers/") || url.contains("/job-category/") || url.contains("/job-location/") || url.equals(GAMJOBS_URL)) continue;
 
+                log.info("Processing Gamjobs link: {}", url);
                 JobResponseDTO detail = fetchGamjobsJobDetail(url);
                 if (detail != null) {
                     jobs.add(detail);
                 } else {
                     String title = link.text().trim();
-                    String company = firstText(el, ".company", ".job-company");
+                    if (title.isBlank()) title = "Unknown Title";
+                    String company = firstText(el, ".company", ".job-company", ".employer", "a[href*=/employers/]");
                     jobs.add(JobResponseDTO.builder()
                             .id(url).title(title).description("Details available at source.")
                             .employer(JobResponseDTO.EmployerInfo.builder()
@@ -107,20 +122,20 @@ public class ExternalJobService {
     }
 
     private JobResponseDTO fetchGamjobsJobDetail(String jobUrl) {
-        Document doc = safelyFetchDocument(jobUrl);
+        Document doc = safelyFetchDocument(jobUrl, GAMJOBS_URL);
         if (doc == null) return null;
 
-        Element titleEl = doc.selectFirst("h1.entry-title, h1.page-title, h1, .job-title");
+        Element titleEl = doc.selectFirst("h1.entry-title, h1.page-title, h1, .job-title, .entry-title");
         String title = (titleEl != null) ? titleEl.text().trim() : "Unknown Title";
 
-        String company = firstText(doc, ".company", ".job-company", ".job-company span", "a[href*=/employers/]");
-        String location = firstText(doc, ".job-location", ".location", ".job_listing-location", "a[href*=/job-location/]");
-        String postedText = firstText(doc, ".job-date__posted", "time.entry-date", "time", ".date-posted", ".posted-date");
+        String company = firstText(doc, ".company", ".job-company", ".job-company span", "a[href*=/employers/]", ".employer-name");
+        String location = firstText(doc, ".job-location", ".location", ".job_listing-location", "a[href*=/job-location/]", ".location-name");
+        String postedText = firstText(doc, ".job-date__posted", "time.entry-date", "time", ".date-posted", ".posted-date", ".post-date");
         
-        Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content, #content");
+        Element descEl = doc.selectFirst("div[itemprop=description], .job_description, .job-description, .entry-content, #content, .description");
         String description = (descEl != null) ? descEl.html().trim() : "";
 
-        String logo = firstAttr(doc, "src", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img", "header img");
+        String logo = firstAttr(doc, "src", ".company-logo img", "img[itemprop=logo]", ".logo img", ".job-company-logo img", "header img", ".employer-logo img");
         return JobResponseDTO.builder()
                 .id(jobUrl).title(title).description(description)
                 .employer(JobResponseDTO.EmployerInfo.builder()

@@ -149,8 +149,9 @@ public class JobPostService {
     }
 
     // Disabled @Scheduled to save free-tier resources. Admin must trigger manually.
+    @org.springframework.scheduling.annotation.Async
     public void syncExternalJobs() {
-        log.info("Starting manual job sync...");
+        log.info("Starting manual job sync in background...");
         
         try {
             List<JobResponseDTO> gamjobs = externalJobService.fetchGamjobs();
