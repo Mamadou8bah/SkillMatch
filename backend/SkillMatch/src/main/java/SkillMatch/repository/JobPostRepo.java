@@ -16,5 +16,7 @@ public interface JobPostRepo extends JpaRepository<JobPost,Long> {
 
     boolean existsByJobUrl(String jobUrl);
 
+    long countByPostedAtAfter(java.time.LocalDateTime date);
+
     void deleteByPostedAtBefore(java.time.LocalDateTime dateTime);
 }

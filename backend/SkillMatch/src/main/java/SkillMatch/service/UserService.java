@@ -81,11 +81,15 @@ public class UserService {
         return repo.count();
     }
 
+    public long countRecentUsers(int days) {
+        return repo.countByCreatedAtAfter(LocalDateTime.now().minusDays(days));
+    }
+
     public List<UserDTO>getUsers(){
         return repo.findAll(org.springframework.data.domain.PageRequest.of(0, 50))
                 .getContent()
                 .stream()
-                .map(user -> new UserDTO(user.getFullName(), user.getRole().toString()))
+                .map(user -> new UserDTO(user.getId(), user.getFullName(), user.getEmail(), user.getRole().toString()))
                 .toList();
     }
 

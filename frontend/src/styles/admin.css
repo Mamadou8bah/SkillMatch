@@ -102,6 +102,33 @@
   margin: 0;
 }
 
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Badge alignment */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-success { background-color: #e6ffed; color: #28a745; }
+.badge-warning { background-color: #fff4e5; color: #ffa940; }
+.badge-danger { background-color: #fff1f0; color: #ff4d4f; }
+.badge-info { background-color: #e7f1ff; color: #007bff; }
+  font-weight: 700;
+  margin: 0;
+}
+
 .admin-card {
   background: white;
   padding: 1.5rem;

@@ -56,7 +56,7 @@ public class JobPostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePost(long id){
+    public ResponseEntity<?> deletePost(@PathVariable long id){
         service.deletePost(id);
         return ResponseEntity.ok("Post Deleted");
     }

@@ -82,4 +82,8 @@ public class ApplicationService {
         }
         return repository.findApplicationsByUser_Id(user.getId());
     }
+
+    public long countApplications() {
+        return repository.count();
+    }
 }

@@ -1,3 +1,5 @@
+package SkillMatch.dto;
+
 import java.util.List;
 
 public record RegistrationStage3Request(

@@ -43,6 +43,15 @@ public class JobPostService {
         return repo.count();
     }
 
+    public long countRecentJobs(int days) {
+        return repo.countByPostedAtAfter(LocalDateTime.now().minusDays(days));
+    }
+
+    public List<JobPost> getRecentJobs(int limit) {
+        return repo.findAll(PageRequest.of(0, limit, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "postedAt")))
+                .getContent();
+    }
+
     public JobPost addJob(JobPost jobPost){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();

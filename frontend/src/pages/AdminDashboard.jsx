@@ -11,20 +11,26 @@ const AdminOverview = () => {
         activeApplications: 0,
         newSignups: 0
     });
+    const [activities, setActivities] = useState([]);
     const [isScraping, setIsScraping] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
+            setLoading(true);
             try {
-                const response = await apiFetch('/api/admin/stats');
-                if (response.success) {
-                    setStats(response.data);
-                }
+                const statsRes = await apiFetch('/api/admin/stats');
+                if (statsRes.success) setStats(statsRes.data);
+
+                const activitiesRes = await apiFetch('/api/admin/activities');
+                if (activitiesRes.success) setActivities(activitiesRes.data);
             } catch (err) {
-                console.error("Failed to fetch stats", err);
+                console.error("Failed to fetch dashboard data", err);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchStats();
+        fetchData();
     }, []);
 
     const handleScrape = async () => {
@@ -38,6 +44,8 @@ const AdminOverview = () => {
             setIsScraping(false);
         }
     };
+
+    if (loading) return <div className="admin-content"><h2>Loading Dashboard...</h2></div>;
 
     return (
         <div className="admin-content">
@@ -55,7 +63,8 @@ const AdminOverview = () => {
                         color: 'white', 
                         padding: '0.75rem 1.25rem', 
                         borderRadius: '8px',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        cursor: 'pointer'
                     }}
                 >
                     <RefreshCw size={18} className={isScraping ? 'spin' : ''} />
@@ -95,7 +104,7 @@ const AdminOverview = () => {
                         <Bell size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>Pending Approvals</h3>
+                        <h3>New Signups (7d)</h3>
                         <p>{stats.newSignups}</p>
                     </div>
                 </div>
@@ -114,24 +123,18 @@ const AdminOverview = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><span className="badge badge-success">New Signup</span></td>
-                                <td>Candidate Account</td>
-                                <td>Fatoumata Jallow</td>
-                                <td>10 mins ago</td>
-                            </tr>
-                            <tr>
-                                <td><span className="badge badge-warning">Job Posted</span></td>
-                                <td>Software Engineer</td>
-                                <td>QCell Gambia</td>
-                                <td>2 hours ago</td>
-                            </tr>
-                            <tr>
-                                <td><span className="badge badge-danger">Job Deleted</span></td>
-                                <td>UI Designer</td>
-                                <td>Admin</td>
-                                <td>5 hours ago</td>
-                            </tr>
+                            {activities.length > 0 ? activities.map((activity, index) => (
+                                <tr key={index}>
+                                    <td><span className={`badge badge-${activity.status}`}>{activity.action}</span></td>
+                                    <td>{activity.entity}</td>
+                                    <td>{activity.user}</td>
+                                    <td>{new Date(activity.date).toLocaleString()}</td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>No recent activity found</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -142,6 +145,7 @@ const AdminOverview = () => {
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -171,46 +175,61 @@ const UserManagement = () => {
         }
     };
 
+    const filteredUsers = users.filter(user => 
+        user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3>User Management</h3>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <div style={{ position: 'relative' }}>
                         <Search size={18} style={{ position: 'absolute', left: '10px', top: '10px', color: '#777' }} />
-                        <input type="text" placeholder="Search users..." style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid #ddd' }} />
+                        <input 
+                            type="text" 
+                            placeholder="Search users..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid #ddd' }} 
+                        />
                     </div>
-                    <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0.5rem 1rem', borderRadius: '8px', background: '#007bff', color: 'white', border: 'none' }}>
-                        <Plus size={18} /> Add User
-                    </button>
                 </div>
             </div>
-            {loading ? <p>Loading...</p> : (
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {users.map(user => (
-                            <tr key={user.id}>
-                                <td>{user.firstName} {user.lastName}</td>
-                                <td>{user.email}</td>
-                                <td><span className={`badge ${user.role === 'ADMIN' ? 'badge-danger' : 'badge-success'}`}>{user.role}</span></td>
-                                <td><span className="badge badge-success">Active</span></td>
-                                <td>
-                                    <button className="action-btn"><Edit size={16} /></button>
-                                    <button className="action-btn delete" onClick={() => handleDelete(user.id)}><Trash2 size={16} /></button>
-                                </td>
+            {loading ? <p>Loading users...</p> : (
+                <div className="admin-table-container">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredUsers.map(user => (
+                                <tr key={user.id}>
+                                    <td>{user.fullName}</td>
+                                    <td>{user.email}</td>
+                                    <td><span className={`badge ${user.role === 'ADMIN' ? 'badge-danger' : 'badge-success'}`}>{user.role}</span></td>
+                                    <td><span className="badge badge-success">Active</span></td>
+                                    <td>
+                                        <button className="action-btn" title="Edit"><Edit size={16} /></button>
+                                        <button className="action-btn delete" onClick={() => handleDelete(user.id)} title="Delete"><Trash2 size={16} /></button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>No users found</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );
@@ -218,6 +237,7 @@ const UserManagement = () => {
 
 const JobManagement = () => {
     const [jobs, setJobs] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isScraping, setIsScraping] = useState(false);
 
@@ -264,47 +284,112 @@ const JobManagement = () => {
         }
     };
 
+    const filteredJobs = jobs.filter(job => 
+        job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (job.companyName || job.company)?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3>Job Post Management</h3>
-                <button 
-                    onClick={handleScrape} 
-                    disabled={isScraping}
-                    className="btn-primary" 
-                    style={{ background: '#28a745', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}
-                >
-                    <RefreshCw size={16} className={isScraping ? 'spin' : ''} />
-                    {isScraping ? 'Scraping...' : 'Scrape External Jobs'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ position: 'relative' }}>
+                        <Search size={18} style={{ position: 'absolute', left: '10px', top: '10px', color: '#777' }} />
+                        <input 
+                            type="text" 
+                            placeholder="Search jobs..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', borderRadius: '8px', border: '1px solid #ddd' }} 
+                        />
+                    </div>
+                    <button 
+                        onClick={handleScrape} 
+                        disabled={isScraping}
+                        className="btn-primary" 
+                        style={{ background: '#28a745', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+                    >
+                        <RefreshCw size={16} className={isScraping ? 'spin' : ''} />
+                        {isScraping ? 'Scraping...' : 'Scrape Jobs'}
+                    </button>
+                </div>
             </div>
-            {loading ? <p>Loading...</p> : (
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Company</th>
-                            <th>Location</th>
-                            <th>Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {jobs.map(job => (
-                            <tr key={job.id}>
-                                <td>{job.title}</td>
-                                <td>{job.company}</td>
-                                <td>{job.location}</td>
-                                <td><span className="badge badge-warning">{job.jobType}</span></td>
-                                <td>
-                                    <button className="action-btn"><Edit size={16} /></button>
-                                    <button className="action-btn delete" onClick={() => handleDelete(job.id)}><Trash2 size={16} /></button>
-                                </td>
+            {loading ? <p>Loading jobs...</p> : (
+                <div className="admin-table-container">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Company</th>
+                                <th>Location</th>
+                                <th>Type</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredJobs.map(job => (
+                                <tr key={job.id}>
+                                    <td>{job.title}</td>
+                                    <td>{job.companyName || job.company}</td>
+                                    <td>{job.locationType || job.location}</td>
+                                    <td><span className="badge badge-warning">{job.source}</span></td>
+                                    <td>
+                                        <button className="action-btn" title="Edit"><Edit size={16} /></button>
+                                        <button className="action-btn delete" onClick={() => handleDelete(job.id)} title="Delete"><Trash2 size={16} /></button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredJobs.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>No jobs found</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             )}
+        </div>
+    );
+};
+
+const AdminSettings = () => {
+    return (
+        <div className="admin-card">
+            <h3>System Settings</h3>
+            <p style={{ color: '#777', marginBottom: '1.5rem' }}>Configure global application parameters and administrative preferences.</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
+                    <h4 style={{ marginBottom: '0.5rem' }}>General Settings</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <p style={{ fontWeight: '600', margin: 0 }}>System Maintenance Mode</p>
+                            <span style={{ fontSize: '0.875rem', color: '#777' }}>Disable public access to the platform during updates.</span>
+                        </div>
+                        <input type="checkbox" style={{ width: '20px', height: '20px' }} />
+                    </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
+                    <h4 style={{ marginBottom: '0.5rem' }}>Job Scraping Configuration</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <p style={{ fontWeight: '600', margin: 0 }}>Auto-Sync Frequency</p>
+                        <select style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd', maxWidth: '200px' }}>
+                            <option>Every 6 hours</option>
+                            <option>Daily</option>
+                            <option>Weekly</option>
+                            <option>Manual Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <button className="btn-primary" style={{ background: '#007bff', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px' }}>
+                        Save Configurations
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
@@ -372,7 +457,7 @@ export const AdminDashboard = () => {
                     <Route index element={<AdminOverview />} />
                     <Route path="users" element={<UserManagement />} />
                     <Route path="jobs" element={<JobManagement />} />
-                    <Route path="settings" element={<div>Settings Component Coming Soon</div>} />
+                    <Route path="settings" element={<AdminSettings />} />
                 </Routes>
             </main>
         </div>
