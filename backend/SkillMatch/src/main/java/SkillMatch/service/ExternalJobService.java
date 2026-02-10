@@ -27,7 +27,7 @@ public class ExternalJobService {
     private final ObjectMapper objectMapper;
 
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
-    private static final int CONNECT_TIMEOUT_MS = 60000;
+    private static final int CONNECT_TIMEOUT_MS = 120000;
 
     private static final String GAMJOBS_URL = "https://gamjobs.com/jobs/";
     private static final String WAVE_URL = "https://www.wave.com/en/careers/";
