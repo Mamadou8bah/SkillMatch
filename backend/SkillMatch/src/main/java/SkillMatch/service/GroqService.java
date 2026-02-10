@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 
@@ -71,13 +72,21 @@ public class GroqService {
             requestBody.put("messages", messages);
             requestBody.put("temperature", 0.1);
             requestBody.put("max_tokens", 4000); 
-            requestBody.put("response_format", Map.of("type", "json_object"));
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
             String response = restTemplate.postForObject(GROQ_API_URL, entity, String.class);
             
             JsonNode root = objectMapper.readTree(response);
             String content = root.path("choices").path(0).path("message").path("content").asText();
+            
+            // Clean up Markdown if AI returned it
+            if (content.contains("```json")) {
+                content = content.substring(content.indexOf("```json") + 7);
+                content = content.substring(0, content.lastIndexOf("```")).trim();
+            } else if (content.contains("```")) {
+                content = content.substring(content.indexOf("```") + 3);
+                content = content.substring(0, content.lastIndexOf("```")).trim();
+            }
             
             JsonNode contentJson = objectMapper.readTree(content);
             List<String> results = new ArrayList<>();
@@ -88,15 +97,23 @@ public class GroqService {
                         results.add(objectMapper.writeValueAsString(node));
                     }
                 }
-            } else if (contentJson.isObject() && contentJson.has("jobs")) {
-                for (JsonNode node : contentJson.get("jobs")) {
-                    if (node.isObject() && node.has("title") && !node.get("title").asText().isEmpty()) {
-                        results.add(objectMapper.writeValueAsString(node));
+            } else if (contentJson.isObject() && (contentJson.has("jobs") || contentJson.size() > 0)) {
+                JsonNode jobsNode = contentJson.has("jobs") ? contentJson.get("jobs") : contentJson;
+                if (jobsNode.isArray()) {
+                    for (JsonNode node : jobsNode) {
+                        if (node.isObject() && node.has("title")) {
+                            results.add(objectMapper.writeValueAsString(node));
+                        }
                     }
+                } else if (jobsNode.isObject() && jobsNode.has("title")) {
+                    results.add(objectMapper.writeValueAsString(jobsNode));
                 }
             }
             
             return results;
+        } catch (HttpClientErrorException.Unauthorized unauthorized) {
+            log.error("Groq API Key is invalid (401 Unauthorized). Please check your GROQ_API_KEY environment variable.");
+            return new ArrayList<>();
         } catch (Exception e) {
             log.error("Error calling Groq API for batch: {}", e.getMessage());
             return new ArrayList<>();
