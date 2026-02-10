@@ -10,8 +10,9 @@ public class AccountVerificationEmailContext extends AbstractEmailContext{
     public <T> void init(T context) {
         User user= (User) context;
         put("firstName",user.getFullName());
+        put("logoUrl", "https://res.cloudinary.com/dflsnes44/image/upload/v1770537539/skillmatch-logo_ufunkh.png");
         setTemplateLocation("mailing/email-verification");
-        setSubject("Verify Your Email");
+        setSubject("Verify Your Email - SkillMatch");
         setFrom("mbah18791@gmail.com"); 
         setTo(user.getEmail());
     }

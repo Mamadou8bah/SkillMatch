@@ -15,7 +15,6 @@ application = app
 
 @app.route('/')
 def basic_health():
-    """Health check endpoint as requested"""
     return "Service is running", 200
 
 @app.route('/health')

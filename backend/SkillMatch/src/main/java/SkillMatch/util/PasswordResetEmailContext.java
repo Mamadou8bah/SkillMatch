@@ -10,6 +10,7 @@ public class PasswordResetEmailContext extends AbstractEmailContext {
     public <T> void init(T context) {
         User user = (User) context;
         put("firstName", user.getFullName());
+        put("logoUrl", "https://res.cloudinary.com/dflsnes44/image/upload/v1770537539/skillmatch-logo_ufunkh.png");
         setTemplateLocation("mailing/password-reset");
         setSubject("Password Reset Request - SkillMatch");
         setFrom("mbah18791@gmail.com");

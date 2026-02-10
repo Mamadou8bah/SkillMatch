@@ -80,11 +80,17 @@ public class AuthController {
             if (isVerified) {
                 return ResponseEntity.ok(ApiResponse.success("Account verified successfully! You can now log in."));
             } else {
-                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid or expired verification token."));
+                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid or expired verification code."));
             }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Verification failed: " + e.getMessage()));
         }
+    }
+
+    @PostMapping("/register/resend-code")
+    public ResponseEntity<ApiResponse<String>> resendCode(@RequestParam String email) {
+        service.resendRegistrationCode(email);
+        return ResponseEntity.ok(ApiResponse.success("A new verification code has been sent to your email."));
     }
 
     @PostMapping("/password-reset/request")

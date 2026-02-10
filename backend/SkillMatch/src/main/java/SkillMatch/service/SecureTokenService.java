@@ -39,4 +39,13 @@ public class SecureTokenService {
         return secureToken;
     }
 
+    public SecureToken create6DigitCode(){
+        String code = String.valueOf((int)((Math.random() * 900000) + 100000));
+        SecureToken secureToken=new SecureToken();
+        secureToken.setToken(code);
+        secureToken.setExpiredAt(LocalDateTime.now().plusMinutes(tokenValidityInMinutes));
+        this.saveToken(secureToken);
+        return secureToken;
+    }
+
 }

@@ -348,6 +348,13 @@ public class UserService {
         }
     }
 
+    public void resendRegistrationCode(String email) {
+        User user = repo.findByEmail(email);
+        if (user != null && !user.isAccountVerified()) {
+            sendRegistrationConfirmationEmail(user);
+        }
+    }
+
     @Async
     public void sendRegistrationConfirmationEmail(User user){
 
@@ -356,7 +363,7 @@ public class UserService {
             oldToken.setExpiredAt(LocalDateTime.now());
             secureTokenService.saveToken(oldToken);
         }
-        SecureToken secureToken=secureTokenService.createToken();
+        SecureToken secureToken=secureTokenService.create6DigitCode();
         secureToken.setUser(user);
         secureTokenService.saveToken(secureToken);
 
@@ -386,7 +393,7 @@ public class UserService {
             return;
         }
 
-        SecureToken resetToken = secureTokenService.createToken();
+        SecureToken resetToken = secureTokenService.create6DigitCode();
         resetToken.setUser(user);
         secureTokenService.saveToken(resetToken);
 
