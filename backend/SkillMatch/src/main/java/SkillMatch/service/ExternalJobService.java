@@ -12,10 +12,17 @@ import org.jsoup.select.Elements;
 import org.jsoup.HttpStatusException;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +33,11 @@ public class ExternalJobService {
     private final GeminiService geminiService;
     private final ObjectMapper objectMapper;
 
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+        private static final List<String> USER_AGENTS = List.of(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+        );
     private static final int CONNECT_TIMEOUT_MS = 120000;
 
     private static final String GAMJOBS_URL = "https://gamjobs.com/jobs/";
@@ -34,6 +45,8 @@ public class ExternalJobService {
     private static final String IOM_GAMBIA_URL = "https://gambia.iom.int/careers";
     private static final String MOJ_GAMBIA_URL = "https://moj.gov.gm/vcancies/";
     private static final String UNJOBS_GAMBIA_URL = "https://unjobs.org/duty_stations/gambia";
+
+    private static final List<String> TEXT_PROXY_TARGETS = List.of("unjobs.org", "iom.int", "gambia.iom.int");
 
     // Fallback Logos
     private static final String UNJOBS_LOGO = "https://media.licdn.com/dms/image/v2/C4E0BAQHQ1DD92ZSnkA/company-logo_200_200/company-logo_200_200/0/1670422173816?e=2147483647&v=beta&t=ZVwp-54BrQBhzPgiggGGnLE_iGE99WwvOdcFMKkRqIU";
@@ -45,12 +58,24 @@ public class ExternalJobService {
     }
 
     private Document safelyFetchDocument(String url, String referer) {
+        Document doc = tryFetchWithJsoup(url, referer);
+        if (doc != null) return doc;
+
+        doc = tryFetchWithHttpClient(url, referer);
+        if (doc != null) return doc;
+
+        if (needsTextProxy(url)) {
+            doc = tryFetchViaTextProxy(url);
+            if (doc != null) return doc;
+        }
+
+        return null;
+    }
+
+    private Document tryFetchWithJsoup(String url, String referer) {
         try {
-            // Modern Chrome User Agent
-            String ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-            
             return Jsoup.connect(url)
-                    .userAgent(ua)
+                    .userAgent(randomUserAgent())
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Cache-Control", "no-cache")
@@ -70,6 +95,65 @@ public class ExternalJobService {
             log.error("Failed to fetch document from {}: {}", url, e.getMessage());
         }
         return null;
+    }
+
+    private Document tryFetchWithHttpClient(String url, String referer) {
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.ALWAYS)
+                    .connectTimeout(Duration.ofMillis(CONNECT_TIMEOUT_MS))
+                    .build();
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMillis(CONNECT_TIMEOUT_MS))
+                    .GET()
+                    .header("User-Agent", randomUserAgent())
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.9")
+                    .header("Cache-Control", "no-cache")
+                    .header("Upgrade-Insecure-Requests", "1")
+                    .header("Sec-Fetch-Dest", "document")
+                    .header("Sec-Fetch-Mode", "navigate")
+                    .header("Sec-Fetch-Site", "same-origin");
+            if (referer != null) requestBuilder.header("Referer", referer);
+
+            HttpResponse<String> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            int status = response.statusCode();
+            if (status >= 200 && status < 400) {
+                return Jsoup.parse(response.body(), url);
+            }
+            log.warn("HttpClient fetch returned {} for {}", status, url);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("HttpClient fallback interrupted for {}: {}", url, e.getMessage());
+        } catch (IOException e) {
+            log.error("HttpClient fallback failed for {}: {}", url, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("Malformed URL while trying HttpClient for {}: {}", url, e.getMessage());
+        }
+        return null;
+    }
+
+    private Document tryFetchViaTextProxy(String url) {
+        try {
+            URI target = URI.create(url);
+            String proxyUrl = "https://r.jina.ai/http/" + target.toString();
+            log.info("Attempting text proxy for {}", url);
+            Document proxyResponse = tryFetchWithJsoup(proxyUrl, "https://www.google.com/");
+            return proxyResponse != null ? Jsoup.parse(proxyResponse.html(), url) : null;
+        } catch (Exception e) {
+            log.warn("Text proxy fall back failed for {}: {}", url, e.getMessage());
+        }
+        return null;
+    }
+
+    private boolean needsTextProxy(String url) {
+        return TEXT_PROXY_TARGETS.stream().anyMatch(url::contains);
+    }
+
+    private String randomUserAgent() {
+        if (USER_AGENTS.isEmpty()) return "Mozilla/5.0";
+        return USER_AGENTS.get(ThreadLocalRandom.current().nextInt(USER_AGENTS.size()));
     }
 
     public List<JobResponseDTO> fetchGamjobs() {
