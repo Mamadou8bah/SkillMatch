@@ -162,25 +162,18 @@ export const Candidates = () => {
                                         <span>Pending</span>
                                     </button>
                                 ) : (
-                                    <>
-                                        <button 
-                                            onClick={() => handleConnect(user.id)} 
-                                            className="action-btn btn-primary"
-                                            disabled={isProcessing}
-                                        >
-                                            {isProcessing ? '...' : (
-                                                <>
-                                                    <UserPlus size={16} style={{ marginRight: '8px' }} />
-                                                    <span>{myRole === 'EMPLOYER' ? 'Hire' : 'Connect'}</span>
-                                                </>
-                                            )}
-                                        </button>
-                                        <button 
-                                            className="action-btn btn-outline"
-                                        >
-                                            <span>Follow</span>
-                                        </button>
-                                    </>
+                                    <button 
+                                        onClick={() => handleConnect(user.id)} 
+                                        className="action-btn btn-primary"
+                                        disabled={isProcessing}
+                                    >
+                                        {isProcessing ? '...' : (
+                                            <>
+                                                <UserPlus size={16} style={{ marginRight: '8px' }} />
+                                                <span>{myRole === 'EMPLOYER' ? 'Hire' : 'Connect'}</span>
+                                            </>
+                                        )}
+                                    </button>
                                 )}
                             </div>
                         </div>

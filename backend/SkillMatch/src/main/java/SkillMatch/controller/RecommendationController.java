@@ -1,9 +1,11 @@
 package SkillMatch.controller;
 
 import SkillMatch.dto.ApiResponse;
+import SkillMatch.dto.CandidateJobMatchDTO;
 import SkillMatch.model.JobPost;
 import SkillMatch.model.User;
 import SkillMatch.repository.JobPostRepo;
+import SkillMatch.service.CandidateJobMatchService;
 import SkillMatch.service.RecommendationService;
 import SkillMatch.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.List;
 public class RecommendationController {
     private final RecommendationService recommendationService;
     private final UserService userService;
+    private final CandidateJobMatchService candidateJobMatchService;
     private final JobPostRepo jobPostRepo;
 
     @GetMapping("/jobs")
@@ -33,6 +36,13 @@ public class RecommendationController {
                 .orElseThrow(() -> new SkillMatch.exception.ResourceNotFoundException("Job not found"));
         List<User> recommendations = recommendationService.recommendCandidates(job);
         return ResponseEntity.ok(ApiResponse.success("Candidate recommendations retrieved", recommendations));
+    }
+
+    @GetMapping("/matches")
+    public ResponseEntity<ApiResponse<List<CandidateJobMatchDTO>>> getPrecomputedMatches(@RequestParam(defaultValue = "20") int limit) {
+        User user = userService.getLogInUser();
+        List<CandidateJobMatchDTO> matches = candidateJobMatchService.getTopMatches(user, limit);
+        return ResponseEntity.ok(ApiResponse.success("Precomputed job matches retrieved", matches));
     }
 
     @GetMapping("/connections")

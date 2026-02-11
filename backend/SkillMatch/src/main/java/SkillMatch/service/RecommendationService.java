@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RecommendationService {
     private final JobPostRepo jobPostRepo;
+    private final CandidateJobMatchService candidateJobMatchService;
     private final UserRepo userRepo;
     private final UserInteractionRepository interactionRepo;
     private final ConnectionService connectionService;
@@ -31,6 +32,11 @@ public class RecommendationService {
      * Recommends JobPosts for a Candidate based on weighted scoring.
      */
     public List<JobPost> recommendJobs(User candidate) {
+        List<JobPost> cachedMatches = candidateJobMatchService.getTopJobPosts(candidate, 100);
+        if (!cachedMatches.isEmpty()) {
+            return cachedMatches;
+        }
+
         List<JobPost> allJobs = jobPostRepo.findAll();
         if (allJobs.isEmpty()) return Collections.emptyList();
 
