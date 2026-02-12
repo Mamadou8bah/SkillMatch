@@ -104,6 +104,7 @@ const AuthGuard = () => {
   const location = useLocation();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
+  const hasVisited = localStorage.getItem('hasVisited');
   const isAuthenticated = !!token && !isTokenExpired(token);
 
   if (!isAuthenticated) {
@@ -113,6 +114,12 @@ const AuthGuard = () => {
       localStorage.removeItem('userId');
       localStorage.removeItem('registrationStage');
     }
+    
+    // Redirect to intro if first time, else to login
+    if (!hasVisited) {
+      return <Navigate to="/intro" replace />;
+    }
+    
     // Redirect to login but save the current location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

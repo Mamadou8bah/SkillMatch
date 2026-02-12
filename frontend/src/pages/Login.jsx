@@ -136,6 +136,7 @@ export const Login = () => {
             localStorage.setItem('userId', 'test-user-id');
             localStorage.setItem('userRole', 'CANDIDATE');
             localStorage.setItem('registrationStage', '4');
+            localStorage.setItem('hasVisited', 'true');
             const from = locationState.state?.from?.pathname || '/';
             navigate(from, { replace: true });
             setIsLoading(false);
@@ -152,6 +153,7 @@ export const Login = () => {
                 localStorage.setItem('userId', data.data.userId)
                 localStorage.setItem('userRole', data.data.role)
                 localStorage.setItem('registrationStage', data.data.registrationStage)
+                localStorage.setItem('hasVisited', 'true')
                 
                 const role = data.data.role;
                 const from = locationState.state?.from?.pathname || (role === 'ADMIN' ? '/admin' : '/');

@@ -21,11 +21,13 @@ export const LandingIntro = () => {
         if (step < 3) {
             setStep(step + 1);
         } else {
+            localStorage.setItem('hasVisited', 'true');
             navigate('/login');
         }
     };
 
     const handleSkip = () => {
+        localStorage.setItem('hasVisited', 'true');
         navigate('/login');
     };
 
