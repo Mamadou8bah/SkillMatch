@@ -53,15 +53,10 @@ export const Notifications = () => {
   };
 
   const markAsRead = async (id) => {
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/${id}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const data = await apiFetch(`/api/notifications/${id}/read`, {
+        method: 'PUT'
       });
-      const data = await response.json();
       if (data.success) {
         setNotifications(notifications.map(n => 
           n.id === id ? { ...n, isRead: true } : n
@@ -74,15 +69,10 @@ export const Notifications = () => {
 
   const deleteNotification = async (e, id) => {
     e.stopPropagation();
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const data = await apiFetch(`/api/notifications/${id}`, {
+        method: 'DELETE'
       });
-      const data = await response.json();
       if (data.success) {
         setNotifications(notifications.filter(n => n.id !== id));
       }
@@ -93,15 +83,10 @@ export const Notifications = () => {
 
   const markAllRead = async () => {
     if (!userId) return;
-    const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/user/${userId}/read-all`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const data = await apiFetch(`/api/notifications/user/${userId}/read-all`, {
+        method: 'PUT'
       });
-      const data = await response.json();
       if (data.success) {
         setNotifications(notifications.map(n => ({ ...n, isRead: true })));
       }

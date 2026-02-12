@@ -59,7 +59,6 @@ export const Profile = () => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const userId = localStorage.getItem('userId');
-  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -141,14 +140,10 @@ export const Profile = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}/photo`, {
+      const data = await apiFetch(`/api/users/${userId}/photo`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: formData
       });
-      const data = await response.json();
       if (data.success) {
         fetchUserProfile();
       } else {
@@ -156,7 +151,9 @@ export const Profile = () => {
       }
     } catch (err) {
       console.error('Error uploading photo:', err);
-      setError('Error uploading photo');
+      if (err.message !== 'Unauthorized' && err.message !== 'Token expired') {
+        setError('Error uploading photo');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -170,16 +167,19 @@ export const Profile = () => {
     if (!profileData.mobile.trim()) return setError('Mobile number is required');
 
     try {
-      const data = await apiFetch(`/api/users/${userId}/photo`, {
-        method: 'POST',
-        body: JSON.stringify({ photo: base64Photo })
+      const data = await apiFetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
       });
       if (data.success) {
         setActiveView('main');
+        fetchUserProfile();
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      setError('Failed to update profile');
+      if (error.message !== 'Unauthorized' && error.message !== 'Token expired') {
+        setError('Failed to update profile');
+      }
     }
   };
 
@@ -217,15 +217,10 @@ export const Profile = () => {
     }
 
     try {
-      const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/skill', {
+      const data = await apiFetch('/api/skill', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({ title: titleToAdd })
       });
-      const data = await response.json();
       if (data.success) {
         setSkills(prev => [...prev, data.data]);
         setNewSkill('');
@@ -239,11 +234,9 @@ export const Profile = () => {
   const handleRemoveSkill = async (id) => {
     if (!id) return;
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/skill/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const data = await apiFetch(`/api/skill/${id}`, {
+        method: 'DELETE'
       });
-      const data = await response.json();
       if (data.success) {
         setSkills(prev => prev.filter(s => s.id !== id));
       }
@@ -260,15 +253,10 @@ export const Profile = () => {
     if (!newExperience.description.trim()) return setError('Description is required');
 
     try {
-      const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/experience', {
+      const data = await apiFetch('/api/experience', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(newExperience)
       });
-      const data = await response.json();
       if (data.success) {
         setExperiences([...experiences, data.data]);
         setNewExperience({
@@ -282,17 +270,17 @@ export const Profile = () => {
       }
     } catch (e) {
       console.error(e);
-      setError('Failed to add experience');
+      if (e.message !== 'Unauthorized' && e.message !== 'Token expired') {
+        setError('Failed to add experience');
+      }
     }
   };
 
   const handleDeleteExperience = async (id) => {
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/experience/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const data = await apiFetch(`/api/experience/${id}`, {
+        method: 'DELETE'
       });
-      const data = await response.json();
       if (data.success) {
         setExperiences(experiences.filter(exp => exp.id !== id));
       }
@@ -302,8 +290,7 @@ export const Profile = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+    redirectToLogin();
   };
 
   const renderBackBtn = () => (

@@ -44,15 +44,9 @@ export const Candidates = () => {
     const handleConnect = async (targetId) => {
         setProcessingId(targetId)
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch(`${BASE_URL}/api/connections/request/${targetId}`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const data = await apiFetch(`/api/connections/request/${targetId}`, {
+                method: 'POST'
             })
-            const data = await response.json()
             if (data.success) {
                 await fetchData()
             } else {
@@ -60,7 +54,9 @@ export const Candidates = () => {
             }
         } catch (err) {
             console.error('Failed to send request', err)
-            alert('A network error occurred. Please try again.')
+            if (err.message !== 'Unauthorized' && err.message !== 'Token expired') {
+                alert('A network error occurred. Please try again.')
+            }
         } finally {
             setProcessingId(null)
         }
@@ -69,15 +65,9 @@ export const Candidates = () => {
     const handleAccept = async (requestId) => {
         setProcessingId(requestId)
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch(`${BASE_URL}/api/connections/accept/${requestId}`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const data = await apiFetch(`/api/connections/accept/${requestId}`, {
+                method: 'POST'
             })
-            const data = await response.json()
             if (data.success) {
                 await fetchData()
             } else {
@@ -85,7 +75,9 @@ export const Candidates = () => {
             }
         } catch (err) {
             console.error('Failed to accept request', err)
-            alert('A network error occurred. Please try again.')
+            if (err.message !== 'Unauthorized' && err.message !== 'Token expired') {
+                alert('A network error occurred. Please try again.')
+            }
         } finally {
             setProcessingId(null)
         }

@@ -86,19 +86,13 @@ export const Conversation = () => {
         if (!newMessage.trim()) return
 
         try {
-            const token = localStorage.getItem('token')
-            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/messages/send', {
+            const data = await apiFetch('/api/messages/send', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
                     recipientId: id,
                     content: newMessage
                 })
             })
-            const data = await response.json()
             if (data.success) {
                 // The message will also be received via WebSocket, but we can add it here too if we want immediate feedback
                 // or just rely on the WebSocket if the server broadcasts to sender too (common in STOMP user queues)

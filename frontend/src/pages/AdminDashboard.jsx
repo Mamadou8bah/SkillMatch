@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, NavLink, Routes, Route } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, Settings, LogOut, Bell, Search, Trash2, Edit, RefreshCw } from 'lucide-react';
 import '../styles/admin.css';
-import { apiFetch } from '../utils/api';
+import { apiFetch, redirectToLogin } from '../utils/api';
 
 const AdminOverview = () => {
     const [stats, setStats] = useState({
@@ -434,8 +434,7 @@ export const AdminDashboard = () => {
     }, [userRole, navigate]);
 
     const handleLogout = () => {
-        localStorage.clear();
-        navigate('/login');
+        redirectToLogin();
     };
 
     return (
