@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/onboarding.css';
+import { isTokenExpired } from '../utils/api';
 import introImg1 from '../assets/ChatGPT Image Oct 19, 2025, 05_08_56 PM.png';
 import introImg2 from '../assets/Gemini_Generated_Image_1k8ta1k8ta1k8ta1.png';
 
@@ -9,8 +10,10 @@ export const LandingIntro = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (localStorage.getItem('token')) {
-            navigate('/', { replace: true });
+        const token = localStorage.getItem('token');
+        if (token && !isTokenExpired(token)) {
+            const role = localStorage.getItem('userRole');
+            navigate(role === 'ADMIN' ? '/admin' : '/', { replace: true });
         }
     }, [navigate]);
 

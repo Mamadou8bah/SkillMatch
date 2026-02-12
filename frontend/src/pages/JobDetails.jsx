@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useBookmarks } from '../contexts/BookmarksContext'
 import '../styles/jobdetails.css'
 import Loader from '../components/Loader'
+import { apiFetch } from '../utils/api'
 
 export const JobDetails = () => {
     const { isBookmarked, toggleBookmark } = useBookmarks()
@@ -16,13 +17,7 @@ export const JobDetails = () => {
     const [showApplicants, setShowApplicants] = useState(false);
  
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        fetch(`https://skillmatch-1-6nn0.onrender.com/post/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(res => res.json())
+        apiFetch(`/post/${id}`)
         .then(data => {
             setJob(data);
             setIsLoading(false);
@@ -41,11 +36,7 @@ export const JobDetails = () => {
 
     useEffect(() => {
         if (isOwner && job) {
-            const token = localStorage.getItem('token');
-            fetch(`https://skillmatch-1-6nn0.onrender.com/api/apply/submitted/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
+            apiFetch(`/api/apply/submitted/${id}`)
             .then(data => setApplicants(data))
             .catch(err => console.error('Error fetching applicants:', err));
         }
@@ -67,23 +58,17 @@ export const JobDetails = () => {
 
         setIsApplying(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/apply', {
+            const data = await apiFetch('/api/apply', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify(job.id) // It takes a Long jobId
             });
-            if (response.ok) {
-                setIsApplied(true);
-                alert('Application submitted successfully!');
-            } else {
-                alert('You have already applied for this job');
-            }
+            setIsApplied(true);
+            alert('Application submitted successfully!');
         } catch (err) {
             console.error('Failed to apply', err);
+            if (err.message !== 'Unauthorized' && err.message !== 'Token expired') {
+                alert('You have already applied for this job or a system error occurred');
+            }
         } finally {
             setIsApplying(false);
         }

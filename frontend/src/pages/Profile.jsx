@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
+import { apiFetch, redirectToLogin, isTokenExpired } from '../utils/api';
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -72,10 +73,7 @@ export const Profile = () => {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const data = await apiFetch(`/api/users/${userId}`);
       if (data.success) {
         setProfileData({
           fullName: data.data.fullName || '',
@@ -92,35 +90,29 @@ export const Profile = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userId, token]);
+  }, [userId]);
 
   const fetchSkills = useCallback(async () => {
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/skill/user/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const data = await apiFetch(`/api/skill/user/${userId}`);
       if (data.success) {
         setSkills(data.data || []);
       }
     } catch (e) {
       console.error(e);
     }
-  }, [userId, token]);
+  }, [userId]);
 
   const fetchExperiences = useCallback(async () => {
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/experience/user/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const data = await apiFetch(`/api/experience/user/${userId}`);
       if (data.success) {
         setExperiences(data.data || []);
       }
     } catch (e) {
       console.error(e);
     }
-  }, [userId, token]);
+  }, [userId]);
 
   useEffect(() => {
     if (userId) {
@@ -178,15 +170,10 @@ export const Profile = () => {
     if (!profileData.mobile.trim()) return setError('Mobile number is required');
 
     try {
-      const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${userId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
+      const data = await apiFetch(`/api/users/${userId}/photo`, {
+        method: 'POST',
+        body: JSON.stringify({ photo: base64Photo })
       });
-      const data = await response.json();
       if (data.success) {
         setActiveView('main');
       }

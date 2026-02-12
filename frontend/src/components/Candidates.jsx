@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapPin, MessageSquare, UserPlus, Search, Clock } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
-import BASE_URL from '../utils/api'
+import { apiFetch } from '../utils/api'
 
 export const Candidates = () => {
     const [users, setUsers] = useState([])
@@ -19,19 +19,12 @@ export const Candidates = () => {
     const fetchData = async () => {
         setIsLoading(true)
         try {
-            const token = localStorage.getItem('token')
-            const headers = { 'Authorization': `Bearer ${token}` }
-            const [usersRes, connRes, pendingRes, recRes] = await Promise.all([
-                fetch(`${BASE_URL}/api/users/network`, { headers }),
-                fetch(`${BASE_URL}/api/connections`, { headers }),
-                fetch(`${BASE_URL}/api/connections/pending`, { headers }),
-                fetch(`${BASE_URL}/api/recommendations/connections`, { headers })
+            const [usersData, connData, pendingData, recData] = await Promise.all([
+                apiFetch('/api/users/network'),
+                apiFetch('/api/connections'),
+                apiFetch('/api/connections/pending'),
+                apiFetch('/api/recommendations/connections')
             ])
-            
-            const usersData = await usersRes.json()
-            const connData = await connRes.json()
-            const pendingData = await pendingRes.json()
-            const recData = await recRes.json()
             
             if (usersData.success) setUsers(usersData.data)
             if (connData.success) setConnections(connData.data)

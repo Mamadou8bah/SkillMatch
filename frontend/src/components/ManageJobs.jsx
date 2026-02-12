@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Briefcase, Eye, Users, Plus, Trash2, Edit } from 'lucide-react'
 import '../styles/discover.css'
 import Loader from './Loader'
+import { apiFetch } from '../utils/api'
 
 export const ManageJobs = () => {
     const [myJobs, setMyJobs] = useState([])
@@ -11,11 +12,7 @@ export const ManageJobs = () => {
     useEffect(() => {
         const fetchMyJobs = async () => {
             try {
-                const token = localStorage.getItem('token')
-                const response = await fetch('https://skillmatch-1-6nn0.onrender.com/post/myjobs', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                const data = await response.json()
+                const data = await apiFetch('/post/myjobs')
                 setMyJobs(data)
             } catch (err) {
                 console.error("Failed to fetch my jobs", err)

@@ -20,6 +20,7 @@ import { ManageJobs } from './components/ManageJobs';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
 import { useState, useEffect } from 'react';
+import { isTokenExpired } from './utils/api';
 
 function App() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -101,11 +102,24 @@ function App() {
 
 const AuthGuard = () => {
   const location = useLocation();
-  const isAuthenticated = !!localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  const isAuthenticated = !!token && !isTokenExpired(token);
 
   if (!isAuthenticated) {
+    if (token) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('registrationStage');
+    }
     // Redirect to login but save the current location
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Redirect admin users from homepage to admin dashboard
+  if (userRole === 'ADMIN' && location.pathname === '/') {
+    return <Navigate to="/admin" replace />;
   }
 
   return <Main />;

@@ -4,6 +4,7 @@ import { ArrowLeft, Send, MoreVertical } from 'lucide-react'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import '../styles/conversation.css'
+import { apiFetch } from '../utils/api'
 
 export const Conversation = () => {
     const { id } = useParams() // This is the recipientId
@@ -27,11 +28,7 @@ export const Conversation = () => {
     useEffect(() => {
         const fetchRecipient = async () => {
             try {
-                const token = localStorage.getItem('token')
-                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/users/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                const data = await response.json()
+                const data = await apiFetch(`/api/users/${id}`)
                 if (data.success) {
                     setRecipient(data.data)
                 }
@@ -42,11 +39,7 @@ export const Conversation = () => {
 
         const fetchHistory = async () => {
             try {
-                const token = localStorage.getItem('token')
-                const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/messages/conversation/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                const data = await response.json()
+                const data = await apiFetch(`/api/messages/conversation/${id}`)
                 if (data.success) {
                     setChatMessages(data.data)
                 }
@@ -54,6 +47,7 @@ export const Conversation = () => {
                 console.error("Failed to fetch history", err)
             }
         }
+
         fetchRecipient()
         fetchHistory()
     }, [id])

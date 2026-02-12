@@ -10,6 +10,7 @@ import {
   Trash2
 } from 'lucide-react';
 import Loader from '../components/Loader';
+import { apiFetch } from '../utils/api';
 
 export const Notifications = () => {
   const navigate = useNavigate();
@@ -23,14 +24,8 @@ export const Notifications = () => {
         setIsLoading(false);
         return;
       }
-      const token = localStorage.getItem('token');
       try {
-        const response = await fetch(`https://skillmatch-1-6nn0.onrender.com/api/notifications/user/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
+        const data = await apiFetch(`/api/notifications/user/${userId}`);
         if (data.success) {
           setNotifications(data.data || []);
         }

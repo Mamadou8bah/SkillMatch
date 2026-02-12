@@ -4,7 +4,7 @@ import { Eye, EyeOff, MapPin, Briefcase, Camera, Plus, X, Code, Palette, Trendin
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import Loader from '../components/Loader'
-import { apiFetch } from '../utils/api'
+import { apiFetch, isTokenExpired } from '../utils/api'
 
 export const Login = () => {
     const navigate = useNavigate()
@@ -105,7 +105,8 @@ export const Login = () => {
     };
 
     useEffect(() => {
-        if (localStorage.getItem('token')) {
+        const token = localStorage.getItem('token');
+        if (token && !isTokenExpired(token)) {
             const role = localStorage.getItem('userRole');
             navigate(role === 'ADMIN' ? '/admin' : '/');
             return;

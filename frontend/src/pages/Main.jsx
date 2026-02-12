@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import '../styles/Main.css'
 import { NavLink, Outlet } from 'react-router-dom'
+import { apiFetch } from '../utils/api'
 
 export const Main = () => {
   const userRole = localStorage.getItem('userRole')
@@ -15,13 +16,8 @@ export const Main = () => {
     // If we don't have the role in localStorage, fetch it from profile
     if (!userRole) {
       const fetchProfile = async () => {
-        const token = localStorage.getItem('token')
-        if (!token) return
         try {
-          const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/users/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
-          const data = await response.json()
+          const data = await apiFetch('/api/users/profile')
           if (data.success) {
             localStorage.setItem('userRole', data.data.role)
             localStorage.setItem('userId', data.data.id)

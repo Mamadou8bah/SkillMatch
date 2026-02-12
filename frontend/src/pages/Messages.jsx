@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Search, MessageCircle, Check, CheckCheck } from 'lucide-react'
 import '../styles/messages.css'
 import Loader from '../components/Loader'
+import { apiFetch } from '../utils/api'
 
 export const Messages = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,11 +16,7 @@ export const Messages = () => {
   useEffect(() => {
     const fetchInbox = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('https://skillmatch-1-6nn0.onrender.com/api/messages/inbox', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
+        const data = await apiFetch('/api/messages/inbox');
         if (data.success) {
           setInbox(data.data);
         }
