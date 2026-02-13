@@ -314,7 +314,8 @@ export const Login = () => {
         const newCode = [...verificationCode]
         newCode[index] = value.substring(value.length - 1)
         setVerificationCode(newCode)
-
+        if (value && index < 5) document.getElementById(`code-${index + 1}`).focus()
+    }
 
     const handleKeyDown = (index, e) => {
         if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
