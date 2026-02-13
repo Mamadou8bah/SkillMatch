@@ -66,7 +66,6 @@ export const Home = () => {
 
     const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
-    // const popularJobs = jobs.slice(0, 5); // Old
     const popularJobs = recommendedJobs.length > 0 ? recommendedJobs.slice(0, 5) : jobsList.slice(0, 5);
 
     const searchedJobs = useMemo(() => {
@@ -82,11 +81,18 @@ export const Home = () => {
 
     const isSearching = searchTerm.length > 0;
 
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good Morning.";
+        if (hour < 17) return "Good Afternoon.";
+        return "Good Evening.";
+    };
+
     return (
         <div className='home-page'>
             <div className="home-header">
                 <div className={isSearching ? "header-text searching" : "header-text"}>
-                    <p>Good Morning.</p>
+                    <p>{getGreeting()}</p>
                     <h2>{userData.firstName}</h2>
                 </div>
                 <div className={isSearching ? "notification searching" : 'notification'}>
