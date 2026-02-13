@@ -31,7 +31,6 @@ export const JobDetails = () => {
     const myId = localStorage.getItem('userId');
     const myRole = localStorage.getItem('userRole');
 
-    // Check if this job belongs to the current employer
     const isOwner = job?.employer?.user?.id?.toString() === myId || (myRole === 'EMPLOYER' && job?.employer?.name === localStorage.getItem('companyName'));
 
     useEffect(() => {

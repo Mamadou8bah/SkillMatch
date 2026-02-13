@@ -43,7 +43,7 @@ export const LandingIntro = () => {
             description: "Immediately join us and start applying for the job you are interested in.",
         },
         {
-            image: introImg1, // Reusing for now
+            image: introImg1,
             title: <>Get the best <span className="highlight">choice for the job</span> you've always dreamed of</>,
             description: "The better the skills you have, the greater the good job opportunities for you.",
         }

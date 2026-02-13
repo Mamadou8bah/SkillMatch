@@ -26,7 +26,6 @@ export const Discover = () => {
 
         if (recData && recData.success && Array.isArray(recData.data)) {
           finalJobs = [...recData.data];
-          // Add other jobs that aren't in recommendations
           const recIds = new Set(recData.data.map(j => j.id));
           const others = allJobs.filter(j => !recIds.has(j.id));
           finalJobs = [...finalJobs, ...others];

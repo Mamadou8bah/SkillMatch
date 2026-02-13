@@ -13,7 +13,6 @@ export const Onboarding = () => {
     const [error, setError] = useState('');
     const [photoPreview, setPhotoPreview] = useState(null);
 
-    // Auto-clear error messages after 5 seconds
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
@@ -141,7 +140,6 @@ export const Onboarding = () => {
         if (step < 4) {
             setStep(step + 1);
         } else {
-            // Finally save onboarding data
             try {
                 const response = await apiFetch(`/api/users/${localStorage.getItem('userId')}/onboarding`, {
                     method: 'POST',
@@ -153,7 +151,7 @@ export const Onboarding = () => {
                 }
             } catch (err) {
                 console.error("Failed to save onboarding", err);
-                navigate('/'); // Fallback
+                navigate('/');
             }
         }
     };

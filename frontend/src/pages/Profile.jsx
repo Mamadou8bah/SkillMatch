@@ -23,7 +23,6 @@ export const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Auto-clear error messages after 5 seconds
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => {
@@ -208,7 +207,6 @@ export const Profile = () => {
       return;
     }
 
-    // Check if duplicate locally first
     if (skills.some(s => s.title.toLowerCase() === titleToAdd.toLowerCase())) {
       setError('Skill already added');
       setNewSkill('');

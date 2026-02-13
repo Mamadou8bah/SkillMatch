@@ -31,7 +31,6 @@ export const redirectToLogin = () => {
 export const apiFetch = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
     
-    // Proactive check for token expiration
     if (token && isTokenExpired(token)) {
         redirectToLogin();
         throw new Error('Token expired');
@@ -42,7 +41,6 @@ export const apiFetch = async (endpoint, options = {}) => {
         ...options.headers,
     };
 
-    // Only add JSON content type if it's not FormData and not already specified
     if (!(options.body instanceof FormData) && !headers['Content-Type']) {
         headers['Content-Type'] = 'application/json';
     }
@@ -51,13 +49,11 @@ export const apiFetch = async (endpoint, options = {}) => {
     
     const response = await fetch(url, { ...options, headers });
     
-    // Check for unauthorized access
     if (response.status === 401) {
         redirectToLogin();
         throw new Error('Unauthorized');
     }
     
-    // For 204 No Content
     if (response.status === 204) return null;
     
     const data = await response.json();

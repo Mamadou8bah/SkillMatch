@@ -80,7 +80,6 @@ export const Login = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
 
-    // Auto-clear error messages after 5 seconds
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
@@ -99,7 +98,6 @@ export const Login = () => {
     };
 
     const validatePassword = (pass) => {
-        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         return regex.test(pass);
     };
@@ -137,7 +135,6 @@ export const Login = () => {
         setError('')
 
         // Test login shortcut
-        if (email === 'test@gmail.com' && password === 'test') {
             localStorage.setItem('token', 'test-token');
             localStorage.setItem('userId', 'test-user-id');
             localStorage.setItem('userRole', 'CANDIDATE');
@@ -257,8 +254,6 @@ export const Login = () => {
             }
         } catch (err) {
             setError('Failed to save photo.')
-            // Even if photo fails, let's try to proceed? 
-            // Or just allow setRegStage(4) if it's strictly optional
             setRegStage(4)
         } finally {
             setIsLoading(false)
@@ -277,8 +272,7 @@ export const Login = () => {
                 setRegStage(5)
             }
         } catch (err) {
-            setRegStage(5) // Proceed anyway for now or show error
-        } finally {
+            setRegStage(5)
             setIsLoading(false)
         }
     }
@@ -316,6 +310,8 @@ export const Login = () => {
             // For now, let's assume stage 2 re-triggers email or we add a simple resend
             const data = await apiFetch(`/api/auth/register/resend-code?email=${email}`)
             if (data.success) {
+            const data = await apiFetch(`/api/auth/register/resend-code?email=${email}`)
+            if (data.success) {
                 alert('A new code has been sent to your email.')
             } else {
                 setError(data.message)
@@ -333,11 +329,6 @@ export const Login = () => {
         newCode[index] = value.substring(value.length - 1)
         setVerificationCode(newCode)
 
-        // Auto focus next input
-        if (value && index < 5) {
-            document.getElementById(`code-${index + 1}`).focus()
-        }
-    }
 
     const handleKeyDown = (index, e) => {
         if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
@@ -560,7 +551,6 @@ export const Login = () => {
                                         <label><Plus size={18} /></label>
                                         <input 
                                             type="text" 
-                                            value={skillInput}
                                             onChange={(e) => setSkillInput(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addManualSkill())}
                                             placeholder="Type a skill..."

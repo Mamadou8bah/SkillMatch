@@ -6,7 +6,6 @@
     padding-bottom: 2rem;
 }
 
-/* Header & Upper Section */
 .jd-upper {
     display: flex;
     flex-direction: column;
@@ -116,7 +115,6 @@
     color: white;
 }
 
-/* Floating Stats Card */
 .md-tags-container {
     width: 100%;
     position: relative;
@@ -197,7 +195,6 @@
 }
 
 /* Page Content */
-.jd-content {
     padding: 3.5rem 1.5rem 7rem;
     display: flex;
     flex-direction: column;
@@ -245,7 +242,6 @@
 
 /* Requirements List */
 .jd-requirements-list {
-    padding-left: 1.5rem;
     margin: 0;
 }
 
@@ -257,7 +253,6 @@
 
 /* Skills */
 .jd-skills-list {
-    display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-top: 0.5rem;
@@ -275,7 +270,6 @@
 
 /* Fixed Bottom Footer Case */
 .jd-apply {
-    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
@@ -324,7 +318,6 @@
 /* Applicant List Section (Employer Only) */
 .applicants-section {
     width: 100%;
-}
 
 .applicant-item {
     display: flex;
@@ -383,7 +376,6 @@
 /* Tablet & Mobile Adjustments */
 @media (max-width: 480px) {
     .jd-upper {
-        padding-top: 2rem;
     }
     .jd-md {
         padding: 0.75rem 1rem;

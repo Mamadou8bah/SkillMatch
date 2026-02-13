@@ -209,7 +209,6 @@
     background: rgba(var(--primary-rgb, 74, 144, 226), 0.05);
 }
 
-/* Re-using some structures for pending requests */
 .pending-request-card {
     display: flex;
     align-items: center;

@@ -28,16 +28,15 @@ function App() {
   const [fadeSplash, setFadeSplash] = useState(false);
 
   useEffect(() => {
-    // Proactive backend wake-up call
     apiFetch('/').catch(err => console.log('Backend wake-up initiated'));
 
     const fadeTimer = setTimeout(() => {
       setFadeSplash(true);
-    }, 3000); // Start fading after 3s
+    }, 3000);
 
     const removeTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 3500); // Remove from DOM after 3.5s total
+    }, 3500);
 
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -118,16 +117,13 @@ const AuthGuard = () => {
       localStorage.removeItem('registrationStage');
     }
     
-    // Redirect to intro if first time, else to login
     if (!hasVisited) {
       return <Navigate to="/intro" replace />;
     }
     
-    // Redirect to login but save the current location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Redirect admin users from homepage to admin dashboard
   if (userRole === 'ADMIN' && location.pathname === '/') {
     return <Navigate to="/admin" replace />;
   }
