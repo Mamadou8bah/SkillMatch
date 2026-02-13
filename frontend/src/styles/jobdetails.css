@@ -195,6 +195,7 @@
 }
 
 /* Page Content */
+.jd-content {
     padding: 3.5rem 1.5rem 7rem;
     display: flex;
     flex-direction: column;
@@ -318,6 +319,7 @@
 /* Applicant List Section (Employer Only) */
 .applicants-section {
     width: 100%;
+}
 
 .applicant-item {
     display: flex;
