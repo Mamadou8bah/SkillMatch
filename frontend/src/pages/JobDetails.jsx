@@ -41,6 +41,21 @@ export const JobDetails = () => {
         }
     }, [id, isOwner, job]);
 
+    useEffect(() => {
+        const checkApplicationStatus = async () => {
+            if (job && !isOwner && myRole === 'CANDIDATE') {
+                try {
+                    const myApplications = await apiFetch('/api/apply/myapplications');
+                    const alreadyApplied = myApplications.some(app => app.jobPost?.id === job.id);
+                    setIsApplied(alreadyApplied);
+                } catch (err) {
+                    console.error('Error checking application status:', err);
+                }
+            }
+        };
+        checkApplicationStatus();
+    }, [job, isOwner, myRole]);
+
     if (isLoading) {
         return <Loader fullPage={true} />
     }
@@ -195,32 +210,34 @@ export const JobDetails = () => {
                     </div>
                 )}
                 
+                {isOwner && showApplicants && (
+                    <div className="applicants-list">
+                        <h3 className="applicants-title">Applicants</h3>
+                        {applicants.length === 0 ? (
+                            <p className="no-applicants">No applications yet</p>
+                        ) : (
+                            applicants.map(app => (
+                                <div key={app.id} className="applicant-item">
+                                    <div className="applicant-info">
+                                        <img src={app.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.user.fullName)}&background=random`} alt="" />
+                                        <div>
+                                            <p className="applicant-name">{app.user.fullName}</p>
+                                            <p className="applicant-email">{app.user.email}</p>
+                                        </div>
+                                    </div>
+                                    <Link to={`/messages/${app.user.id}`} className="message-btn">Message</Link>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+                
                 <div className="jd-apply">
                     {isOwner ? (
                         <div className="applicants-section">
                             <button className="apply-btn" onClick={() => setShowApplicants(!showApplicants)}>
                                 {showApplicants ? 'Hide Applicants' : `View Applicants (${applicants.length})`}
                             </button>
-                            {showApplicants && (
-                                <div className="applicants-list">
-                                    {applicants.length === 0 ? (
-                                        <p>No applications yet</p>
-                                    ) : (
-                                        applicants.map(app => (
-                                            <div key={app.id} className="applicant-item">
-                                                <div className="applicant-info">
-                                                    <img src={app.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(app.user.fullName)}&background=random`} alt="" />
-                                                    <div>
-                                                        <p className="applicant-name">{app.user.fullName}</p>
-                                                        <p className="applicant-email">{app.user.email}</p>
-                                                    </div>
-                                                </div>
-                                                <Link to={`/messages/${app.user.id}`} className="message-btn">Message</Link>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
                         </div>
                     ) : (
                         <button 
@@ -228,7 +245,7 @@ export const JobDetails = () => {
                             onClick={handleApply} 
                             disabled={(isApplied || isApplying) && job.source === 'Own'}
                         >
-                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : (job.source !== 'Own' && job.url ? `Apply on ${job.source}` : 'Apply Now')}
+                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : (job.source && job.source !== 'Own' && job.jobUrl ? `Apply on ${job.source}` : 'Apply Now')}
                         </button>
                     )}
                 </div>

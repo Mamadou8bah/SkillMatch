@@ -160,6 +160,20 @@
     padding-left: 1rem;
     padding-right: 1rem;
     overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.job-list::-webkit-scrollbar {
+    display: none;
+}
+
+.job-list a {
+    scroll-snap-align: start;
+    flex-shrink: 0;
 }
 
 .job-list::after {

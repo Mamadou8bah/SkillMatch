@@ -3,7 +3,7 @@
     background-color: var(--bg-color);
     color: var(--text-color);
     min-height: 100vh;
-    padding-bottom: 2rem;
+    padding-bottom: 7rem;
 }
 
 .jd-upper {
@@ -271,11 +271,12 @@
 
 /* Fixed Bottom Footer Case */
 .jd-apply {
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     padding: 1.25rem 1.5rem;
-    background: linear-gradient(to top, var(--bg-color) 90%, rgba(255,255,255,0));
+    background: linear-gradient(to top, var(--bg-color) 80%, rgba(255,255,255,0));
     z-index: 100;
     display: flex;
     justify-content: center;
@@ -373,6 +374,22 @@
 
 .message-btn:hover {
     opacity: 0.9;
+}
+
+.applicants-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.no-applicants {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+    background: var(--card-bg);
+    border-radius: 1.2rem;
+    border: 1px dashed var(--border-color);
 }
 
 /* Tablet & Mobile Adjustments */

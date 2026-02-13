@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/home.css';
 import { PopularJobCard } from './PopularJobCard';
@@ -13,6 +13,7 @@ export const Home = () => {
     const [notificationCount, setNotificationCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const userId = localStorage.getItem('userId');
+    const scrollRef = useRef(null);
 
     useEffect(() => {
         if (userId) {
@@ -67,6 +68,46 @@ export const Home = () => {
     const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
     const popularJobs = recommendedJobs.length > 0 ? recommendedJobs.slice(0, 5) : jobsList.slice(0, 5);
+
+    useEffect(() => {
+        let interval;
+        const startScroll = () => {
+            if (!isLoading && popularJobs.length > 1) {
+                interval = setInterval(() => {
+                    if (scrollRef.current && window.innerWidth <= 768) {
+                        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+                        if (Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 15) {
+                            scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else {
+                            scrollRef.current.scrollBy({ left: clientWidth * 0.85, behavior: 'smooth' });
+                        }
+                    }
+                }, 4000);
+            }
+        };
+
+        const stopScroll = () => clearInterval(interval);
+
+        startScroll();
+
+        const el = scrollRef.current;
+        if (el) {
+            el.addEventListener('mouseenter', stopScroll);
+            el.addEventListener('mouseleave', startScroll);
+            el.addEventListener('touchstart', stopScroll, { passive: true });
+            el.addEventListener('touchend', startScroll, { passive: true });
+        }
+
+        return () => {
+            stopScroll();
+            if (el) {
+                el.removeEventListener('mouseenter', stopScroll);
+                el.removeEventListener('mouseleave', startScroll);
+                el.removeEventListener('touchstart', stopScroll);
+                el.removeEventListener('touchend', startScroll);
+            }
+        };
+    }, [isLoading, popularJobs.length]);
 
     const searchedJobs = useMemo(() => {
         if (!searchQuery) return [];
@@ -141,7 +182,7 @@ export const Home = () => {
                             <Link to='/jobs'>View All</Link>
                         </div>
                     </div>
-                    <div className={isSearching ? "job-list searching" : "job-list"}>
+                    <div ref={scrollRef} className={isSearching ? "job-list searching" : "job-list"}>
                         {popularJobs.map((job) => (
                             <Link key={job.id} to={`jobs/${job.id}`}><PopularJobCard job={job} /></Link>
                         ))}
