@@ -134,18 +134,6 @@ export const Login = () => {
         setIsLoading(true)
         setError('')
 
-        // Test login shortcut
-            localStorage.setItem('token', 'test-token');
-            localStorage.setItem('userId', 'test-user-id');
-            localStorage.setItem('userRole', 'CANDIDATE');
-            localStorage.setItem('registrationStage', '4');
-            localStorage.setItem('hasVisited', 'true');
-            const from = locationState.state?.from?.pathname || '/';
-            navigate(from, { replace: true });
-            setIsLoading(false);
-            return;
-        }
-
         try {
             const data = await apiFetch('/api/auth/login', {
                 method: 'POST',
@@ -308,8 +296,6 @@ export const Login = () => {
         try {
             // Re-use stage 2 to trigger email resend or add a dedicated endpoint
             // For now, let's assume stage 2 re-triggers email or we add a simple resend
-            const data = await apiFetch(`/api/auth/register/resend-code?email=${email}`)
-            if (data.success) {
             const data = await apiFetch(`/api/auth/register/resend-code?email=${email}`)
             if (data.success) {
                 alert('A new code has been sent to your email.')
