@@ -12,6 +12,11 @@ export const JobCard = ({ job }) => {
         toggleBookmark(job)
     }
 
+    const truncate = (text, limit) => {
+        if (!text) return '';
+        return text.length > limit ? text.substring(0, limit) + '...' : text;
+    };
+
     return (
         <div className='job-card'>
                 <div className="jc-header">
@@ -20,8 +25,8 @@ export const JobCard = ({ job }) => {
                                         <img src={job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''} alt={`${job.employer?.name || job.employer?.companyName || job.companyName || 'Company'} logo`} />
                                 </div>
                                 <div className="jc-ci-text">
-                                        <h3>{job.title}</h3>
-                                        <p>{job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company'}</p>
+                                        <h3>{truncate(job.title, 30)}</h3>
+                                        <p>{truncate(job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company', 25)}</p>
                                 </div>
                         </div>
                         <div className="jc-bookmark">

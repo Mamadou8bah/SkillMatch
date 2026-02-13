@@ -23,6 +23,11 @@ export const PopularJobCard = ({ job }) => {
 
     const tags = [job.locationType, ...(job.requiredSkills?.slice(0, 2).map(s => s.name) || [])].filter(Boolean);
 
+    const truncateTitle = (title, limit = 28) => {
+        if (!title) return '';
+        return title.length > limit ? title.substring(0, limit) + '...' : title;
+    };
+
     return (
         <div className="popular-job-card" style={{ backgroundColor: getLightColor(), border: `1px solid rgba(0,0,0,0.1)` }}>
             <div className="pjc-header">
@@ -31,7 +36,7 @@ export const PopularJobCard = ({ job }) => {
                         <img src={job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''} alt={`${job.employer?.name || job.employer?.companyName || job.companyName || 'Company'} logo`} />
                     </div>
                     <div className="pjc-ci-text">
-                        <h3>{job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company'}</h3>
+                        <h3>{truncateTitle(job.employer?.name || job.employer?.companyName || job.companyName || job.company || 'Company', 20)}</h3>
                         <p>{job.locationType}</p>
                     </div>
                 </div>
@@ -44,7 +49,7 @@ export const PopularJobCard = ({ job }) => {
                 </div>
             </div>
             <div className="pjc-body">
-                <h3>{job.title}</h3>
+                <h3>{truncateTitle(job.title)}</h3>
                 <p className="pjc-salary">{job.salary || 'Salary Not Disclosed'}</p>
                 <div className="tags">
                     {tags.map((tag, index) => (
