@@ -8,7 +8,6 @@ export const Main = () => {
   const userRole = localStorage.getItem('userRole')
   const isAdmin = userRole === 'ADMIN'
 
-  const hideNavbarPaths = ['/jobs/']
   const isJobDetails = location.pathname.startsWith('/jobs/') && 
                       !['/jobs/discover', '/jobs/bookmarks'].includes(location.pathname)
   const isConversation = location.pathname.startsWith('/messages/')
