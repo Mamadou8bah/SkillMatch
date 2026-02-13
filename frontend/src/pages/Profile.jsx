@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
-import { apiFetch, redirectToLogin, isTokenExpired } from '../utils/api';
+import { apiFetch, redirectToLogin } from '../utils/api';
 
 export const Profile = () => {
   const navigate = useNavigate();
