@@ -1,11 +1,18 @@
 import React, { useEffect } from 'react'
 import '../styles/Main.css'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
 
 export const Main = () => {
+  const location = useLocation()
   const userRole = localStorage.getItem('userRole')
   const isAdmin = userRole === 'ADMIN'
+
+  const hideNavbarPaths = ['/jobs/']
+  const isJobDetails = location.pathname.startsWith('/jobs/') && 
+                      !['/jobs/discover', '/jobs/bookmarks'].includes(location.pathname)
+  const isConversation = location.pathname.startsWith('/messages/')
+  const shouldHideNavbar = isJobDetails || isConversation
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -37,7 +44,7 @@ export const Main = () => {
       <div className="element">
         <Outlet />
       </div>
-      {!isAdmin && (
+      {!isAdmin && !shouldHideNavbar && (
         <div className="nav-bar">
           <NavLink to='/' end className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
