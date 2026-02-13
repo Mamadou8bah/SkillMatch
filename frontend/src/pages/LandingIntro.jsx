@@ -22,13 +22,13 @@ export const LandingIntro = () => {
             setStep(step + 1);
         } else {
             localStorage.setItem('hasVisited', 'true');
-            navigate('/welcome');
+            navigate('/login');
         }
     };
 
     const handleSkip = () => {
         localStorage.setItem('hasVisited', 'true');
-        navigate('/welcome');
+        navigate('/login');
     };
 
     const steps = [

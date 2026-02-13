@@ -1,7 +1,6 @@
 import './App.css';
 import { Onboarding } from './pages/Onboarding';
 import { Login } from './pages/Login';
-import { Welcome } from './pages/Welcome';
 import { LandingIntro } from './pages/LandingIntro';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Main } from './pages/Main';
@@ -75,7 +74,6 @@ function App() {
       <InstallPrompt />
       <Routes>
         <Route path="/intro" element={<LandingIntro />} />
-        <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Login />} />
 
@@ -117,13 +115,13 @@ const AuthGuard = () => {
       localStorage.removeItem('registrationStage');
     }
     
-    // Redirect to intro if first time, else to welcome
+    // Redirect to intro if first time, else to login
     if (!hasVisited) {
       return <Navigate to="/intro" replace />;
     }
     
-    // Redirect to welcome but save the current location
-    return <Navigate to="/welcome" state={{ from: location }} replace />;
+    // Redirect to login but save the current location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Redirect admin users from homepage to admin dashboard

@@ -60,7 +60,7 @@ export const JobDetails = () => {
         try {
             await apiFetch('/api/apply', {
                 method: 'POST',
-                body: JSON.stringify(job.id) // It takes a Long jobId
+                body: JSON.stringify(job.id)
             });
             setIsApplied(true);
             alert('Application submitted successfully!');
