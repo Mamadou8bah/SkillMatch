@@ -539,6 +539,7 @@ input:checked+.slider:before {
 .language-list {
     display: flex;
     flex-direction: column;
+}
 
 .language-option {
     padding: 1rem;
