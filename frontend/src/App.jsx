@@ -20,7 +20,7 @@ import { ManageJobs } from './components/ManageJobs';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
 import { useState, useEffect } from 'react';
-import { isTokenExpired } from './utils/api';
+import { isTokenExpired, apiFetch } from './utils/api';
 
 function App() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -28,6 +28,9 @@ function App() {
   const [fadeSplash, setFadeSplash] = useState(false);
 
   useEffect(() => {
+    // Proactive backend wake-up call
+    apiFetch('/').catch(err => console.log('Backend wake-up initiated'));
+
     const fadeTimer = setTimeout(() => {
       setFadeSplash(true);
     }, 3000); // Start fading after 3s
