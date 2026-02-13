@@ -112,6 +112,12 @@ export const Login = () => {
             return;
         }
 
+        const hasVisited = localStorage.getItem('hasVisited');
+        if (!hasVisited) {
+            navigate('/intro', { replace: true });
+            return;
+        }
+
         if (locationState.state?.mode === 'signup') {
             setHasAccount(false)
         } else if (locationState.state?.mode === 'login') {

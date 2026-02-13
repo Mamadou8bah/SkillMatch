@@ -617,7 +617,6 @@
     left: 0;
     width: 100%;
     height: 8px;
-    background: var(--primary-transparent);
     z-index: -1;
     border-radius: 4px;
 }

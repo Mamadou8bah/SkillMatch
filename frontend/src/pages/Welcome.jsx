@@ -1,10 +1,26 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import  '../styles/welcome.css'
 import image from '../assets/ChatGPT Image Oct 19, 2025, 05_08_56 PM.png'
+import { isTokenExpired } from '../utils/api'
 
 export const Welcome = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+     const token = localStorage.getItem('token');
+     if (token && !isTokenExpired(token)) {
+         const role = localStorage.getItem('userRole');
+         navigate(role === 'ADMIN' ? '/admin' : '/', { replace: true });
+         return;
+     }
+
+     const hasVisited = localStorage.getItem('hasVisited');
+     if (!hasVisited) {
+         navigate('/intro', { replace: true });
+     }
+  }, [navigate]);
+
   return (
     <div className='welcome-page'>
         <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10 }}>
