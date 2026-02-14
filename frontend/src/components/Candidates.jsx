@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, MessageSquare, UserPlus, Search, Clock } from 'lucide-react'
+import { Search, Target } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
 import { apiFetch } from '../utils/api'
@@ -90,10 +90,12 @@ export const Candidates = () => {
         }
     }
 
-    const filteredUsers = users.filter(user => 
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+    const displayedUsers = searchQuery.trim() !== '' 
+        ? users.filter(user => 
+            user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
+          )
+        : recommendations;
 
     const isUserConnected = (userId) => {
         return connections.some(c => c.id === userId)
@@ -225,12 +227,6 @@ export const Candidates = () => {
                     Discover
                 </button>
                 <button 
-                    className={`network-tab ${activeTab === 'suggestions' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('suggestions')}
-                >
-                    Recommended ✨
-                </button>
-                <button 
                     className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
                     onClick={() => setActiveTab('pending')}
                 >
@@ -266,8 +262,11 @@ export const Candidates = () => {
                     <Loader />
                 ) : (
                     <>
-                        {activeTab === 'discover' && renderUserList(filteredUsers)}
-                        {activeTab === 'suggestions' && renderRecommendations()}
+                        {activeTab === 'discover' && (
+                            searchQuery.trim() !== '' 
+                                ? renderUserList(displayedUsers) 
+                                : renderRecommendations()
+                        )}
                         {activeTab === 'connections' && renderUserList(connections)}
                         {activeTab === 'pending' && (
                             <div className="pending-list">
