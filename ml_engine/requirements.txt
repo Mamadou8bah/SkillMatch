@@ -6,4 +6,6 @@ python-dotenv
 requests
 gunicorn
 joblib
-# torch and sentence-transformers removed for API-based embeddings to save memory
+psycopg2-binary
+sqlalchemy
+scipy

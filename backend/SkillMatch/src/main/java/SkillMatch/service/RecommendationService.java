@@ -1,9 +1,7 @@
 package SkillMatch.service;
 
 import SkillMatch.model.*;
-import SkillMatch.repository.JobPostRepo;
-import SkillMatch.repository.UserRepo;
-import SkillMatch.repository.UserInteractionRepository;
+import SkillMatch.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,89 +23,51 @@ public class RecommendationService {
     private final ConnectionService connectionService;
     private final org.springframework.web.client.RestTemplate restTemplate;
 
+    private final JobRecommendationRepository jobRecommendationRepository;
+    private final ConnectionRecommendationRepository connectionRecommendationRepository;
+    private final RecommendationLogRepository recommendationLogRepository;
+
     @Value("${ml.engine.url}")
     private String mlEngineUrl;
 
     /**
-     * Recommends JobPosts for a Candidate based on weighted scoring.
+     * Recommends JobPosts for a Candidate based on offline precomputed ML scores.
      */
     public List<JobPost> recommendJobs(User candidate) {
+        // 1. Try to fetch offline precomputed recommendations
+        List<JobRecommendation> precomputed = jobRecommendationRepository.findByUserIdOrderByRankAsc(candidate.getId());
+        
+        if (!precomputed.isEmpty()) {
+            log.info("Returning {} precomputed job recommendations for user {}", precomputed.size(), candidate.getId());
+            List<JobPost> jobs = precomputed.stream()
+                    .map(JobRecommendation::getJob)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            
+            // Log SHOWN event for training
+            jobs.forEach(j -> logRecommendationEvent(candidate.getId(), j.getId(), "JOB", "SHOWN"));
+            
+            return jobs;
+        }
+
+        // 2. Fallback to candidate job matches (previously computed/cached)
         List<JobPost> cachedMatches = candidateJobMatchService.getTopJobPosts(candidate, 100);
         if (!cachedMatches.isEmpty()) {
             return cachedMatches;
         }
 
+        // 3. Last resort: Fallback to basic skill matching (legacy logic)
         List<JobPost> allJobs = jobPostRepo.findAll();
         if (allJobs.isEmpty()) return Collections.emptyList();
 
-        Map<Long, Double> scores = new HashMap<>();
-        boolean mlSuccess = false;
-        try {
-            // Level 2/3: Pass structured data for better ML intelligence
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("bio", buildUserProfileString(candidate));
-            userData.put("location", candidate.getLocation());
-            userData.put("experience_years", calculateTotalExperience(candidate));
-            userData.put("skills", candidate.getSkills().stream().map(Skill::getTitle).collect(Collectors.toList()));
+        Set<String> candidateSkills = candidate.getSkills().stream()
+                .map(s -> s.getTitle().toLowerCase().trim())
+                .collect(Collectors.toSet());
 
-            // Limit jobs sent to ML to top 100 recent/relevant ones to prevent 502/timeout
-            List<JobPost> mlJobs = allJobs.stream()
-                .sorted(Comparator.comparing(JobPost::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(100)
+        return allJobs.stream()
+                .sorted(Comparator.comparingDouble((JobPost j) -> calculateJobMatchScore(j, candidateSkills, candidate)).reversed())
+                .limit(20)
                 .collect(Collectors.toList());
-
-            List<Map<String, Object>> jobsData = mlJobs.stream().map(j -> {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", j.getId());
-                map.put("description", buildJobNarrative(j));
-                map.put("skills", j.getRequiredSkills() != null ?
-                    j.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()) :
-                    Collections.emptyList());
-                map.put("location", j.getLocationType()); // or actual location if available
-                map.put("postedAt", calculatePostedAgo(j.getPostedAt()));
-                return map;
-            }).collect(Collectors.toList());
-
-            Map<String, Object> request = new HashMap<>();
-            request.put("user_data", userData);
-            request.put("jobs", jobsData);
-
-            // ML Engine handles hybrid scoring and re-ranking
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/recommend/jobs", request, List.class);
-            if (mlResults != null) {
-                mlResults.forEach(r -> scores.put(Long.valueOf(r.get("id").toString()), Double.valueOf(r.get("score").toString())));
-                mlSuccess = true;
-            }
-        } catch (Exception e) {
-            log.error("ML Engine recommendation failed (might be waking up): {}. Falling back to manual ranking.", e.getMessage());
-        }
-
-        if (!mlSuccess) {
-            Set<String> candidateSkills = candidate.getSkills().stream()
-                    .map(s -> s.getTitle().toLowerCase().trim())
-                    .collect(Collectors.toSet());
-            for (JobPost job : allJobs) {
-                scores.put(job.getId(), calculateJobMatchScore(job, candidateSkills, candidate));
-            }
-        }
-
-        // Return top jobs based on ML engine scores
-        // We prioritize jobs with scores, then the rest by date
-        List<JobPost> sortedJobs = allJobs.stream()
-                .sorted((j1, j2) -> {
-                    Double s1 = scores.getOrDefault(j1.getId(), 0.0);
-                    Double s2 = scores.getOrDefault(j2.getId(), 0.0);
-                    int scoreCmp = Double.compare(s2, s1);
-                    if (scoreCmp != 0) return scoreCmp;
-                    // Fallback to date
-                    LocalDateTime d1 = j1.getPostedAt() != null ? j1.getPostedAt() : LocalDateTime.MIN;
-                    LocalDateTime d2 = j2.getPostedAt() != null ? j2.getPostedAt() : LocalDateTime.MIN;
-                    return d2.compareTo(d1);
-                })
-                .limit(100)
-                .collect(Collectors.toList());
-        
-        return sortedJobs;
     }
 
     /**
@@ -120,6 +80,9 @@ public class RecommendationService {
                 .interactionType(type)
                 .build();
         interactionRepo.save(interaction);
+
+        // Also log as recommendation event for training labels
+        logRecommendationEvent(user.getId(), job.getId(), "JOB", type);
 
         // Feedback loop to ML engine with full context for feature extraction
         try {
@@ -182,6 +145,19 @@ public class RecommendationService {
         }
 
         return narrative.toString();
+    }
+
+    /**
+     * Logs recommendation events (SHOWN, CLICKED, etc.) for offline training pipelines.
+     */
+    public void logRecommendationEvent(Long userId, Long itemId, String itemType, String eventType) {
+        RecommendationLog logEntry = RecommendationLog.builder()
+                .userId(userId)
+                .itemId(itemId)
+                .itemType(itemType)
+                .eventType(eventType)
+                .build();
+        recommendationLogRepository.save(logEntry);
     }
 
     private String buildUserProfileString(User user) {
@@ -297,16 +273,33 @@ public class RecommendationService {
     }
 
     /**
-     * Recommends connections for a user based on mutual connections, shared skills, alumni, and shared companies.
+     * Recommends connections for a user based on offline precomputed ML scores.
      */
     public List<User> recommendConnections(User user) {
+        // 1. Try to fetch offline precomputed recommendations
+        List<ConnectionRecommendation> precomputed = connectionRecommendationRepository.findByUserIdOrderByRankAsc(user.getId());
+        
+        if (!precomputed.isEmpty()) {
+            log.info("Returning {} precomputed connection recommendations for user {}", precomputed.size(), user.getId());
+            List<User> recs = precomputed.stream()
+                    .map(ConnectionRecommendation::getRecommendedUser)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            // Log SHOWN event for training
+            recs.forEach(r -> logRecommendationEvent(user.getId(), r.getId(), "CONNECTION", "SHOWN"));
+
+            return recs;
+        }
+
+        // 2. Fallback to basic mutual connection / skill logic (fallback)
         List<User> myConnections = connectionService.getConnections(user);
         Set<Long> myConnIds = myConnections.stream().map(User::getId).collect(Collectors.toSet());
         myConnIds.add(user.getId());
 
         Map<User, Double> scores = new HashMap<>();
 
-        // 1. Mutual Connections (Weight: 5.0 per mutual)
+        // Mutual Connections (Weight: 5.0 per mutual)
         for (User friend : myConnections) {
             List<User> friendsOfFriend = connectionService.getConnections(friend);
             for (User potential : friendsOfFriend) {
@@ -318,69 +311,17 @@ public class RecommendationService {
 
         List<User> others = userRepo.findAll().stream()
                 .filter(u -> !myConnIds.contains(u.getId()))
-                .limit(100) // Limit total candidates to prevent ML engine overload
+                .limit(100)
                 .collect(Collectors.toList());
-
-        Set<String> mySkills = user.getSkills().stream()
-                .map(s -> s.getTitle().toLowerCase().trim())
-                .collect(Collectors.toSet());
-
-        Set<String> mySchools = user.getEducations().stream()
-                .map(e -> e.getInstitutionName().toLowerCase().trim())
-                .collect(Collectors.toSet());
-
-        Set<String> myCompanies = user.getExperiences().stream()
-                .map(ex -> ex.getCompanyName().toLowerCase().trim())
-                .collect(Collectors.toSet());
-
-        // 5. ML Similarity (AI matching on profiles) - Use a subset for ML to ensure low latency
-        try {
-            List<User> mlCandidates = others.size() > 50 ? others.subList(0, 50) : others;
-            
-            Map<String, Object> reqBody = new HashMap<>();
-            reqBody.put("user_profile", buildUserProfileString(user));
-            reqBody.put("others", mlCandidates.stream().map(u -> {
-                Map<String, Object> m = new HashMap<>();
-                m.put("id", u.getId());
-                m.put("profile", buildUserProfileString(u));
-                return m;
-            }).collect(Collectors.toList()));
-
-            List<Map<String, Object>> mlResults = restTemplate.postForObject(mlEngineUrl + "/recommend/similar-users", reqBody, List.class);
-            if (mlResults != null) {
-                for (Map<String, Object> res : mlResults) {
-                    Long oid = Long.valueOf(res.get("id").toString());
-                    Double mlScore = Double.valueOf(res.get("score").toString());
-                    User potential = others.stream().filter(u -> u.getId().equals(oid)).findFirst().orElse(null);
-                    if (potential != null) {
-                        scores.put(potential, scores.getOrDefault(potential, 0.0) + (mlScore * 20.0)); // Weight ML score
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("ML Connection recommendation failed: {}", e.getMessage());
-        }
 
         for (User potential : others) {
             double score = scores.getOrDefault(potential, 0.0);
-
-            // 2. Shared Skills (Weight: 3.0 per skill)
+            
+            // Basic shared skills fallback
             long sharedSkills = potential.getSkills().stream()
-                    .filter(s -> mySkills.contains(s.getTitle().toLowerCase().trim()))
+                    .filter(s -> user.getSkills().contains(s))
                     .count();
             score += sharedSkills * 3.0;
-
-            // 3. Alumni (Weight: 10.0 per shared school)
-            long sharedSchools = potential.getEducations().stream()
-                    .filter(e -> mySchools.contains(e.getInstitutionName().toLowerCase().trim()))
-                    .count();
-            score += sharedSchools * 10.0;
-
-            // 4. Colleagues (Weight: 15.0 per shared company)
-            long sharedCompanies = potential.getExperiences().stream()
-                    .filter(ex -> myCompanies.contains(ex.getCompanyName().toLowerCase().trim()))
-                    .count();
-            score += sharedCompanies * 15.0;
 
             if (score > 0) {
                 scores.put(potential, score);
@@ -390,7 +331,7 @@ public class RecommendationService {
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<User, Double>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
-                .limit(20)
+                .limit(15)
                 .collect(Collectors.toList());
     }
 
