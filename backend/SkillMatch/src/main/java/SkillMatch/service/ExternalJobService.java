@@ -34,9 +34,10 @@ public class ExternalJobService {
     private final ObjectMapper objectMapper;
 
         private static final List<String> USER_AGENTS = List.of(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1"
         );
     private static final int CONNECT_TIMEOUT_MS = 120000;
 
@@ -136,11 +137,14 @@ public class ExternalJobService {
 
     private Document tryFetchViaTextProxy(String url) {
         try {
-            URI target = URI.create(url);
-            String proxyUrl = "https://r.jina.ai/http/" + target.toString();
+            String proxyUrl = "https://r.jina.ai/" + url;
             log.info("Attempting text proxy for {}", url);
+            // Jina Reader prefers headers to be passed as standard to get clean markdown/text
             Document proxyResponse = tryFetchWithJsoup(proxyUrl, "https://www.google.com/");
-            return proxyResponse != null ? Jsoup.parse(proxyResponse.html(), url) : null;
+            if (proxyResponse != null) {
+                // Jina returns markdown/plain text, but we parse it as HTML to maintain compatibility
+                return Jsoup.parse(proxyResponse.html(), url);
+            }
         } catch (Exception e) {
             log.warn("Text proxy fall back failed for {}: {}", url, e.getMessage());
         }

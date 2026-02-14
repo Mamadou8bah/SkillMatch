@@ -2,6 +2,29 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
 
+def map_profession_to_industry(profession):
+    if profession is None or (isinstance(profession, float) and np.isnan(profession)) or not str(profession).strip():
+        return "Other"
+    
+    prof = str(profession).lower()
+    
+    if any(kw in prof for kw in ['engineer', 'developer', 'tech', 'software', 'it', 'data', 'cloud', 'system']):
+        return "Technology"
+    if any(kw in prof for kw in ['nurse', 'doctor', 'physician', 'health', 'medical', 'clinic', 'hospital']):
+        return "Healthcare"
+    if any(kw in prof for kw in ['manager', 'admin', 'hr', 'human resources', 'business', 'operation', 'ceo', 'cto']):
+        return "Business/Management"
+    if any(kw in prof for kw in ['teacher', 'professor', 'educat', 'school', 'university', 'research', 'student']):
+        return "Education"
+    if any(kw in prof for kw in ['market', 'sales', 'advertis', 'brand', 'content']):
+        return "Marketing/Sales"
+    if any(kw in prof for kw in ['design', 'art', 'creat', 'ux', 'ui', 'graphic']):
+        return "Creative/Design"
+    if any(kw in prof for kw in ['finance', 'bank', 'account', 'invest', 'audit']):
+        return "Finance"
+    
+    return "Other"
+
 def compute_job_features(candidates_df, users_df, jobs_df, interactions_df, connections_df):
     """
     Features for (user, job) pairs:
@@ -57,6 +80,7 @@ def compute_job_features(candidates_df, users_df, jobs_df, interactions_df, conn
             'job_id': jid,
             'skill_similarity': row.get('skill_similarity', 0),
             'cf_score': row.get('cf_score', 0),
+            'interaction_sim_score': row.get('interaction_sim_score', 0),
             'popularity_score': job_pop.get(jid, 0),
             'recency_score': job_recency.get(jid, 0),
             'social_score': social_score,
@@ -90,7 +114,10 @@ def compute_connection_features(users_df, connections_df, interactions_df):
     recent = (now - interactions_df['timestamp']).dt.days <= 30
     activity = np.log1p(interactions_df[recent].groupby('user_id').size()).to_dict()
 
-    # 4. Skill similarity setup (TF-IDF)
+    # 4. Industry mapping
+    users_df['mapped_industry'] = users_df['industry'].apply(map_profession_to_industry)
+
+    # 5. Skill similarity setup (TF-IDF)
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
     
@@ -113,9 +140,9 @@ def compute_connection_features(users_df, connections_df, interactions_df):
             mutual_count = len(conns_a.intersection(conns_b))
             
             # Filter: only consider if they have mutual connections or same industry to keep it offline-tractable
-            industry_a = users_df.iloc[i]['industry']
-            industry_b = users_df.iloc[j]['industry']
-            same_industry = 1 if industry_a == industry_b and industry_a else 0
+            industry_a = users_df.iloc[i]['mapped_industry']
+            industry_b = users_df.iloc[j]['mapped_industry']
+            same_industry = 1 if industry_a == industry_b and industry_a != "Other" else 0
             
             if mutual_count > 0 or same_industry:
                 # Skill similarity

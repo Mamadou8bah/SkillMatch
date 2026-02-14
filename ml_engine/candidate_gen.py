@@ -57,9 +57,12 @@ class CandidateGenerator:
         job_ids = pivot_table.columns.tolist()
 
         # SVD
-        # k = min(matrix.shape) - 1 if min(matrix.shape) < 50 else 50
-        k = min(matrix.shape[0], matrix.shape[1], 20) # Lower k for small datasets
-        if k < 1: return pd.DataFrame(columns=['user_id', 'job_id', 'cf_score'])
+        # svds requires 0 < k < min(matrix.shape)
+        min_dim = min(matrix.shape)
+        if min_dim <= 1:
+            return pd.DataFrame(columns=['user_id', 'job_id', 'cf_score'])
+            
+        k = min(min_dim - 1, 20)
         
         U, sigma, Vt = svds(matrix, k=k)
         sigma = np.diag(sigma)
@@ -78,10 +81,61 @@ class CandidateGenerator:
                 })
         return pd.DataFrame(candidates)
 
+    def get_interaction_similarity_candidates(self, top_n=50):
+        """Find jobs similar to those the user has interacted with (Content-based Item-Item)"""
+        if self.interactions.empty:
+            return pd.DataFrame(columns=['user_id', 'job_id', 'interaction_sim_score'])
+
+        # 1. Prepare job content descriptors
+        job_content = (self.jobs['title'].fillna('') + " " + 
+                       self.jobs['description'].fillna('') + " " + 
+                       self.jobs['industry'].fillna('') + " " + 
+                       self.jobs['skills_required'].fillna(''))
+        
+        vectorizer = TfidfVectorizer(stop_words='english')
+        job_vectors = vectorizer.fit_transform(job_content)
+        
+        # 2. Get user interactions
+        # Filter for meaningful interactions
+        meaningful = self.interactions[self.interactions['type'].isin(['APPLICATION', 'SAVE', 'CLICK'])]
+        if meaningful.empty:
+            return pd.DataFrame(columns=['user_id', 'job_id', 'interaction_sim_score'])
+
+        # 3. For each user, compute their "centroid" vector based on interacted jobs
+        job_id_to_idx = {jid: i for i, jid in enumerate(self.jobs['id'])}
+        
+        candidates = []
+        for user_id in meaningful['user_id'].unique():
+            user_interacted_jobs = meaningful[meaningful['user_id'] == user_id]['job_post_id'].unique()
+            interacted_indices = [job_id_to_idx[jid] for jid in user_interacted_jobs if jid in job_id_to_idx]
+            
+            if not interacted_indices:
+                continue
+                
+            # Compute user profile vector (mean of interacted job vectors)
+            user_profile = job_vectors[interacted_indices].mean(axis=0)
+            user_profile = np.asarray(user_profile)
+            
+            # Compute similarity of all jobs to this user profile
+            sims = cosine_similarity(user_profile, job_vectors).flatten()
+            
+            # Get top N jobs
+            top_indices = sims.argsort()[-top_n:][::-1]
+            for idx in top_indices:
+                candidates.append({
+                    'user_id': user_id,
+                    'job_id': self.jobs.iloc[idx]['id'],
+                    'interaction_sim_score': sims[idx]
+                })
+        
+        return pd.DataFrame(candidates)
+
     def generate_all_candidates(self):
         cb_cands = self.get_content_based_candidates()
         cf_cands = self.get_collaborative_candidates()
+        is_cands = self.get_interaction_similarity_candidates()
         
         # Merge candidates
         all_cands = pd.merge(cb_cands, cf_cands, on=['user_id', 'job_id'], how='outer').fillna(0)
+        all_cands = pd.merge(all_cands, is_cands, on=['user_id', 'job_id'], how='outer').fillna(0)
         return all_cands

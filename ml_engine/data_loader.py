@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,7 +60,6 @@ class DataLoader:
         FROM applications
         """
         return pd.read_sql(query, self.engine)
-        return pd.read_sql(query, self.engine)
 
     def get_connections(self):
         query = "SELECT requester_id, target_id, accepted, created_at FROM connections"
@@ -69,6 +68,6 @@ class DataLoader:
     def save_recommendations(self, df, table_name):
         # Prevent database bloat by clearing old recommendations before saving new ones
         with self.engine.begin() as conn:
-            conn.execute(f"TRUNCATE TABLE {table_name}")
+            conn.execute(text(f"TRUNCATE TABLE {table_name}"))
             
         df.to_sql(table_name, self.engine, if_exists='append', index=False)
