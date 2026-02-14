@@ -94,7 +94,7 @@ export const Candidates = () => {
         ? users.filter(user => 
             user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
-          )
+          ).slice(0, 8)
         : recommendations;
 
     const isUserConnected = (userId) => {
