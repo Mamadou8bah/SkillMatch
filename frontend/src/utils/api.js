@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://skillmatch-1-6nn0.onrender.com';
+export const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://skillmatch-1-6nn0.onrender.com';
 
 export const isTokenExpired = (token) => {
     if (!token) return true;

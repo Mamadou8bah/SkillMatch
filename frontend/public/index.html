@@ -34,6 +34,21 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/assets/logos/skillmatch-logo.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>SkillMatch</title>
+    <script>
+      (function() {
+        const savedSettings = localStorage.getItem('userSettings');
+        const settings = savedSettings ? JSON.parse(savedSettings) : null;
+        let theme = 'light';
+        
+        if (settings && settings.darkMode !== undefined) {
+          theme = settings.darkMode ? 'dark' : 'light';
+        } else {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -18,9 +18,13 @@ export const Main = () => {
   const shouldHideNavbar = isJobDetails || isConversation || isProfile
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme) {
-      document.documentElement.setAttribute('data-theme', savedTheme)
+    const savedSettings = localStorage.getItem('userSettings')
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings)
+      document.documentElement.setAttribute('data-theme', settings.darkMode ? 'dark' : 'light')
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
     }
 
     // If we don't have the role in localStorage, fetch it from profile

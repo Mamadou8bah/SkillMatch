@@ -30,13 +30,15 @@ export const Messages = () => {
   }, []);
 
   const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return 'now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-    return `${Math.floor(diff / 84600)}d`;
+    return `${Math.floor(diff / 86400)}d`;
   }
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);

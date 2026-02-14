@@ -43,12 +43,29 @@ function App() {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
 
+    // System theme listener
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleThemeChange = (e) => {
+      const savedSettings = localStorage.getItem('userSettings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : null;
+      
+      // Only auto-switch if user hasn't manually set a preference or if we want to follow system
+      // For now, let's follow the request "adopt system mood automatically"
+      // If user has manual setting, we might respect it, but the request implies automation.
+      // Let's check if the user has explicitly set darkMode in settings.
+      if (!settings || settings.darkMode === undefined) {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleThemeChange);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(removeTimer);
+      mediaQuery.removeEventListener('change', handleThemeChange);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };

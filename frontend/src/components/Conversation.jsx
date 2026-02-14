@@ -4,7 +4,7 @@ import { ArrowLeft, Send, MoreVertical } from 'lucide-react'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import '../styles/conversation.css'
-import { apiFetch } from '../utils/api'
+import { apiFetch, BASE_URL } from '../utils/api'
 
 export const Conversation = () => {
     const { id } = useParams() // This is the recipientId
@@ -54,18 +54,29 @@ export const Conversation = () => {
 
     // Setup WebSocket
     useEffect(() => {
-        const socket = new SockJS('https://skillmatch-1-6nn0.onrender.com/ws')
+        const socket = new SockJS(`${BASE_URL}/ws`)
         const client = new Client({
             webSocketFactory: () => socket,
             // debug: (str) => console.log(str),
+            connectHeaders: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             reconnectDelay: 5000,
             onConnect: () => {
                 setConnected(true)
                 client.subscribe('/user/queue/messages', (message) => {
                     const receivedMessage = JSON.parse(message.body)
-                    // If the message is from the current recipient, add it to the list
-                    if (receivedMessage.sender.id.toString() === id || receivedMessage.recipient.id.toString() === id) {
-                        setChatMessages(prev => [...prev, receivedMessage])
+                    // If the message is part of this conversation, add it to the list
+                    const otherUserId = id;
+                    const isFromOther = receivedMessage.sender.id.toString() === otherUserId;
+                    const isFromMe = receivedMessage.recipient.id.toString() === otherUserId;
+
+                    if (isFromOther || isFromMe) {
+                        setChatMessages(prev => {
+                            // Avoid duplicates (especially for messages sent by us)
+                            if (prev.find(m => m.id === receivedMessage.id)) return prev;
+                            return [...prev, receivedMessage];
+                        })
                     }
                 })
             }
@@ -85,21 +96,47 @@ export const Conversation = () => {
         e.preventDefault()
         if (!newMessage.trim()) return
 
+        const currentUserId = localStorage.getItem('userId');
+        const tempId = Date.now();
+        const content = newMessage;
+
+        // Optimistically add message to UI
+        const tempMessage = {
+            id: tempId,
+            content: content,
+            sender: { id: currentUserId },
+            recipient: { id: id },
+            sentAt: new Date().toISOString(),
+            isTemp: true
+        };
+
+        setChatMessages(prev => [...prev, tempMessage]);
+        setNewMessage("");
+
         try {
             const data = await apiFetch('/api/messages/send', {
                 method: 'POST',
                 body: JSON.stringify({
                     recipientId: id,
-                    content: newMessage
+                    content: content
                 })
             })
             if (data.success) {
-                // The message will also be received via WebSocket, but we can add it here too if we want immediate feedback
-                // or just rely on the WebSocket if the server broadcasts to sender too (common in STOMP user queues)
-                setNewMessage("")
+                // Replace temp message with actual message from server
+                setChatMessages(prev => prev.map(msg => 
+                    msg.id === tempId ? data.data : msg
+                ));
+            } else {
+                // Mark as failed or remove? Let's mark as failed
+                setChatMessages(prev => prev.map(msg => 
+                    msg.id === tempId ? { ...msg, error: true } : msg
+                ));
             }
         } catch (err) {
-            console.error("Failed to send message", err)
+            console.error("Failed to send message", err);
+            setChatMessages(prev => prev.map(msg => 
+                msg.id === tempId ? { ...msg, error: true } : msg
+            ));
         }
     }
 
@@ -147,11 +184,11 @@ export const Conversation = () => {
                                     />
                                 )}
                                 <div className="message-content-wrapper">
-                                    <div className="message-bubble">
+                                    <div className={`message-bubble ${msg.error ? 'error' : ''} ${msg.isTemp ? 'pending' : ''}`}>
                                         <p>{msg.content}</p>
                                     </div>
                                     <span className="message-time">
-                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {msg.error ? 'Failed' : msg.isTemp ? 'Sending...' : msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
                                     </span>
                                 </div>
                             </div>

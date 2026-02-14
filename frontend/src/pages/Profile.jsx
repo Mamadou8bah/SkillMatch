@@ -52,10 +52,14 @@ export const Profile = () => {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('userSettings');
-    return saved ? JSON.parse(saved) : {
+    if (saved) return JSON.parse(saved);
+    
+    // Default to system preference if no saved settings
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return {
       pushNotifications: true,
       emailNotifications: true,
-      darkMode: false,
+      darkMode: prefersDark,
       language: 'English'
     };
   });
