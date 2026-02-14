@@ -466,14 +466,16 @@
     box-shadow: none;
 }
 
+/* Landing Intro Styles */
 .intro-page {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: white;
+    background: var(--bg-color);
     font-family: 'Inter', sans-serif;
-    color: #1a1a1a;
+    color: var(--text-color);
     position: relative;
+    overflow: hidden;
 }
 
 .intro-header {
@@ -489,43 +491,41 @@
 }
 
 .logo {
-   height: 3.5rem;
+    height: 3.5rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #1a1a1a; /* Ensure the logo text is dark and readable */
+    color: var(--text-color);
 }
+
 .logo img {
     height: 100%;
     width: auto;
 }
 
-.pagination-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 24px 0;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e5e7eb;
+.skip-btn {
+    background: var(--primary-transparent);
+    backdrop-filter: blur(8px);
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 100px;
+    padding: 8px 16px;
     transition: all 0.3s ease;
 }
 
-.dot.active {
-    width: 24px;
-    border-radius: 4px;
-    background: var(--primary-color);
+.skip-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
 }
 
 .intro-image-container {
     height: 55vh;
     width: 100%;
     overflow: hidden;
-    background: #f8fafc;
+    background: var(--tag-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -535,12 +535,21 @@
 .intro-image {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Using contain for better image visibility */
+    object-fit: contain;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 25%;
+    background: linear-gradient(to bottom, transparent, var(--bg-color));
+}
+
 .intro-content {
-    background: white;
+    background: var(--card-bg);
     border-radius: 40px 40px 0 0;
     margin-top: -40px;
     padding: 2.5rem 1.5rem 3rem;
@@ -559,15 +568,41 @@
     line-height: 1.2;
     margin-bottom: 1rem;
     letter-spacing: -1px;
-    color: #111;
+    color: var(--text-color);
+}
+
+.highlight {
+    color: var(--primary-color);
+    position: relative;
 }
 
 .intro-description {
-    color: #4b5563;
+    color: var(--text-secondary);
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 2rem;
     padding: 0 0.5rem;
+}
+
+.pagination-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 1.5rem 0;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: var(--primary-color);
 }
 
 .cta-btn {
@@ -575,13 +610,14 @@
     padding: 18px;
     border-radius: 100px;
     border: none;
-    background: #1a1a1a;
+    background: var(--primary-color);
     color: white;
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-top: auto;
+    box-shadow: 0 10px 25px var(--primary-transparent);
 }
 
 .cta-btn:active {
@@ -590,134 +626,6 @@
 
 .cta-btn.get-started {
     background: var(--primary-color);
-    box-shadow: 0 10px 25px var(--primary-transparent);
-}
-
-.skip-btn {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    border: none;
-    color: #4b5563;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    border-radius: 100px;
-    padding: 8px 16px;
-    transition: all 0.3s ease;
-}
-
-.skip-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    color: var(--primary-color);
-}
-
-.highlight {
-    color: var(--primary-color);
-    position: relative;
-}
-
-.highlight::after {
-    content: '';
-    position: absolute;
-    bottom: 2px;
-    left: 0;
-    width: 100%;
-    height: 8px;
-    z-index: -1;
-    border-radius: 4px;
-}
-
-.intro-image-container {
-    position: relative;
-    height: 55vh; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: white;
-}
-
-.intro-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; 
-    object-position: bottom;
-}
-
-.image-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 25%; 
-    background: linear-gradient(to bottom, transparent, white);
-}
-
-.intro-content {
-    padding: 24px 22px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    z-index: 5;
-}
-
-.intro-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 1px;
-    line-height: 1.2;
-}
-
-.highlight {
-    color: #ff8c00;
-}
-
-.intro-description {
-    color: #666;
-    font-size: 1rem;
-    line-height: 1.5;
-    margin-bottom: 20px;
-}
-
-.pagination-dots {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-
-.dot {
-    width: 10px;
-    height: 6px;
-    border-radius: 3px;
-    background: #eee;
-    transition: all 0.3s ease;
-}
-
-.dot.active {
-    width: 20px;
-    background: #ff8c00;
-}
-
-.cta-btn {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 30px; 
-    background: #ff8c00;
     color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(255, 140, 0, 0.2);
-}
-
-.cta-btn.get-started {
-    background: linear-gradient(to right, #ff8c00, #ffae42);
-}
-
-.cta-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
 }
 

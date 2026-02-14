@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/onboarding.css';
 import { isTokenExpired } from '../utils/api';
 import introImg1 from '../assets/ChatGPT Image Oct 19, 2025, 05_08_56 PM.png';
-import introImg2 from '../assets/Gemini_Generated_Image_1k8ta1k8ta1k8ta1.png';
-
+import introImg2 from '../assets/stage2.png';
+import introImg3 from '../assets/stage3.png';
 export const LandingIntro = () => {
     const [step, setStep] = useState(1);
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ export const LandingIntro = () => {
         {
             image: introImg1,
             title: <>Find a job, and <span className="highlight">start building</span> your career from now on</>,
-            description: "Explore over 25,924 available job roles and upgrade your career now.",
+            description: "Explore multiple available job roles and upgrade your career now.",
         },
         {
             image: introImg2,
@@ -43,7 +44,7 @@ export const LandingIntro = () => {
             description: "Immediately join us and start applying for the job you are interested in.",
         },
         {
-            image: introImg1,
+            image: introImg3,
             title: <>Get the best <span className="highlight">choice for the job</span> you've always dreamed of</>,
             description: "The better the skills you have, the greater the good job opportunities for you.",
         }
@@ -61,13 +62,35 @@ export const LandingIntro = () => {
             </div>
 
             <div className="intro-image-container">
-                <img src={currentStep.image} alt="Intro" className="intro-image" />
+                <AnimatePresence mode="wait">
+                    <motion.img 
+                        key={step}
+                        src={currentStep.image} 
+                        alt="Intro" 
+                        className="intro-image"
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                </AnimatePresence>
                 <div className="image-overlay"></div>
             </div>
 
             <div className="intro-content">
-                <h1 className="intro-title">{currentStep.title}</h1>
-                <p className="intro-description">{currentStep.description}</p>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={step}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                        style={{ width: '100%' }}
+                    >
+                        <h1 className="intro-title">{currentStep.title}</h1>
+                        <p className="intro-description">{currentStep.description}</p>
+                    </motion.div>
+                </AnimatePresence>
                 
                 <div className="pagination-dots">
                     {[1, 2, 3].map(i => (
@@ -75,9 +98,14 @@ export const LandingIntro = () => {
                     ))}
                 </div>
 
-                <button className={`cta-btn ${step === 3 ? 'get-started' : ''}`} onClick={handleNext}>
+                <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`cta-btn ${step === 3 ? 'get-started' : ''}`} 
+                    onClick={handleNext}
+                >
                     {step === 3 ? "Get started" : "Next"}
-                </button>
+                </motion.button>
             </div>
         </div>
     );
