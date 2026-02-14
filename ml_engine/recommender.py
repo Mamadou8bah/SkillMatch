@@ -83,11 +83,11 @@ class AIRecommender:
         
         # LEVEL 5: Personalization / Global preference weights (starting defaults)
         self.global_weights = {
-            "semantic": 0.45,
+            "semantic": 0.35,
             "skills": 0.25,
             "exp": 0.15,
-            "loc": 0.10,
-            "recency": 0.05
+            "loc": 0.05,
+            "recency": 0.20 # Increased from 0.05 for "very big boost"
         }
 
     def _get_embedding(self, text):
@@ -335,13 +335,13 @@ class AIRecommender:
             
             if is_cold_start:
                 # 2. Cold Start Ranking Formula
-                # score = 0.6 * skill_similarity + 0.25 * recency_score + 0.15 * normalized_popularity
-                base_score = (0.6 * skill_sim) + (0.25 * recency_score) + (0.15 * norm_pop)
+                # Significant weight to recency (0.4) as per user request
+                base_score = (0.45 * skill_sim) + (0.4 * recency_score) + (0.15 * norm_pop)
             else:
                 # Hybrid score calculated using current weights (Level 5)
                 base_score = sum(features[k] * self.global_weights[k] for k in features)
 
-            # 🔥 For New Jobs: Multiply final score by 1.2 if < 3 days old
+            # 🔥 "Very Big Boost" for New Jobs:
             days_old = 14 # default
             posted_str = str(posted_at).lower()
             if 'h' in posted_str or 'm' in posted_str:
@@ -350,8 +350,13 @@ class AIRecommender:
                 try: days_old = int(re.findall(r'\d+', posted_str)[0])
                 except: pass
             
-            if days_old < 3:
-                base_score *= 1.2
+            # Massive multiplier for fresh content (Instagram/LinkedIn style)
+            if days_old == 0:
+                base_score *= 1.5 # 50% boost for today's jobs
+            elif days_old < 3:
+                base_score *= 1.3 # 30% boost for recent jobs (within 72h)
+            elif days_old < 7:
+                base_score *= 1.1 # 10% boost for past week jobs
 
             candidates.append({
                 "id": job_id,
