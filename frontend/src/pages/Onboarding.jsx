@@ -278,7 +278,7 @@ export const Onboarding = () => {
                                 {photoPreview ? (
                                     <img src={photoPreview} alt="Preview" />
                                 ) : (
-                                    <UserIcon size={40} color="#cbd5e0" />
+                                    <UserIcon size={40} className="placeholder-icon" />
                                 )}
                                 <div className="camera-icon-badge">
                                     <Camera size={14} />

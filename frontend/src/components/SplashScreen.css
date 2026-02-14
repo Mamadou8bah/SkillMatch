@@ -4,7 +4,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: #ffffff; /* Or any background color you prefer */
+  background-color: var(--bg-color);
   display: flex;
   justify-content: center;
   align-items: center;

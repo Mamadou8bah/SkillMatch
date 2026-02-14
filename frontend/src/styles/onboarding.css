@@ -3,7 +3,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-color) 100%);
     font-family: 'Inter', sans-serif;
     padding: 1rem;
     box-sizing: border-box;
@@ -13,7 +13,7 @@
     width: 100%;
     max-width: 500px;
     padding: 2rem;
-    background: white;
+    background: var(--card-bg);
     border-radius: 32px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.08);
     margin: 1rem;
@@ -25,7 +25,7 @@
 .progress-bar {
     width: 100%;
     height: 8px;
-    background: #f0f0f0;
+    background: var(--border-color);
     border-radius: 4px;
     margin-bottom: 2rem;
     overflow: hidden;
@@ -45,13 +45,13 @@
 .onboarding-header h1 {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #1a1a1a;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
     letter-spacing: -0.5px;
 }
 
 .onboarding-header p {
-    color: #444;
+    color: var(--text-secondary);
     font-size: 1rem;
     line-height: 1.5;
 }
@@ -87,7 +87,7 @@
 
 .option-card {
     padding: 2rem 1.5rem;
-    border: 2px solid #f0f0f0;
+    border: 2px solid var(--border-color);
     border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -125,15 +125,17 @@
 .option-card p {
     margin: 0;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
 .onboarding-input-group input {
     width: 100%;
     padding: 18px 20px;
-    border: 2px solid #f0f0f0;
+    border: 2px solid var(--border-color);
     border-radius: 16px;
+    background: var(--bg-color);
+    color: var(--text-color);
     font-size: 1rem;
     margin-bottom: 1rem;
     outline: none;
@@ -161,8 +163,10 @@
 .skills-input-container input {
     width: 100%;
     padding: 14px 20px;
-    border: 2px solid #f0f0f0;
+    border: 2px solid var(--border-color);
     border-radius: 16px;
+    background: var(--bg-color);
+    color: var(--text-color);
     outline: none;
     font-size: 1rem;
     transition: all 0.2s ease;
@@ -174,8 +178,8 @@
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #f0f0f0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     z-index: 1000;
@@ -189,8 +193,8 @@
     padding: 14px 20px;
     cursor: pointer;
     font-size: 1rem;
-    color: #333;
-    border-bottom: 1px solid #f8f8f8;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
     transition: all 0.2s ease;
     text-align: left;
 }
@@ -200,7 +204,7 @@
 }
 
 .suggestion-item:hover {
-    background: #fcfcfc;
+    background: var(--hover-color);
     color: var(--primary-color);
 }
 
@@ -234,9 +238,9 @@
     gap: 10px;
     min-height: 100px;
     padding: 1rem;
-    background: #fcfcfc;
+    background: var(--tag-bg);
     border-radius: 16px;
-    border: 1px dashed #e0e0e0;
+    border: 1px dashed var(--border-color);
 }
 
 .skill-tag {
@@ -264,7 +268,7 @@
 
 .mini-option {
     padding: 16px;
-    border: 2px solid #f0f0f0;
+    border: 2px solid var(--border-color);
     border-radius: 16px;
     text-align: center;
     cursor: pointer;
@@ -293,7 +297,7 @@
 .section-label {
     font-size: 0.95rem;
     font-weight: 600;
-    color: #4a5568;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
     text-align: left;
 }
@@ -315,8 +319,8 @@
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: #f7fafc;
-    border: 2px dashed #cbd5e0;
+    background: var(--tag-bg);
+    border: 2px dashed var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -328,13 +332,17 @@
 
 .photo-preview-circle:hover {
     border-color: var(--primary-color);
-    background: #ebf8ff;
+    background: var(--primary-light);
 }
 
 .photo-preview-circle img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.placeholder-icon {
+    color: var(--text-secondary);
 }
 
 .camera-icon-badge {
@@ -354,7 +362,7 @@
 
 .photo-hint {
     font-size: 0.8rem;
-    color: #718096;
+    color: var(--text-secondary);
 }
 
 .diverse-skills-wrapper {
@@ -376,14 +384,14 @@
     align-items: center;
     gap: 10px;
     padding: 12px 20px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 100px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     font-weight: 500;
-    color: #4a5568;
+    color: var(--text-secondary);
 }
 
 .skill-pill:hover {
@@ -406,8 +414,8 @@
 }
 
 .others-pill {
-    border: 1px dashed #cbd5e0;
-    background: #f8fafc;
+    border: 1px dashed var(--border-color);
+    background: var(--tag-bg);
 }
 
 .onboarding-footer {
@@ -437,8 +445,8 @@
 }
 
 .btn-secondary {
-    background: #f0f0f0;
-    color: #666;
+    background: var(--tag-bg);
+    color: var(--text-secondary);
     border: none;
     padding: 16px 28px;
     border-radius: 16px;
