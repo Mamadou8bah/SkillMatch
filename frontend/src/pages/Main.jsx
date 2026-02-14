@@ -2,9 +2,7 @@ import React, { useEffect } from 'react'
 import '../styles/Main.css'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
-
-const MotionNavLink = motion.create(NavLink)
+import { motion, AnimatePresence } from 'framer-motion'
 
 export const Main = () => {
   const location = useLocation()
