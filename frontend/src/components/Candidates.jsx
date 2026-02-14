@@ -9,6 +9,7 @@ export const Candidates = () => {
     const [users, setUsers] = useState([])
     const [connections, setConnections] = useState([])
     const [pendingRequests, setPendingRequests] = useState([])
+    const [sentRequests, setSentRequests] = useState([])
     const [recommendations, setRecommendations] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('discover')
@@ -19,16 +20,18 @@ export const Candidates = () => {
     const fetchData = async (silent = false) => {
         if (!silent) setIsLoading(true)
         try {
-            const [usersData, connData, pendingData, recData] = await Promise.all([
+            const [usersData, connData, pendingData, sentData, recData] = await Promise.all([
                 apiFetch('/api/users/network'),
                 apiFetch('/api/connections'),
                 apiFetch('/api/connections/pending'),
+                apiFetch('/api/connections/sent'),
                 apiFetch('/api/recommendations/connections')
             ])
             
             if (usersData.success) setUsers(usersData.data)
             if (connData.success) setConnections(connData.data)
             if (pendingData.success) setPendingRequests(pendingData.data)
+            if (sentData.success) setSentRequests(sentData.data)
             if (recData.success) setRecommendations(recData.data)
         } catch (err) {
             console.error("Failed to fetch data", err)
@@ -96,6 +99,10 @@ export const Candidates = () => {
         return pendingRequests.some(r => r.requester.id === userId)
     }
 
+    const hasSentRequest = (userId) => {
+        return sentRequests.some(r => r.target.id === userId)
+    }
+
     const renderUserList = (userList) => {
         if (userList.length === 0) {
             return (
@@ -111,6 +118,7 @@ export const Candidates = () => {
                 {userList.map(user => {
                     const connected = isUserConnected(user.id)
                     const isPending = hasPendingRequest(user.id)
+                    const isRequested = hasSentRequest(user.id)
                     const isProcessing = processingId === user.id
                     
                     return (
@@ -122,29 +130,27 @@ export const Candidates = () => {
                                     className="user-list-avatar" 
                                 />
                                 <div className="user-details">
-                                    <div className="user-name-row">
-                                        <h3>{user.fullName}</h3>
-                                        {user.profession?.includes('Senior') && <span className="pro-badge">PRO</span>}
+                                    <div className="user-name-wrapper">
+                                        <span className="user-name">{user.fullName}</span>
                                     </div>
-                                    <div className="user-meta-row">
-                                        <MapPin size={14} />
-                                        <span>{user.location || 'Gambia'}</span>
-                                        <span className="separator">•</span>
-                                        <span className="user-profession">{user.profession || 'Professional'}</span>
-                                    </div>
+                                    <p className="user-bio">
+                                        {user.profession || 'Professional'} {user.location && `• ${user.location}`}
+                                    </p>
                                 </div>
                             </div>
                             
                             <div className="user-actions-section">
                                 {connected ? (
                                     <Link to={`/messages/${user.id}`} className="action-btn btn-primary">
-                                        <MessageSquare size={16} style={{ marginRight: '8px' }} />
                                         <span>Message</span>
                                     </Link>
                                 ) : isPending ? (
-                                    <button className="action-btn btn-outline" disabled>
-                                        <Clock size={16} style={{ marginRight: '8px' }} />
+                                    <button className="action-btn btn-outline" disabled style={{ opacity: 0.6 }}>
                                         <span>Pending</span>
+                                    </button>
+                                ) : isRequested ? (
+                                    <button className="action-btn btn-outline" disabled style={{ opacity: 0.8 }}>
+                                        <span>Requested</span>
                                     </button>
                                 ) : (
                                     <button 
@@ -153,10 +159,7 @@ export const Candidates = () => {
                                         disabled={isProcessing}
                                     >
                                         {isProcessing ? '...' : (
-                                            <>
-                                                <UserPlus size={16} style={{ marginRight: '8px' }} />
-                                                <span>{myRole === 'EMPLOYER' ? 'Hire' : 'Connect'}</span>
-                                            </>
+                                            <span>{myRole === 'EMPLOYER' ? 'Hire' : 'Connect'}</span>
                                         )}
                                     </button>
                                 )}
@@ -173,7 +176,7 @@ export const Candidates = () => {
             <div className="network-header">
                 <h2>Connections</h2>
                 <p>Build your professional community on SkillMatch</p>
-            </div>
+            </div> 
 
             <div className="network-tabs">
                 <button 
@@ -183,22 +186,16 @@ export const Candidates = () => {
                     Discover
                 </button>
                 <button 
-                    className={`network-tab ${activeTab === 'suggestions' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('suggestions')}
+                    className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pending')}
                 >
-                    Suggestions
-                </button>
+                    Requests {pendingRequests.length > 0 && <span className="tab-badge">{pendingRequests.length}</span>}
+                </button>                
                 <button 
                     className={`network-tab ${activeTab === 'connections' ? 'active' : ''}`}
                     onClick={() => setActiveTab('connections')}
                 >
                     Connections ({connections.length})
-                </button>
-                <button 
-                    className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pending')}
-                >
-                    Requests {pendingRequests.length > 0 && <span className="tab-badge">{pendingRequests.length}</span>}
                 </button>
             </div>
 
@@ -235,19 +232,23 @@ export const Candidates = () => {
                                         <p className="no-jobs-text">All caught up!</p>
                                     </div>
                                 ) : pendingRequests.map(req => (
-                                    <div key={req.id} className="pending-request-card">
-                                        <img 
-                                            src={req.requester.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.requester.fullName)}&background=random`} 
-                                            alt="" 
-                                            style={{ width: '50px', height: '50px', borderRadius: '50%' }} 
-                                        />
-                                        <div className="pending-request-info">
-                                            <h4>{req.requester.fullName}</h4>
-                                            <p>{req.requester.role || 'Member'}</p>
+                                    <div key={req.id} className="user-list-item">
+                                        <div className="user-info-section">
+                                            <img 
+                                                src={req.requester.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.requester.fullName)}&background=random`} 
+                                                alt="" 
+                                                className="user-list-avatar"
+                                            />
+                                            <div className="user-details">
+                                                <div className="user-name-wrapper">
+                                                    <span className="user-name">{req.requester.fullName}</span>
+                                                </div>
+                                                <p className="user-bio">{req.requester.profession || req.requester.role || 'Member'}</p>
+                                            </div>
                                         </div>
-                                        <div className="pending-actions">
-                                            <button onClick={() => handleAccept(req.id)} className="accept-btn">Accept</button>
-                                            <button className="decline-btn">Decline</button>
+                                        <div className="user-actions-section">
+                                            <button onClick={() => handleAccept(req.id)} className="action-btn btn-primary" style={{ marginRight: '8px', minWidth: '70px', padding: '6px 14px' }}>Accept</button>
+                                            <button className="action-btn btn-outline" style={{ minWidth: '70px', padding: '6px 14px' }}>Decline</button>
                                         </div>
                                     </div>
                                 ))}

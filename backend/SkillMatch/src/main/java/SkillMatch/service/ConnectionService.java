@@ -62,6 +62,10 @@ public class ConnectionService {
         return connectionRepository.findByTargetAndAcceptedFalse(user);
     }
 
+    public List<Connection> getSentRequests(User user) {
+        return connectionRepository.findByRequesterAndAcceptedFalse(user);
+    }
+
     public boolean areConnected(User u1, User u2) {
         return connectionRepository.findConnectionBetween(u1, u2)
                 .map(Connection::isAccepted)

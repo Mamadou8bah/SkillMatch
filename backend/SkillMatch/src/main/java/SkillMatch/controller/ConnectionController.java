@@ -43,4 +43,10 @@ public class ConnectionController {
         User user = userService.getLogInUser();
         return ResponseEntity.ok(ApiResponse.success("Pending requests retrieved", connectionService.getPendingRequests(user)));
     }
+
+    @GetMapping("/sent")
+    public ResponseEntity<ApiResponse<List<Connection>>> getSentRequests() {
+        User user = userService.getLogInUser();
+        return ResponseEntity.ok(ApiResponse.success("Sent requests retrieved", connectionService.getSentRequests(user)));
+    }
 }

@@ -19,4 +19,6 @@ public interface ConnectionRepository extends JpaRepository<Connection, Long> {
     Optional<Connection> findConnectionBetween(User u1, User u2);
 
     List<Connection> findByTargetAndAcceptedFalse(User target);
+
+    List<Connection> findByRequesterAndAcceptedFalse(User requester);
 }
