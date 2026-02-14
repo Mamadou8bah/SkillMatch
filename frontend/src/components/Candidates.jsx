@@ -31,11 +31,18 @@ export const Candidates = () => {
                 apiFetch(`/api/users/${userId}`)
             ])
             
-            if (usersData.success) setUsers(usersData.data)
+            if (usersData.success) {
+                // Remove duplicates and self from network list
+                const cleanUsers = usersData.data.filter(u => String(u.id) !== String(userId))
+                setUsers(Array.from(new Map(cleanUsers.map(u => [u.id, u])).values()))
+            }
             if (connData.success) setConnections(connData.data)
             if (pendingData.success) setPendingRequests(pendingData.data)
             if (sentData.success) setSentRequests(sentData.data)
-            if (recData.success) setRecommendations(recData.data)
+            if (recData.success) {
+                // Deduplicate recommendations
+                setRecommendations(Array.from(new Map(recData.data.map(u => [u.id, u])).values()))
+            }
             if (profileData.success) setMyIndustry(profileData.data.industry)
         } catch (err) {
             console.error("Failed to fetch data", err)
@@ -119,8 +126,12 @@ export const Candidates = () => {
             )
         }
 
-        const highMatch = recommendations.filter(u => u.industry === myIndustry || !myIndustry).slice(0, 7)
-        const diverse = recommendations.filter(u => u.industry !== myIndustry && myIndustry).slice(0, 3)
+        // Filter out existing connections and deduplicate
+        const uniqueRecs = Array.from(new Map(recommendations.map(u => [u.id, u])).values())
+            .filter(u => !isUserConnected(u.id));
+
+        const highMatch = uniqueRecs.filter(u => u.industry === myIndustry || !myIndustry).slice(0, 7)
+        const diverse = uniqueRecs.filter(u => u.industry !== myIndustry && myIndustry).slice(0, 3)
 
         return (
             <div className="recommendations-section">
