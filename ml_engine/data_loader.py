@@ -31,12 +31,22 @@ class DataLoader:
         self.engine = create_engine(self.conn_str)
 
     def get_users(self):
-        query = "SELECT id, skills, industry, created_at FROM users"
+        query = """
+        SELECT u.id, u.profession as industry, u.created_at, STRING_AGG(s.title, ', ') as skills 
+        FROM users u 
+        LEFT JOIN skill s ON u.id = s.user_id 
+        GROUP BY u.id, u.profession, u.created_at
+        """
         return pd.read_sql(query, self.engine)
 
     def get_jobs(self):
         # Combining title and description for TF-IDF
-        query = "SELECT id, title, description, skills_required, created_at FROM job_posts"
+        query = """
+        SELECT j.id, j.title, j.description, j.industry, j.posted_at as created_at, STRING_AGG(s.title, ', ') as skills_required 
+        FROM job_post j 
+        LEFT JOIN skill s ON j.id = s.job_post_id 
+        GROUP BY j.id, j.title, j.description, j.industry, j.posted_at
+        """
         return pd.read_sql(query, self.engine)
 
     def get_interactions(self):
@@ -50,10 +60,15 @@ class DataLoader:
         FROM applications
         """
         return pd.read_sql(query, self.engine)
+        return pd.read_sql(query, self.engine)
 
     def get_connections(self):
         query = "SELECT requester_id, target_id, accepted, created_at FROM connections"
         return pd.read_sql(query, self.engine)
 
     def save_recommendations(self, df, table_name):
+        # Prevent database bloat by clearing old recommendations before saving new ones
+        with self.engine.begin() as conn:
+            conn.execute(f"TRUNCATE TABLE {table_name}")
+            
         df.to_sql(table_name, self.engine, if_exists='append', index=False)

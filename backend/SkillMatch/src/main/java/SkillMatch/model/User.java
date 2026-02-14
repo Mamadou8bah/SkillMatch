@@ -2,6 +2,7 @@ package SkillMatch.model;
 
 import SkillMatch.util.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @EntityListeners(AuditingEntityListener.class)
 public class User implements UserDetails {
     @Id
@@ -42,6 +44,9 @@ public class User implements UserDetails {
 
     @Column(nullable = true)
     private String profession;
+
+    @Column(nullable = true)
+    private String industry;
 
     @Column(nullable = true)
     private String experienceLevel;

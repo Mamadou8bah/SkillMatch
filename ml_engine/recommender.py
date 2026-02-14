@@ -190,6 +190,25 @@ class AIRecommender:
             ''')
             conn.commit()
 
+    def get_interaction_count(self, user_id):
+        """Get total interaction count for a specific user"""
+        if not user_id: return 0
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM interactions WHERE user_id = ?", (str(user_id),))
+                return cursor.fetchone()[0]
+        except:
+            return 0
+
+    def get_job_popularity(self, job_id):
+        """Get popularity of a job based on total interactions"""
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM interactions WHERE job_id = ?", (str(job_id),))
+                return cursor.fetchone()[0]
+        except:
+            return 0
+
     def load_model(self):
         if os.path.exists(MODEL_PATH):
             try:
@@ -267,8 +286,12 @@ class AIRecommender:
         return 0.3 # Different regions
 
     def get_job_recommendations(self, user_data, jobs_df):
-        """LEVEL 1-5 Implementation"""
+        """LEVEL 1-5 Implementation with Cold Start Strategy"""
         if jobs_df.empty: return []
+
+        user_id = user_data.get('id') or user_data.get('userId')
+        interaction_count = self.get_interaction_count(user_id)
+        is_cold_start = interaction_count < 5
 
         # 1. Retrieval Layer (Level 1 Semantic Search)
         user_bio = user_data.get('bio', '') or user_data.get('user_profile', '')
@@ -285,45 +308,94 @@ class AIRecommender:
         user_exp = user_data.get('experience_years', 3)
         user_loc = user_data.get('location', '')
 
+        # Calculate popularity for all jobs for normalization
+        job_popularities = {row['id']: self.get_job_popularity(row['id']) for _, row in jobs_df.iterrows()}
+        max_pop = max(job_popularities.values()) if job_popularities.values() else 1
+        if max_pop == 0: max_pop = 1
+
         candidates = []
         for i, (idx, row) in enumerate(jobs_df.iterrows()):
+            job_id = row['id']
+            skill_sim = float(self.calculate_skill_overlap(user_skills, row.get('skills', [])))
+            
+            # Recency calculation
+            posted_at = row.get('postedAt', '1d')
+            recency_score = float(self.calculate_recency_score(posted_at))
+            
+            # Popularity
+            norm_pop = job_popularities[job_id] / max_pop
+
             features = {
                 "semantic": float(semantic_scores[i]),
-                "skills": float(self.calculate_skill_overlap(user_skills, row.get('skills', []))),
+                "skills": skill_sim,
                 "exp": float(self.calculate_experience_match(user_exp, row.get('required_experience', 2))),
                 "loc": float(self.calculate_location_score(user_loc, row.get('location', ''))),
-                "recency": float(self.calculate_recency_score(row.get('postedAt', '1d')))
+                "recency": recency_score
             }
             
-            # Hybrid score calculated using current weights
-            base_score = sum(features[k] * self.global_weights[k] for k in features)
+            if is_cold_start:
+                # 2. Cold Start Ranking Formula
+                # score = 0.6 * skill_similarity + 0.25 * recency_score + 0.15 * normalized_popularity
+                base_score = (0.6 * skill_sim) + (0.25 * recency_score) + (0.15 * norm_pop)
+            else:
+                # Hybrid score calculated using current weights (Level 5)
+                base_score = sum(features[k] * self.global_weights[k] for k in features)
+
+            # 🔥 For New Jobs: Multiply final score by 1.2 if < 3 days old
+            days_old = 14 # default
+            posted_str = str(posted_at).lower()
+            if 'h' in posted_str or 'm' in posted_str:
+                days_old = 0
+            elif 'd' in posted_str:
+                try: days_old = int(re.findall(r'\d+', posted_str)[0])
+                except: pass
             
+            if days_old < 3:
+                base_score *= 1.2
+
             candidates.append({
-                "id": row['id'],
+                "id": job_id,
                 "base_score": base_score,
                 "feature_vector": [features[k] for k in ["semantic", "skills", "exp", "loc", "recency"]]
             })
 
-        # Sort by hybrid score and take top 50 for re-ranking
+        # Sort by hybrid score
         candidates = sorted(candidates, key=lambda x: x['base_score'], reverse=True)
-        top_slice = candidates[:50]
-
+        
         # 3. Model Layer (Level 3 Re-ranking)
-        if self.is_trained:
+        # Skip re-ranking for cold start as behavioral data is missing
+        if not is_cold_start and self.is_trained:
+            top_slice = candidates[:50]
             X = np.array([c['feature_vector'] for c in top_slice])
-            # Probability of "1" (User applies/saves)
             probs = self.reranker.predict_proba(X)[:, 1]
             for i, c in enumerate(top_slice):
                 c['score'] = float(probs[i])
+            results = sorted(top_slice, key=lambda x: x['score'], reverse=True)
         else:
-            for c in top_slice:
+            # For cold start or untrained model, use base_score
+            for c in candidates:
                 c['score'] = c['base_score']
+            results = candidates
 
-        # 4. Final results
-        return sorted([
+        # 4. Exploration Boost (Diversity)
+        # 70% highest match + 30% diverse/trending (random slice of high but not top)
+        if is_cold_start and len(results) > 10:
+            top_70_pct = int(20 * 0.7)
+            top_matches = results[:top_70_pct]
+            
+            # Select diverse jobs from the rest (trending or just different)
+            diverse_pool = results[top_70_pct:50] 
+            np.random.shuffle(diverse_pool)
+            diverse_matches = diverse_pool[:(20 - top_70_pct)]
+            
+            final_slice = top_matches + diverse_matches
+        else:
+            final_slice = results[:20]
+
+        return [
             {"id": c['id'], "score": c['score'], "features": c['feature_vector']} 
-            for c in top_slice
-        ], key=lambda x: x['score'], reverse=True)[:20]
+            for c in final_slice
+        ]
 
     def record_interaction(self, data):
         """LEVEL 4: Feedback loop with persistence in SQLite"""
@@ -458,22 +530,55 @@ def get_candidate_recommendations(job_description, candidates_df):
     return sorted(results, key=lambda x: x['score'], reverse=True)[:20]
 
 def get_connection_recommendations(user_data, others_df):
-    """LEVEL 2-ish for Connections with Caching"""
+    """LEVEL 2-ish for Connections with Caching and Cold Start Strategy"""
     if others_df.empty: return []
     
-    # Get source user embedding
+    # Get source user data
     if isinstance(user_data, dict):
         profile_text = user_data.get('bio', '') or user_data.get('user_profile', '')
+        user_skills = user_data.get('skills', [])
+        user_industry = user_data.get('profession', '') or user_data.get('industry', '')
+        user_id = user_data.get('id') or user_data.get('userId')
     else:
         profile_text = user_data if isinstance(user_data, str) else ""
+        user_skills = []
+        user_industry = ""
+        user_id = None
         
-    user_embedding = recommender._get_embedding(profile_text).reshape(1, -1)
+    interaction_count = recommender.get_interaction_count(user_id)
+    is_cold_start = interaction_count < 5
 
-    # PERFORMANCE: Use global embedding cache for others
+    # PERFORMANCE: Use global embedding cache for semantic similarity
+    # We still use semantic similarity as part of the "pool" even in cold start
+    user_embedding = recommender._get_embedding(profile_text).reshape(1, -1)
     other_texts = others_df['profile'].fillna('').tolist()
     other_embeddings = recommender._get_batch_embeddings(other_texts)
     
     cosine_sim = cosine_similarity(user_embedding, other_embeddings)[0]
-    recommendations = [{"id": int(others_df.iloc[i]['id']), "score": float(cosine_sim[i])} 
-                      for i in range(len(others_df)) if cosine_sim[i] > 0.2]
+    
+    recommendations = []
+    
+    for i in range(len(others_df)):
+        row = others_df.iloc[i]
+        
+        # Calculate Skill Similarity
+        other_skills = row.get('skills', [])
+        skill_sim = float(recommender.calculate_skill_overlap(user_skills, other_skills))
+        
+        # Calculate Industry Match
+        other_industry = row.get('profession', '') or row.get('industry', '')
+        industry_flag = 1.0 if (user_industry and other_industry and str(user_industry).lower() == str(other_industry).lower()) else 0.0
+
+        if is_cold_start:
+            # 🧠 Cold Start Connection Formula (Matched to Promp Requirements):
+            # score = 0.6 * skills + 0.25 * industry_match + 0.15 * mutual_sim
+            mutual_sim = 0.5 # Default simulated mutual commonality
+            score = (0.6 * skill_sim) + (0.25 * industry_flag) + (0.15 * mutual_sim)
+        else:
+            # Fallback to semantic or hybrid if not cold start
+            score = float(cosine_sim[i])
+            
+        if score > 0.1: # Threshold to keep results relevant
+            recommendations.append({"id": int(row['id']), "score": score})
+
     return sorted(recommendations, key=lambda x: x['score'], reverse=True)[:25]

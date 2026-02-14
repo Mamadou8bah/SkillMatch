@@ -23,6 +23,7 @@ export const redirectToLogin = () => {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
     localStorage.removeItem('registrationStage');
+    localStorage.removeItem('firstName');
     if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/intro')) {
         window.location.href = '/login';
     }

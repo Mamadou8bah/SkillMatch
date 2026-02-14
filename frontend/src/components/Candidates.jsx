@@ -12,6 +12,7 @@ export const Candidates = () => {
     const [sentRequests, setSentRequests] = useState([])
     const [recommendations, setRecommendations] = useState([])
     const [isLoading, setIsLoading] = useState(true)
+    const [myIndustry, setMyIndustry] = useState(null)
     const [activeTab, setActiveTab] = useState('discover')
     const [searchQuery, setSearchQuery] = useState('')
     const [processingId, setProcessingId] = useState(null)
@@ -20,12 +21,14 @@ export const Candidates = () => {
     const fetchData = async (silent = false) => {
         if (!silent) setIsLoading(true)
         try {
-            const [usersData, connData, pendingData, sentData, recData] = await Promise.all([
+            const userId = localStorage.getItem('userId')
+            const [usersData, connData, pendingData, sentData, recData, profileData] = await Promise.all([
                 apiFetch('/api/users/network'),
                 apiFetch('/api/connections'),
                 apiFetch('/api/connections/pending'),
                 apiFetch('/api/connections/sent'),
-                apiFetch('/api/recommendations/connections')
+                apiFetch('/api/recommendations/connections'),
+                apiFetch(`/api/users/${userId}`)
             ])
             
             if (usersData.success) setUsers(usersData.data)
@@ -33,6 +36,7 @@ export const Candidates = () => {
             if (pendingData.success) setPendingRequests(pendingData.data)
             if (sentData.success) setSentRequests(sentData.data)
             if (recData.success) setRecommendations(recData.data)
+            if (profileData.success) setMyIndustry(profileData.data.industry)
         } catch (err) {
             console.error("Failed to fetch data", err)
         } finally {
@@ -101,6 +105,41 @@ export const Candidates = () => {
 
     const hasSentRequest = (userId) => {
         return sentRequests.some(r => r.target.id === userId)
+    }
+
+    const renderRecommendations = () => {
+        if (recommendations.length === 0) {
+            return (
+                <div className="no-jobs-container">
+                    <p className="no-jobs-title">No recommendations yet</p>
+                    <p className="no-jobs-text">Grow your profile to get better matches.</p>
+                </div>
+            )
+        }
+
+        const highMatch = recommendations.filter(u => u.industry === myIndustry || !myIndustry).slice(0, 7)
+        const diverse = recommendations.filter(u => u.industry !== myIndustry && myIndustry).slice(0, 3)
+
+        return (
+            <div className="recommendations-section">
+                {highMatch.length > 0 && (
+                    <div className="rec-group">
+                        <h3 className="rec-group-title" style={{ fontSize: '1rem', marginBottom: '15px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
+                            <Target size={18} style={{ marginRight: '8px' }} /> Matched for You (Top Picks)
+                        </h3>
+                        {renderUserList(highMatch)}
+                    </div>
+                )}
+                {diverse.length > 0 && (
+                    <div className="rec-group" style={{ marginTop: '30px' }}>
+                        <h3 className="rec-group-title" style={{ fontSize: '1rem', marginBottom: '15px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
+                            <Search size={18} style={{ marginRight: '8px' }} /> Diverse Discovery (Expanding your Circle)
+                        </h3>
+                        {renderUserList(diverse)}
+                    </div>
+                )}
+            </div>
+        )
     }
 
     const renderUserList = (userList) => {
@@ -186,6 +225,12 @@ export const Candidates = () => {
                     Discover
                 </button>
                 <button 
+                    className={`network-tab ${activeTab === 'suggestions' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('suggestions')}
+                >
+                    Recommended ✨
+                </button>
+                <button 
                     className={`network-tab ${activeTab === 'pending' ? 'active' : ''}`}
                     onClick={() => setActiveTab('pending')}
                 >
@@ -222,7 +267,7 @@ export const Candidates = () => {
                 ) : (
                     <>
                         {activeTab === 'discover' && renderUserList(filteredUsers)}
-                        {activeTab === 'suggestions' && renderUserList(recommendations)}
+                        {activeTab === 'suggestions' && renderRecommendations()}
                         {activeTab === 'connections' && renderUserList(connections)}
                         {activeTab === 'pending' && (
                             <div className="pending-list">

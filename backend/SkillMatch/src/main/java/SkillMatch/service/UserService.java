@@ -198,8 +198,10 @@ public class UserService {
         User user = repo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         if (request.location() != null) user.setLocation(request.location());
+        if (request.experienceLevel() != null) user.setExperienceLevel(request.experienceLevel());
         if (request.role() != null) user.setRole(request.role());
         if (request.profession() != null) user.setProfession(request.profession());
+        if (request.industry() != null) user.setIndustry(request.industry());
         
         if (request.photo() != null && !request.photo().isEmpty()) {
             try {
@@ -320,7 +322,9 @@ public class UserService {
         token.setExpired(false);
         token.setUser(user);
         tokenRepo.save(token);
-        return new LoginResponse(jwtToken, user.getId(), user.getRole().name(), user.getRegistrationStage());
+        
+        String firstName = user.getFullName() != null ? user.getFullName().split(" ")[0] : "";
+        return new LoginResponse(jwtToken, user.getId(), user.getRole().name(), user.getRegistrationStage(), firstName);
     }
     public User getLogInUser(){
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();

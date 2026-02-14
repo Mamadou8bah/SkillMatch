@@ -1,5 +1,6 @@
 import joblib
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LogisticRegression
 import os
 
@@ -13,6 +14,11 @@ class RankingModel:
             os.makedirs('models')
 
     def train(self, X, y):
+        # Ensure we have at least 2 classes for training
+        if len(np.unique(y)) < 2:
+            print(f"Skipping training for {self.model_type}: not enough interaction data (need at least 2 classes, found {len(np.unique(y))})")
+            return
+            
         self.model = LogisticRegression(class_weight='balanced')
         self.model.fit(X, y)
         joblib.dump(self.model, self.model_path)

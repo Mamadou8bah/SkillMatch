@@ -15,6 +15,7 @@ public class LoginResponse {
     private Long userId;
     private String role;
     private int registrationStage;
+    private String firstName;
 
 
 }

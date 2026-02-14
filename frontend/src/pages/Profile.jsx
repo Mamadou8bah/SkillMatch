@@ -104,6 +104,10 @@ export const Profile = () => {
     try {
       const data = await apiFetch(`/api/users/${userId}`);
       if (data.success) {
+        const firstName = data.data.fullName?.split(' ')[0] || '';
+        if (firstName) {
+          localStorage.setItem('firstName', firstName);
+        }
         setProfileData({
           fullName: data.data.fullName || '',
           email: data.data.email || '',
