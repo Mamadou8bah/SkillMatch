@@ -11,7 +11,14 @@ import {
   Plus,
   X,
   Trash2,
-  Camera
+  Camera,
+  Settings,
+  Globe,
+  Lock,
+  Moon,
+  Shield,
+  HelpCircle,
+  Smartphone
 } from 'lucide-react';
 import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
@@ -39,8 +46,32 @@ export const Profile = () => {
     location: "",
     profession: "",
     mobile: "",
+    experienceLevel: "",
     photoUrl: ""
   });
+
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('userSettings');
+    return saved ? JSON.parse(saved) : {
+      pushNotifications: true,
+      emailNotifications: true,
+      darkMode: false,
+      language: 'English'
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    if (settings.darkMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  }, [settings]);
+
+  const toggleSetting = (key) => {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
@@ -80,6 +111,7 @@ export const Profile = () => {
           location: data.data.location || '',
           profession: data.data.profession || '',
           mobile: data.data.mobile || '',
+          experienceLevel: data.data.experienceLevel || '',
           photoUrl: data.data.photo?.url || ''
         });
       }
@@ -347,6 +379,16 @@ export const Profile = () => {
             <label>Mobile</label>
             <input type="text" name="mobile" value={profileData.mobile} onChange={handleInputChange} className="form-input" />
           </div>
+          <div className="form-group">
+            <label>Experience Level</label>
+            <select name="experienceLevel" value={profileData.experienceLevel} onChange={handleInputChange} className="form-input">
+              <option value="">Select Level</option>
+              <option value="Entry Level">Entry Level</option>
+              <option value="Mid Level">Mid Level</option>
+              <option value="Senior Level">Senior Level</option>
+              <option value="Lead/Manager">Lead/Manager</option>
+            </select>
+          </div>
           <button className="save-btn" onClick={handleSaveProfile}>Save Changes</button>
         </div>
       </div>
@@ -464,6 +506,119 @@ export const Profile = () => {
     );
   }
 
+  if (activeView === 'settings') {
+    return (
+      <div className="profile-container sub-view">
+        <div className="edit-header">
+          {renderBackBtn()}
+          <h2>Settings</h2>
+          <div className="spacer"></div>
+        </div>
+        
+        <div className="settings-list">
+          <div className="settings-section">
+            <h3>Preferences</h3>
+            <div className="setting-row">
+              <div className="setting-info">
+                <Moon size={20} />
+                <span>Dark Mode</span>
+              </div>
+              <label className="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  checked={settings.darkMode} 
+                  onChange={() => toggleSetting('darkMode')} 
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <Globe size={20} />
+                <span>Language</span>
+              </div>
+              <select 
+                value={settings.language} 
+                onChange={(e) => setSettings({...settings, language: e.target.value})}
+                className="language-select"
+              >
+                <option>English</option>
+                <option>French</option>
+                <option>Spanish</option>
+                <option>German</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Notifications</h3>
+            <div className="setting-row">
+              <div className="setting-info">
+                <Smartphone size={20} />
+                <span>Push Notifications</span>
+              </div>
+              <label className="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  checked={settings.pushNotifications} 
+                  onChange={() => toggleSetting('pushNotifications')} 
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <Bell size={20} />
+                <span>Email Notifications</span>
+              </div>
+              <label className="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  checked={settings.emailNotifications} 
+                  onChange={() => toggleSetting('emailNotifications')} 
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Account & Security</h3>
+            <div className="setting-item-link" onClick={() => {}}>
+              <div className="setting-info">
+                <Lock size={20} />
+                <span>Change Password</span>
+              </div>
+              <ChevronRight size={18} />
+            </div>
+            <div className="setting-item-link" onClick={() => {}}>
+              <div className="setting-info">
+                <Shield size={20} />
+                <span>Privacy Settings</span>
+              </div>
+              <ChevronRight size={18} />
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Support</h3>
+            <div className="setting-item-link" onClick={() => {}}>
+              <div className="setting-info">
+                <HelpCircle size={20} />
+                <span>Help Center</span>
+              </div>
+              <ChevronRight size={18} />
+            </div>
+          </div>
+          
+          <div className="version-info">
+            SkillMatch v1.0.2
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -493,6 +648,10 @@ export const Profile = () => {
         </div>
         <h1 className="profile-name">{profileData.fullName}</h1>
         <p className="profile-role">{profileData.profession || profileData.role}</p>
+        <div className="profile-location">
+          <Globe size={14} />
+          <span>{profileData.location || "Location not set"}</span>
+        </div>
         <button className="edit-profile-btn" onClick={() => setActiveView('edit')}>Edit Profile</button>
       </div>
 
@@ -529,6 +688,12 @@ export const Profile = () => {
         <div className="menu-item" onClick={() => navigate('/notifications')}>
           <div className="menu-icon-wrapper"><Bell size={20} /></div>
           <span className="menu-label">Notifications</span>
+          <ChevronRight className="chevron" size={20} />
+        </div>
+
+        <div className="menu-item" onClick={() => setActiveView('settings')}>
+          <div className="menu-icon-wrapper"><Settings size={20} /></div>
+          <span className="menu-label">Settings</span>
           <ChevronRight className="chevron" size={20} />
         </div>
 

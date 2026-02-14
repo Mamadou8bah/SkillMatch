@@ -153,7 +153,7 @@ export const Login = () => {
                 setError(data.message)
             }
         } catch (err) {
-            setError('System error. Please try again later.')
+            setError(err.message || 'System error. Please try again later.')
         } finally {
             setIsLoading(false)
         }

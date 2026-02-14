@@ -16,8 +16,8 @@ export const Candidates = () => {
     const [processingId, setProcessingId] = useState(null)
     const myRole = localStorage.getItem('userRole')
 
-    const fetchData = async () => {
-        setIsLoading(true)
+    const fetchData = async (silent = false) => {
+        if (!silent) setIsLoading(true)
         try {
             const [usersData, connData, pendingData, recData] = await Promise.all([
                 apiFetch('/api/users/network'),
@@ -33,7 +33,7 @@ export const Candidates = () => {
         } catch (err) {
             console.error("Failed to fetch data", err)
         } finally {
-            setIsLoading(false)
+            if (!silent) setIsLoading(false)
         }
     }
 
@@ -48,7 +48,7 @@ export const Candidates = () => {
                 method: 'POST'
             })
             if (data.success) {
-                await fetchData()
+                await fetchData(true)
             } else {
                 alert(data.message || 'Failed to send connection request')
             }
@@ -69,7 +69,7 @@ export const Candidates = () => {
                 method: 'POST'
             })
             if (data.success) {
-                await fetchData()
+                await fetchData(true)
             } else {
                 alert(data.message || 'Failed to accept request')
             }

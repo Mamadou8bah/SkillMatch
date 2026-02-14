@@ -7,6 +7,7 @@ import SkillMatch.model.User;
 import SkillMatch.model.UserInteraction;
 import SkillMatch.repository.JobPostRepo;
 import SkillMatch.repository.UserInteractionRepository;
+import SkillMatch.repository.UserRepo;
 import SkillMatch.model.Skill;
 import SkillMatch.util.LocationType;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class JobPostService {
     private final JobPostRepo repo;
     private final UserInteractionRepository interactionRepo;
     private final ExternalJobService externalJobService;
+    private final UserRepo userRepository;
 
     public long countJobs() {
         return repo.count();
@@ -54,7 +56,8 @@ public class JobPostService {
 
     public JobPost addJob(JobPost jobPost){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) auth.getPrincipal();
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email);
         jobPost.setEmployer(user.getEmployer());
         return repo.save(jobPost);
     }
@@ -97,12 +100,15 @@ public class JobPostService {
         // Log interaction on view
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof User user) {
-                interactionRepo.save(UserInteraction.builder()
-                        .user(user)
-                        .jobPost(jobPost)
-                        .interactionType("CLICK")
-                        .build());
+            if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+                User user = userRepository.findByEmail(auth.getName());
+                if (user != null) {
+                    interactionRepo.save(UserInteraction.builder()
+                            .user(user)
+                            .jobPost(jobPost)
+                            .interactionType("CLICK")
+                            .build());
+                }
             }
         } catch (Exception e) {
             // Silently fail if auth is missing or detached
@@ -138,7 +144,8 @@ public class JobPostService {
 
     public List<JobPost> getJobsByLoggedInEmployer() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) auth.getPrincipal();
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email);
         return repo.findByEmployerId(user.getEmployer().getId());
     }
 

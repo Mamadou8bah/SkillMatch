@@ -6,6 +6,7 @@ import SkillMatch.exception.ResourceNotFoundException;
 import SkillMatch.model.Education;
 import SkillMatch.model.User;
 import SkillMatch.repository.EducationRepo;
+import SkillMatch.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ public class EducationService {
 
 
     private  final EducationRepo repo;
+    private final UserRepo userRepository;
     public List<EducationDTO>getEducation(){
         List<Education>educations=repo.findAll();
         List<EducationDTO>educationDTOList=new ArrayList<>();
@@ -37,7 +39,8 @@ public class EducationService {
 
     public Education addEducation(EducationDTO educationDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Not logged in");
         }
@@ -81,7 +84,8 @@ public class EducationService {
 
     public List<EducationDTO> getEducationByUser_Id() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("Not logged in");
         }

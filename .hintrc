@@ -8,7 +8,8 @@
       {
         "ignore": [
           "user-select",
-          "backdrop-filter"
+          "backdrop-filter",
+          "min-width: fit-content"
         ]
       }
     ]

@@ -7,6 +7,7 @@ import { Main } from './pages/Main';
 import { Home } from './components/Home';
 import { Jobs } from './pages/Jobs';
 import { Discover } from './components/Discover';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmarks } from './components/Bookmarks';
 import { JobDetails } from './pages/JobDetails';
 import { Profile } from './pages/Profile';
@@ -23,6 +24,7 @@ import { useState, useEffect } from 'react';
 import { isTokenExpired, apiFetch } from './utils/api';
 
 function App() {
+  const location = useLocation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showSplash, setShowSplash] = useState(true);
   const [fadeSplash, setFadeSplash] = useState(false);
@@ -74,29 +76,43 @@ function App() {
         </div>
       )}
       <InstallPrompt />
-      <Routes>
-        <Route path="/intro" element={<LandingIntro />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/login" element={<Login />} />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname.split('/')[1] || '/'}>
+          <Route path="/intro" element={
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+              <LandingIntro />
+            </motion.div>
+          } />
+          <Route path="/onboarding" element={
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+              <Onboarding />
+            </motion.div>
+          } />
+          <Route path="/login" element={
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+              <Login />
+            </motion.div>
+          } />
 
 
-        <Route path="/" element={<AuthGuard />} >
-          <Route index element={<Home />} />
-          <Route path="about" element={<div>About</div>} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="messages" element={<Messages />} />
-          <Route path="messages/:id" element={<Conversation />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="candidates" element={<Candidates />} />
-          <Route path="jobs" element={<Jobs />}>
-            <Route index element={role === 'EMPLOYER' ? <ManageJobs /> : <Discover />} />
-            <Route path="discover" element={<Discover />} />
-            <Route path="bookmarks" element={<Bookmarks />} />
+          <Route path="/" element={<AuthGuard />} >
+            <Route index element={<Home />} />
+            <Route path="about" element={<div>About</div>} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="messages" element={<Messages />} />
+            <Route path="messages/:id" element={<Conversation />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="candidates" element={<Candidates />} />
+            <Route path="jobs" element={<Jobs />}>
+              <Route index element={role === 'EMPLOYER' ? <ManageJobs /> : <Discover />} />
+              <Route path="discover" element={<Discover />} />
+              <Route path="bookmarks" element={<Bookmarks />} />
+            </Route>
+            <Route path="jobs/:id" element={<JobDetails />} />
+            <Route path="admin/*" element={<AdminDashboard />} />
           </Route>
-          <Route path="jobs/:id" element={<JobDetails />} />
-          <Route path="admin/*" element={<AdminDashboard />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </AnimatePresence>
       </div>
     </>
   );

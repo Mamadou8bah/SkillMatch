@@ -2,6 +2,9 @@ import React, { useEffect } from 'react'
 import '../styles/Main.css'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+
+const MotionNavLink = motion(NavLink)
 
 export const Main = () => {
   const location = useLocation()
@@ -11,7 +14,8 @@ export const Main = () => {
   const isJobDetails = location.pathname.startsWith('/jobs/') && 
                       !['/jobs/discover', '/jobs/bookmarks'].includes(location.pathname)
   const isConversation = location.pathname.startsWith('/messages/')
-  const shouldHideNavbar = isJobDetails || isConversation
+  const isProfile = location.pathname === '/profile'
+  const shouldHideNavbar = isJobDetails || isConversation || isProfile
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -41,7 +45,18 @@ export const Main = () => {
   return (
     <div className={`main-container ${isAdmin ? 'admin-layout' : ''}`}>
       <div className="element">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </div>
       {!isAdmin && !shouldHideNavbar && (
         <div className="nav-bar">

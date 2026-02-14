@@ -7,6 +7,7 @@ import SkillMatch.model.Application;
 import SkillMatch.model.JobPost;
 import SkillMatch.model.User;
 import SkillMatch.repository.ApplicationRepository;
+import SkillMatch.repository.UserRepo;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +32,13 @@ public class ApplicationService {
 
     private final CloudinaryService cloudinaryService;
 
+    private final UserRepo userRepository;
+
     @Transactional
     public Application submitApplication(Long jobId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         Optional<Application> existingApp = repository.findByUser_IdAndJobPost_Id(user.getId(), jobId);
 
         if (existingApp.isPresent()) {
@@ -76,7 +80,8 @@ public class ApplicationService {
 
     public List<Application> getAllUserApplications() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new AuthenticationException("User not logged in");
         }

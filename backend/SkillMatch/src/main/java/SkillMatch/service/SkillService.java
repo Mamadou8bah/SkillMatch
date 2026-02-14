@@ -36,7 +36,8 @@ public class SkillService {
 
     public Skill addSkill(Skill skill){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         skill.setUser(user);
         return repo.save(skill);
     }

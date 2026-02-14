@@ -8,6 +8,7 @@ import SkillMatch.model.Photo;
 import SkillMatch.model.User;
 import SkillMatch.repository.EmployerRepo;
 import SkillMatch.repository.PhotoRepository;
+import SkillMatch.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,8 @@ public class EmployerService {
 
     private final PhotoRepository photoRepository;
 
+    private final UserRepo userRepository;
+
     public List<Employer> getEmployers(){
        List<Employer>employers=repo.findAll();
        return employers;
@@ -40,7 +43,8 @@ public class EmployerService {
 
     public Employer addEmployer(EmployerDTO employerDTO, MultipartFile file) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new ResourceNotFoundException("User not found");
         }

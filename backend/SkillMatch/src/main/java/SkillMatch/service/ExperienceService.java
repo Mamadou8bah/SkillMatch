@@ -46,9 +46,11 @@ public class ExperienceService {
 
     public Experience addExperience(ExperienceDTO experienceDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
         Experience experience = Experience.builder()
                 .description(experienceDTO.getDescription())
+                .startDate(experienceDTO.getStartDate())
                 .endDate(experienceDTO.getEndDate())
                 .companyName(experienceDTO.getCompanyName())
                 .jobTitle(experienceDTO.getJobTitle())

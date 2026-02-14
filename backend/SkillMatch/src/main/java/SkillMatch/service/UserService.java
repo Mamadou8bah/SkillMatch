@@ -304,7 +304,7 @@ public class UserService {
 
     public LoginResponse login(LoginRequest request){
         User user=repo.findByEmail(request.getEmail());
-        if(user==null) throw new ResourceNotFoundException("No user with that email");
+        if(user==null) throw new InvalidCredentialsException("Invalid credentials");
 
         if(!user.isAccountVerified()) {
             throw new AuthenticationException("Please verify your email before logging in");

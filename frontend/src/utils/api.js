@@ -51,7 +51,8 @@ export const apiFetch = async (endpoint, options = {}) => {
     
     if (response.status === 401) {
         redirectToLogin();
-        throw new Error('Unauthorized');
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || 'Unauthorized');
     }
     
     if (response.status === 204) return null;
