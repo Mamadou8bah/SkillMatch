@@ -9,6 +9,7 @@ export const Discover = () => {
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState(null)
   const [jobsList, setJobsList] = useState([])
+  const [recommendedJobs, setRecommendedJobs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -17,23 +18,16 @@ export const Discover = () => {
     const fetchJobs = async () => {
       try {
         const [allJobsData, recData] = await Promise.all([
-          apiFetch('/post'),
+          apiFetch('/post?size=100'),
           role !== 'EMPLOYER' ? apiFetch('/api/recommendations/jobs') : Promise.resolve(null)
         ]);
 
-        let finalJobs = [];
         const allJobs = allJobsData?.content || allJobsData || [];
+        setJobsList(allJobs);
 
         if (recData && recData.success && Array.isArray(recData.data)) {
-          finalJobs = [...recData.data];
-          const recIds = new Set(recData.data.map(j => j.id));
-          const others = allJobs.filter(j => !recIds.has(j.id));
-          finalJobs = [...finalJobs, ...others];
-        } else {
-          finalJobs = allJobs;
+          setRecommendedJobs(recData.data);
         }
-
-        setJobsList(finalJobs);
       } catch (err) {
         console.error('Error fetching jobs:', err);
       } finally {
@@ -45,28 +39,35 @@ export const Discover = () => {
   }, []);
 
   const tags = useMemo(() => {
+    const listToProcess = search.trim() !== '' ? jobsList : recommendedJobs;
     const s = new Set()
-    jobsList.forEach(j => {
+    listToProcess.forEach(j => {
       if (j.locationType) s.add(j.locationType)
     })
     return Array.from(s)
-  }, [jobsList])
+  }, [jobsList, recommendedJobs, search])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    
+    // If NOT searching, show recommended jobs ranked by AI
+    if (!q) {
+      return recommendedJobs.filter(j => !activeTag || (j.locationType === activeTag));
+    }
+
+    // If searching, show limited search results from all jobs
     return jobsList.filter(j => {
       const locationMatch = !activeTag || (j.locationType === activeTag);
       if (!locationMatch) return false;
       
-      if (!q) return true
-      
       const inTitle = j.title && j.title.toLowerCase().includes(q)
       const inEmployer = j.employer && j.employer.name && j.employer.name.toLowerCase().includes(q)
-      const inSkills = Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => s.name.toLowerCase().includes(q))
+      const inSkills = Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => s.title?.toLowerCase().includes(q))
+      const inIndustry = j.industry && j.industry.toLowerCase().includes(q)
       
-      return inTitle || inEmployer || inSkills
-    })
-  }, [search, activeTag, jobsList])
+      return inTitle || inEmployer || inSkills || inIndustry
+    }).slice(0, 10) // Limit search results for better UX
+  }, [search, activeTag, jobsList, recommendedJobs])
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -129,8 +130,12 @@ export const Discover = () => {
           <Loader />
       ) : paginated.length === 0 ? (
           <div className="no-jobs-container" style={{ marginTop: '2rem' }}>
-            <p className="no-jobs-title">No jobs match your search</p>
-            <p className="no-jobs-text">Try different keywords or filters.</p>
+            <p className="no-jobs-title">
+              {search.trim() ? "No jobs match your search" : "No recommendations yet"}
+            </p>
+            <p className="no-jobs-text">
+              {search.trim() ? "Try different keywords or filters." : "Complete your profile to get personalized job picks."}
+            </p>
           </div>
       ) : (
           <div className="discover-list">
