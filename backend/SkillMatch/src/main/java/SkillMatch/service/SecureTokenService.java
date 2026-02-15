@@ -30,6 +30,11 @@ public class SecureTokenService {
     public void removeToken(SecureToken token){
         repository.delete(token);
     }
+
+    public void removeTokensByUser(SkillMatch.model.User user) {
+        repository.deleteByUser(user);
+    }
+
     public SecureToken createToken(){
         String tokenValue=new String(Base64.encodeBase64URLSafe(DEFAULT_TOKEN_GENERATOR.generateKey()));
         SecureToken secureToken=new SecureToken();

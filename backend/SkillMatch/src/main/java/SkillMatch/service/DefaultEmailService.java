@@ -16,6 +16,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 public class DefaultEmailService implements EmailService{
 
     private final SpringTemplateEngine templateEngine;
+    private Resend resend;
 
     @Value("${resend.api.key}")
     private String resendApiKey;
@@ -23,14 +24,18 @@ public class DefaultEmailService implements EmailService{
     @Value("${resend.from}")
     private String resendFrom;
 
+    @PostConstruct
+    public void init() {
+        resend = new Resend(resendApiKey);
+    }
+
     @Override
+    @Async("taskExecutor")
     public void sendMail(AbstractEmailContext email) {
         try {
             Context context=new Context();
             context.setVariables(email.getContext());
             String emailContent=templateEngine.process(email.getTemplateLocation(),context);
-
-            Resend resend = new Resend(resendApiKey);
 
             SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
                     .from(resendFrom)

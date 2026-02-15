@@ -359,14 +359,11 @@ public class UserService {
         }
     }
 
-    @Async
+    @Transactional
     public void sendRegistrationConfirmationEmail(User user){
+        // Efficiently remove old tokens in one DB call
+        secureTokenService.removeTokensByUser(user);
 
-        List<SecureToken> secureTokens = user.getSecureTokens();
-        for (SecureToken oldToken : secureTokens) {
-            oldToken.setExpiredAt(LocalDateTime.now());
-            secureTokenService.saveToken(oldToken);
-        }
         SecureToken secureToken=secureTokenService.create6DigitCode();
         secureToken.setUser(user);
         secureTokenService.saveToken(secureToken);
@@ -375,9 +372,12 @@ public class UserService {
         context.init(user);
         context.setToken(secureToken.getToken());
         context.buildVerificationUrl(baseUrl,secureToken.getToken());
+        
+        // This is async by default in DefaultEmailService
         emailService.sendMail(context);
     }
 
+    @Transactional
     public boolean verifyAccount(String token) {
         SecureToken secureToken = secureTokenService.findByToken(token);
         if (secureToken == null || secureToken.getExpiredAt().isBefore(java.time.LocalDateTime.now())) {
@@ -387,6 +387,8 @@ public class UserService {
         User user = secureToken.getUser();
         user.setAccountVerified(true);
         repo.save(user);
+        
+        // Remove token after verification is complete
         secureTokenService.removeToken(secureToken);
         return true;
     }
@@ -440,7 +442,6 @@ public class UserService {
         }
     }
 
-    @Async
     public void sendPasswordResetEmail(User user, String token) {
         PasswordResetEmailContext context = new PasswordResetEmailContext();
         context.init(user);
@@ -449,7 +450,6 @@ public class UserService {
         emailService.sendMail(context);
     }
 
-    @Async
     public void sendPasswordResetConfirmationEmail(User user) {
         PasswordResetConfirmationEmailContext context = new PasswordResetConfirmationEmailContext();
         context.init(user);
