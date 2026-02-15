@@ -109,12 +109,12 @@ export const Conversation = () => {
                 })
             },
             onDisconnect: () => {
-                setConnected(false)
             },
             onStompError: (frame) => {
                 console.error("STOMP error", frame)
             },
             onWebSocketClose: () => {
+            }
         })
 
         client.activate()
