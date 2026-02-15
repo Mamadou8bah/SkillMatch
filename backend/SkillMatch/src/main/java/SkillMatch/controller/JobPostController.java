@@ -1,4 +1,5 @@
 package SkillMatch.controller;
+import SkillMatch.dto.JobResponseDTO;
 import SkillMatch.model.JobPost;
 import SkillMatch.service.JobPostService;
 import jakarta.validation.Valid;

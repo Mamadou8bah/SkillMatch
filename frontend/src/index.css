@@ -4,7 +4,7 @@
   --text-secondary: #3d4952;
   --card-bg: #ffffff;
   --nav-bg: #ffffff;
-  --primary-color: #ff8c00;
+  --primary-color: #ff8c00 !important;
   --primary-light: #fff0e6;
   --primary-transparent: rgba(255, 140, 0, 0.1);
   --border-color: #eff3f4;
@@ -19,7 +19,7 @@
   --text-secondary: #71767b;
   --card-bg: #121212;
   --nav-bg: #121212;
-  --primary-color: #ff8c00;
+  --primary-color: #ff8c00 !important;
   --border-color: #2f3336;
   --shadow-color: rgba(255, 255, 255, 0);
   --hover-color: #16181c;

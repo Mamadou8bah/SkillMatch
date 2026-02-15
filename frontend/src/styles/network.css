@@ -28,7 +28,7 @@
     border-bottom: 1px solid var(--border-color);
     padding: 0;
 }
-
+ 
 .network-tab {
     padding: 12px 4px;
     font-size: 0.95rem;
@@ -148,7 +148,7 @@
 
 .action-btn {
     padding: 8px 20px;
-    border-radius: 9999px;
+    border-radius: 40px;
     font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
@@ -158,39 +158,33 @@
     justify-content: center;
     transition: all 0.2s ease;
     min-width: 80px;
+    border: 1.5px solid transparent;
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
-    border: none;
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    filter: brightness(0.9);
 }
 
 .btn-outline {
-    background: transparent;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+    background: transparent !important;
+    border: 1.5px solid var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+
+.btn-outline:hover {
+    background: rgba(var(--primary-rgb, 255, 140, 0), 0.05);
 }
 
 @media (max-width: 768px) {
     .user-list-item {
         padding: 12px;
     }
-}
-
-.btn-primary:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 2px 8px rgba(var(--primary-rgb, 74, 144, 226), 0.3);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 1.5px solid var(--primary-color);
-    color: var(--primary-color);
-}
-
-.btn-outline:hover {
-    background: rgba(var(--primary-rgb, 74, 144, 226), 0.05);
 }
 
 .pending-list {
