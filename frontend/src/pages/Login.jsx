@@ -281,9 +281,12 @@ export const Login = () => {
             })
             if (data.success) {
                 setRegStage(5)
+            } else {
+                setError(data.message || 'Failed to save skills. Please try again.')
             }
         } catch (err) {
             setError('Failed to save skills. Please try again.')
+        } finally {
             setIsLoading(false)
         }
     }
