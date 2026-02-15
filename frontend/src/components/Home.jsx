@@ -5,6 +5,7 @@ import { PopularJobCard } from './PopularJobCard';
 import { JobCard } from './JobCard';
 import { apiFetch } from '../utils/api';
 import Loader from './Loader';
+import { chatCache } from '../utils/cache';
 
 export const Home = () => {
     const storedFirstName = localStorage.getItem('firstName');
@@ -21,12 +22,26 @@ export const Home = () => {
 
     useEffect(() => {
         if (userId) {
+            // Cache check for user specific home data
+            const cachedHomeData = chatCache.get(`home_user_data_${userId}`);
+            if (cachedHomeData) {
+                setUserData(cachedHomeData.userData);
+                setNotificationCount(cachedHomeData.notificationCount);
+            }
+
             apiFetch(`/api/users/${userId}`)
             .then(data => {
                 if (data.success) {
-                    setUserData({ 
+                    const newUserData = { 
                         firstName: data.data.fullName?.split(' ')[0] || 'User',
                         photoUrl: data.data.photo?.url 
+                    };
+                    setUserData(newUserData);
+                    // Update cache with updated user info but keep notification count if already there
+                    const currentCache = chatCache.get(`home_user_data_${userId}`) || {};
+                    chatCache.set(`home_user_data_${userId}`, {
+                        ...currentCache,
+                        userData: newUserData
                     });
                 }
             })
@@ -37,9 +52,26 @@ export const Home = () => {
                 if (data.success) {
                     const unread = data.data.filter(n => !n.isRead).length;
                     setNotificationCount(unread);
+                    // Update cache for notifications
+                    const currentCache = chatCache.get(`home_user_data_${userId}`) || {};
+                    chatCache.set(`home_user_data_${userId}`, {
+                        ...currentCache,
+                        notificationCount: unread
+                    });
                 }
             })
             .catch(err => console.error(err));
+        }
+
+        // Cache check for global job listings
+        const cachedRecent = chatCache.get('home_recent_jobs');
+        const cachedRecs = chatCache.get('home_recommended_jobs');
+        
+        if (cachedRecent) setJobsList(cachedRecent);
+        if (cachedRecs) setRecommendedJobs(cachedRecs);
+        
+        if (cachedRecent && cachedRecs) {
+            setIsLoading(false);
         }
 
         const recentPromise = apiFetch('/post?page=0&size=10');
@@ -47,15 +79,21 @@ export const Home = () => {
 
         Promise.all([recentPromise, recsPromise])
             .then(([recentData, recData]) => {
+                let recentJobs = [];
                 if (Array.isArray(recentData)) {
-                    setJobsList(recentData);
+                    recentJobs = recentData;
                 } else if (recentData && recentData.content) {
-                    setJobsList(recentData.content);
+                    recentJobs = recentData.content;
                 }
+                setJobsList(recentJobs);
+                chatCache.set('home_recent_jobs', recentJobs);
 
+                let recJobs = [];
                 if (recData && recData.success && Array.isArray(recData.data)) {
-                    setRecommendedJobs(recData.data);
+                    recJobs = recData.data;
                 }
+                setRecommendedJobs(recJobs);
+                chatCache.set('home_recommended_jobs', recJobs);
             })
             .catch(err => console.error(err))
             .finally(() => setIsLoading(false));

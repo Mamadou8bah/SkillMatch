@@ -4,6 +4,7 @@ import { Search, Target } from 'lucide-react'
 import '../styles/network.css'
 import Loader from './Loader'
 import { apiFetch } from '../utils/api'
+import { chatCache } from '../utils/cache'
 
 export const Candidates = () => {
     const [users, setUsers] = useState([])
@@ -19,9 +20,23 @@ export const Candidates = () => {
     const myRole = localStorage.getItem('userRole')
 
     const fetchData = async (silent = false) => {
-        if (!silent) setIsLoading(true)
+        const userId = localStorage.getItem('userId');
+        
+        // Try loading from cache first for immediate UI
+        const cachedNetwork = chatCache.get(`network_${userId}`);
+        if (cachedNetwork && !silent) {
+            setUsers(cachedNetwork.users);
+            setConnections(cachedNetwork.connections);
+            setPendingRequests(cachedNetwork.pendingRequests);
+            setSentRequests(cachedNetwork.sentRequests);
+            setRecommendations(cachedNetwork.recommendations);
+            setMyIndustry(cachedNetwork.myIndustry);
+            setIsLoading(false);
+        } else if (!silent) {
+            setIsLoading(true);
+        }
+
         try {
-            const userId = localStorage.getItem('userId')
             const [usersData, connData, pendingData, sentData, recData, profileData] = await Promise.all([
                 apiFetch('/api/users/network'),
                 apiFetch('/api/connections'),
@@ -31,19 +46,35 @@ export const Candidates = () => {
                 apiFetch(`/api/users/${userId}`)
             ])
             
+            let cleanUsers = [];
             if (usersData.success) {
                 // Remove duplicates and self from network list
-                const cleanUsers = usersData.data.filter(u => String(u.id) !== String(userId))
-                setUsers(Array.from(new Map(cleanUsers.map(u => [u.id, u])).values()))
+                const rawUsers = usersData.data.filter(u => String(u.id) !== String(userId))
+                cleanUsers = Array.from(new Map(rawUsers.map(u => [u.id, u])).values());
+                setUsers(cleanUsers);
             }
             if (connData.success) setConnections(connData.data)
             if (pendingData.success) setPendingRequests(pendingData.data)
             if (sentData.success) setSentRequests(sentData.data)
+            
+            let cleanRecs = [];
             if (recData.success) {
                 // Deduplicate recommendations
-                setRecommendations(Array.from(new Map(recData.data.map(u => [u.id, u])).values()))
+                cleanRecs = Array.from(new Map(recData.data.map(u => [u.id, u])).values());
+                setRecommendations(cleanRecs)
             }
             if (profileData.success) setMyIndustry(profileData.data.industry)
+
+            // Update Cache
+            chatCache.set(`network_${userId}`, {
+                users: cleanUsers,
+                connections: connData.success ? connData.data : [],
+                pendingRequests: pendingData.success ? pendingData.data : [],
+                sentRequests: sentData.success ? sentData.data : [],
+                recommendations: cleanRecs,
+                myIndustry: profileData.success ? profileData.data.industry : null
+            });
+
         } catch (err) {
             console.error("Failed to fetch data", err)
         } finally {

@@ -4,6 +4,7 @@ import { JobCard } from './JobCard'
 import { Link } from 'react-router-dom'
 import Loader from './Loader'
 import { apiFetch } from '../utils/api'
+import { chatCache } from '../utils/cache'
 
 export const Discover = () => {
   const [search, setSearch] = useState('')
@@ -15,6 +16,13 @@ export const Discover = () => {
     const role = localStorage.getItem('userRole');
     
     const fetchJobs = async () => {
+      // Try to load from cache first
+      const cachedJobs = chatCache.get(`jobs_${role}`);
+      if (cachedJobs) {
+        setJobsList(cachedJobs);
+        setIsLoading(false);
+      }
+
       try {
         let allJobs;
         if (role !== 'EMPLOYER') {
@@ -27,6 +35,7 @@ export const Discover = () => {
           allJobs = response?.content || response || [];
         }
         setJobsList(allJobs);
+        chatCache.set(`jobs_${role}`, allJobs);
       } catch (err) {
         console.error('Error fetching jobs:', err);
       } finally {

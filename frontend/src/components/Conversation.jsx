@@ -194,8 +194,29 @@ export const Conversation = () => {
     }
 
     const formatChatTime = (dateStr) => {
+        if (!dateStr) return '';
         const date = new Date(dateStr)
+        if (isNaN(date.getTime())) return '';
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+
+    const formatMessageDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr)
+        if (isNaN(date.getTime())) return '';
+        const now = new Date()
+        
+        if (date.toDateString() === now.toDateString()) return 'Today'
+        
+        const yesterday = new Date(now)
+        yesterday.setDate(now.getDate() - 1)
+        if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+        
+        return date.toLocaleDateString([], { 
+            month: 'short', 
+            day: 'numeric', 
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+        })
     }
 
     return (
@@ -213,11 +234,11 @@ export const Conversation = () => {
                                     alt={recipient.fullName} 
                                     className="chat-avatar"
                                 />
-                                <span className="chat-online-dot"></span>
+                                <span className={`chat-online-dot ${recipient.online ? 'active' : ''}`}></span>
                             </div>
                             <div className="chat-user-details">
                                 <h3>{recipient.fullName}</h3>
-                                <span className="chat-status">Online</span>
+                                <span className="chat-status">{recipient.online ? 'Online' : 'Offline'}</span>
                             </div>
                         </div>
                     )}
@@ -234,28 +255,42 @@ export const Conversation = () => {
                     <AnimatePresence>
                         {chatMessages.map((msg, index) => {
                             const isMe = msg.sender.id.toString() === localStorage.getItem('userId');
-                            const showTime = index === 0 || 
-                                new Date(msg.timestamp).getTime() - new Date(chatMessages[index-1].timestamp).getTime() > 300000;
+                            const prevMsg = chatMessages[index - 1];
+                            const nextMsg = chatMessages[index + 1];
+                            
+                            const isFirstInGroup = !prevMsg || prevMsg.sender.id !== msg.sender.id;
+                            const isLastInGroup = !nextMsg || nextMsg.sender.id !== msg.sender.id;
+                            
+                            const showDateSeparator = !prevMsg || 
+                                new Date(msg.timestamp || msg.sentAt).toDateString() !== new Date(prevMsg.timestamp || prevMsg.sentAt).toDateString();
 
                             return (
-                                <motion.div 
-                                    key={msg.id || index}
-                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    className={`message-bubble-wrapper ${isMe ? 'sent' : 'received'} ${msg.status || ''}`}
-                                >
-                                    {showTime && <span className="chat-timestamp-divider">{formatChatTime(msg.timestamp)}</span>}
-                                    <div className="bubble-content">
-                                        <p className="message-text">{msg.content}</p>
-                                        {isMe && (
-                                            <div className="message-status-indicator">
-                                                {msg.status === 'sending' && <Clock size={10} className="status-icon rotating" />}
-                                                {msg.status === 'error' && <AlertCircle size={10} className="status-icon error" />}
-                                                {!msg.status && <Check size={10} className="status-icon" />}
+                                <React.Fragment key={msg.id || index}>
+                                    {showDateSeparator && (
+                                        <div className="date-separator">
+                                            <span>{formatMessageDate(msg.timestamp || msg.sentAt)}</span>
+                                        </div>
+                                    )}
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        className={`message-bubble-wrapper ${isMe ? 'sent' : 'received'} ${msg.status || ''} ${isFirstInGroup ? 'first' : ''} ${isLastInGroup ? 'last' : ''}`}
+                                    >
+                                        <div className="bubble-content">
+                                            <p className="message-text">{msg.content}</p>
+                                            <div className="message-meta-info">
+                                                <span className="message-time">{formatChatTime(msg.timestamp || msg.sentAt)}</span>
+                                                {isMe && (
+                                                    <div className="message-status-indicator">
+                                                        {msg.status === 'sending' && <Clock size={12} className="status-icon rotating" />}
+                                                        {msg.status === 'error' && <AlertCircle size={12} className="status-icon error" />}
+                                                        {!msg.status && <Check size={12} className="status-icon" />}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </motion.div>
+                                        </div>
+                                    </motion.div>
+                                </React.Fragment>
                             )
                         })}
                     </AnimatePresence>

@@ -11,7 +11,7 @@
 /* Header Styles */
 .messages-header-nav {
   margin-bottom: 20px;
-}
+} 
 
 .header-top {
   display: flex;
@@ -82,18 +82,18 @@
 .message-item {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 12px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 1px;
 }
 
 .message-item:hover {
   background-color: var(--hover-color);
-  padding-left: 10px;
-  padding-right: 10px;
-  border-radius: 10px;
+  transform: translateY(-1px);
 }
 
 .message-item:last-child {
@@ -102,55 +102,66 @@
 
 .message-avatar-container {
   position: relative;
-  min-width: 60px;
-  height: 60px;
+  min-width: 52px;
+  height: 52px;
 }
 
 .message-avatar {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .online-indicator {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: -2px;
+  right: -2px;
   width: 14px;
   height: 14px;
   background-color: #4ade80;
   border: 3px solid var(--bg-color);
   border-radius: 50%;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
 }
 
 .message-info-col {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 52px;
+  justify-content: space-between;
+  padding: 2px 0;
 }
 
 .message-top-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px;
+  align-items: baseline;
 }
 
 .user-name-text {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .message-time-text {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .message-bottom-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .message-preview-text {
@@ -159,7 +170,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 4px;

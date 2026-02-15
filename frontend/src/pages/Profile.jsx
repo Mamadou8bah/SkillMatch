@@ -23,6 +23,7 @@ import {
 import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
 import { apiFetch, redirectToLogin } from '../utils/api';
+import { chatCache } from '../utils/cache';
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -105,6 +106,13 @@ export const Profile = () => {
   }, []);
 
   const fetchUserProfile = useCallback(async () => {
+    // Try cache first
+    const cachedProfile = chatCache.get(`profile_${userId}`);
+    if (cachedProfile) {
+      setProfileData(cachedProfile);
+      // Don't set isLoading(false) here yet if we want a fresh fetch in background
+    }
+
     try {
       const data = await apiFetch(`/api/users/${userId}`);
       if (data.success) {
@@ -112,7 +120,7 @@ export const Profile = () => {
         if (firstName) {
           localStorage.setItem('firstName', firstName);
         }
-        setProfileData({
+        const profileInfo = {
           fullName: data.data.fullName || '',
           email: data.data.email || '',
           role: data.data.role || '',
@@ -121,7 +129,9 @@ export const Profile = () => {
           mobile: data.data.mobile || '',
           experienceLevel: data.data.experienceLevel || '',
           photoUrl: data.data.photo?.url || ''
-        });
+        };
+        setProfileData(profileInfo);
+        chatCache.set(`profile_${userId}`, profileInfo);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -131,10 +141,14 @@ export const Profile = () => {
   }, [userId]);
 
   const fetchSkills = useCallback(async () => {
+    const cachedSkills = chatCache.get(`skills_${userId}`);
+    if (cachedSkills) setSkills(cachedSkills);
+
     try {
       const data = await apiFetch(`/api/skill/user/${userId}`);
       if (data.success) {
         setSkills(data.data || []);
+        chatCache.set(`skills_${userId}`, data.data || []);
       }
     } catch (e) {
       console.error(e);
@@ -142,10 +156,14 @@ export const Profile = () => {
   }, [userId]);
 
   const fetchExperiences = useCallback(async () => {
+    const cachedExp = chatCache.get(`exp_${userId}`);
+    if (cachedExp) setExperiences(cachedExp);
+
     try {
       const data = await apiFetch(`/api/experience/user/${userId}`);
       if (data.success) {
         setExperiences(data.data || []);
+        chatCache.set(`exp_${userId}`, data.data || []);
       }
     } catch (e) {
       console.error(e);
@@ -660,7 +678,6 @@ export const Profile = () => {
           <Globe size={14} />
           <span>{profileData.location || "Location not set"}</span>
         </div>
-        <button className="edit-profile-btn" onClick={() => setActiveView('edit')}>Edit Profile</button>
       </div>
 
       <div className="profile-menu">

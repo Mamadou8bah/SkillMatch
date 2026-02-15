@@ -119,7 +119,7 @@ export const Messages = () => {
                         <div className="message-top-row">
                           <span className="user-name-text">{otherUser.fullName}</span>
                           <span className="message-time-text">{formatMessageDate(msg.timestamp || msg.sentAt)}</span>
-                        </div>
+                        </div> 
                         <div className="message-bottom-row">
                           <p className={`message-preview-text ${isUnread ? 'unread-msg' : ''}`}>
                             {truncate(msg.content, MAX_PREVIEW)}
