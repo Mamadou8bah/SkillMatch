@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, MessageSquare, Plus, MoreVertical, Check, CheckCheck } from 'lucide-react'
+import { Search, MessageSquare, Plus } from 'lucide-react'
 import '../styles/messages.css'
 import Loader from '../components/Loader'
 import { apiFetch } from '../utils/api'

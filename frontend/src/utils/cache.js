@@ -1,7 +1,6 @@
 
 const CACHE_NAME = 'skillmatch-chat-cache-v1';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes standard
-const LONG_CACHE_EXPIRY = 10 * 60 * 1000; // 10 minutes for static data
 
 export const chatCache = {
     set: (key, data, expiry = CACHE_EXPIRY) => {

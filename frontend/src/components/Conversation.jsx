@@ -18,7 +18,6 @@ export const Conversation = () => {
     const [recipient, setRecipient] = useState(null)
     const [chatMessages, setChatMessages] = useState([])
     const [newMessage, setNewMessage] = useState("")
-    const [connected, setConnected] = useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const messagesEndRef = useRef(null)
     const stompClient = useRef(null)
@@ -38,10 +37,6 @@ export const Conversation = () => {
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-
-    const onEmojiClick = (emojiData) => {
-        setNewMessage(prev => prev + emojiData.emoji)
     }
 
     useEffect(() => {
@@ -96,7 +91,6 @@ export const Conversation = () => {
             },
             reconnectDelay: 5000,
             onConnect: () => {
-                setConnected(true)
                 client.subscribe('/user/queue/messages', (message) => {
                     const receivedMessage = JSON.parse(message.body)
                     const otherUserId = id;
@@ -119,11 +113,8 @@ export const Conversation = () => {
             },
             onStompError: (frame) => {
                 console.error("STOMP error", frame)
-                setConnected(false)
             },
             onWebSocketClose: () => {
-                setConnected(false)
-            }
         })
 
         client.activate()
