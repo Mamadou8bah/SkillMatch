@@ -105,6 +105,7 @@
     justify-content: space-between;
     gap: 12px;
     margin-top: 16px;
+    margin-bottom: 70px;
 }
 
 .pagination-info{
@@ -155,6 +156,6 @@
     vertical-align: middle;
 }
 .next-btn{
-    transform: rotate(180deg);
+   
     transition: transform 0.3s ease;
 }

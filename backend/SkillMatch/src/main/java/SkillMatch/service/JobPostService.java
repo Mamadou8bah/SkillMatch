@@ -73,6 +73,13 @@ public class JobPostService {
                 .collect(Collectors.toList());
     }
 
+    public List<JobResponseDTO> getAllJobs() {
+        return repo.findAll().stream()
+                .map(this::convertToResponseDTO)
+                .sorted(Comparator.comparing(JobResponseDTO::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
+
     private JobResponseDTO convertToResponseDTO(JobPost jobPost) {
         return JobResponseDTO.builder()
                 .id(String.valueOf(jobPost.getId()))
@@ -117,9 +124,8 @@ public class JobPostService {
         return jobPost;
     }
 
-    public List<JobPost> searchPosts(String title){
-        List<JobPost>posts=repo.findByTitleContainingIgnoreCase(title);
-        return posts;
+    public List<JobPost> searchPosts(String query){
+        return repo.searchJobs(query);
     }
 
     public JobPost updateJobPost(long id, JobPost newPost){

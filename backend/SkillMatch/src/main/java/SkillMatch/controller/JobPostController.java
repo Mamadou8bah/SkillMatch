@@ -24,6 +24,11 @@ public class JobPostController {
         return ResponseEntity.ok(service.getJobPost(page, size));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<JobResponseDTO>> getAllJobs() {
+        return ResponseEntity.ok(service.getAllJobs());
+    }
+
     @PostMapping("/add")
     public ResponseEntity<?> addJob(@Valid @RequestBody JobPost jobPost){
          service.addJob(jobPost);

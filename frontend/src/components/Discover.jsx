@@ -18,7 +18,7 @@ export const Discover = () => {
     const fetchJobs = async () => {
       try {
         const [allJobsData, recData] = await Promise.all([
-          apiFetch('/post?size=100'),
+          apiFetch('/post/all'),
           role !== 'EMPLOYER' ? apiFetch('/api/recommendations/jobs') : Promise.resolve(null)
         ]);
 
@@ -55,18 +55,21 @@ export const Discover = () => {
       return recommendedJobs.filter(j => !activeTag || (j.locationType === activeTag));
     }
 
-    // If searching, show limited search results from all jobs
+    // If searching, show all matching results from our job database
     return jobsList.filter(j => {
       const locationMatch = !activeTag || (j.locationType === activeTag);
       if (!locationMatch) return false;
       
       const inTitle = j.title && j.title.toLowerCase().includes(q)
       const inEmployer = j.employer && j.employer.name && j.employer.name.toLowerCase().includes(q)
-      const inSkills = Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => s.title?.toLowerCase().includes(q))
+      const inSkills = (Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => {
+        const title = typeof s === 'string' ? s : s?.title;
+        return title?.toLowerCase().includes(q);
+      })) || (Array.isArray(j.skills) && j.skills.some(s => s?.toLowerCase().includes(q)))
       const inIndustry = j.industry && j.industry.toLowerCase().includes(q)
       
       return inTitle || inEmployer || inSkills || inIndustry
-    }).slice(0, 10) // Limit search results for better UX
+    })
   }, [search, activeTag, jobsList, recommendedJobs])
 
   const [page, setPage] = useState(1)
@@ -174,7 +177,7 @@ export const Discover = () => {
             )
           ))}
           <button
-            className="page-btn next-btn"
+            className="page-btn next-btn" 
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages || totalPages <= 1}
             aria-label="Next page"
