@@ -1,36 +1,65 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Send, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Send, MoreVertical, Phone, Video, Smile, Paperclip, AlertCircle, Clock, Check } from 'lucide-react'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import '../styles/conversation.css'
 import { apiFetch, BASE_URL } from '../utils/api'
+import { chatCache } from '../utils/cache'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const COMMON_EMOJIS = [
+    "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👹", "👺", "🤡", "💩", "👻", "💀", "☠️", "👽", "👾", "🤖", "🎃"
+]
 
 export const Conversation = () => {
-    const { id } = useParams() // This is the recipientId
+    const { id } = useParams()
     const navigate = useNavigate()
     const [recipient, setRecipient] = useState(null)
     const [chatMessages, setChatMessages] = useState([])
     const [newMessage, setNewMessage] = useState("")
     const [connected, setConnected] = useState(false)
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const messagesEndRef = useRef(null)
     const stompClient = useRef(null)
+    const emojiPickerRef = useRef(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                if (!event.target.closest('.emoji-btn')) {
+                    setShowEmojiPicker(false)
+                }
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    const onEmojiClick = (emojiData) => {
+        setNewMessage(prev => prev + emojiData.emoji)
     }
 
     useEffect(() => {
         scrollToBottom()
     }, [chatMessages])
 
-    // Load conversation history and recipient details
     useEffect(() => {
         const fetchRecipient = async () => {
+            const cachedRecipient = chatCache.get(`recipient_${id}`);
+            if (cachedRecipient) {
+                setRecipient(cachedRecipient);
+            }
+
             try {
                 const data = await apiFetch(`/api/users/${id}`)
                 if (data.success) {
                     setRecipient(data.data)
+                    chatCache.set(`recipient_${id}`, data.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch recipient", err)
@@ -38,10 +67,16 @@ export const Conversation = () => {
         }
 
         const fetchHistory = async () => {
+            const cachedHistory = chatCache.get(`history_${id}`);
+            if (cachedHistory) {
+                setChatMessages(cachedHistory);
+            }
+
             try {
                 const data = await apiFetch(`/api/messages/conversation/${id}`)
                 if (data.success) {
                     setChatMessages(data.data)
+                    chatCache.set(`history_${id}`, data.data);
                 }
             } catch (err) {
                 console.error("Failed to fetch history", err)
@@ -52,12 +87,10 @@ export const Conversation = () => {
         fetchHistory()
     }, [id])
 
-    // Setup WebSocket
     useEffect(() => {
         const socket = new SockJS(`${BASE_URL}/ws`)
         const client = new Client({
             webSocketFactory: () => socket,
-            // debug: (str) => console.log(str),
             connectHeaders: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
             },
@@ -66,19 +99,30 @@ export const Conversation = () => {
                 setConnected(true)
                 client.subscribe('/user/queue/messages', (message) => {
                     const receivedMessage = JSON.parse(message.body)
-                    // If the message is part of this conversation, add it to the list
                     const otherUserId = id;
+                    
+                    // Only care about messages from the person we are talking to
                     const isFromOther = receivedMessage.sender.id.toString() === otherUserId;
-                    const isFromMe = receivedMessage.recipient.id.toString() === otherUserId;
 
-                    if (isFromOther || isFromMe) {
+                    if (isFromOther) {
                         setChatMessages(prev => {
-                            // Avoid duplicates (especially for messages sent by us)
                             if (prev.find(m => m.id === receivedMessage.id)) return prev;
-                            return [...prev, receivedMessage];
+                            const newMessages = [...prev, receivedMessage];
+                            chatCache.set(`history_${id}`, newMessages); // Update cache on new message
+                            return newMessages;
                         })
                     }
                 })
+            },
+            onDisconnect: () => {
+                setConnected(false)
+            },
+            onStompError: (frame) => {
+                console.error("STOMP error", frame)
+                setConnected(false)
+            },
+            onWebSocketClose: () => {
+                setConnected(false)
             }
         })
 
@@ -97,121 +141,179 @@ export const Conversation = () => {
         if (!newMessage.trim()) return
 
         const currentUserId = localStorage.getItem('userId');
-        const tempId = Date.now();
-        const content = newMessage;
+        const tempId = Date.now(); // Temporary ID for optimistic update
+        
+        const messageObject = {
+            recipientId: id,
+            content: newMessage,
+            timestamp: new Date().toISOString()
+        }
 
-        // Optimistically add message to UI
-        const tempMessage = {
+        // Optimistic update
+        const optimisticMessage = {
             id: tempId,
-            content: content,
+            content: newMessage,
+            timestamp: messageObject.timestamp,
             sender: { id: currentUserId },
             recipient: { id: id },
-            sentAt: new Date().toISOString(),
-            isTemp: true
-        };
+            isOptimistic: true,
+            status: 'sending' // Added status
+        }
 
-        setChatMessages(prev => [...prev, tempMessage]);
-        setNewMessage("");
+        setChatMessages(prev => [...prev, optimisticMessage]);
+        setNewMessage("")
+        setShowEmojiPicker(false)
 
         try {
-            const data = await apiFetch('/api/messages/send', {
+            const data = await apiFetch(`/api/messages/send`, {
                 method: 'POST',
                 body: JSON.stringify({
                     recipientId: id,
-                    content: content
+                    content: newMessage
                 })
             })
+
             if (data.success) {
-                // Replace temp message with actual message from server
-                setChatMessages(prev => prev.map(msg => 
-                    msg.id === tempId ? data.data : msg
-                ));
+                // Update our optimistic message with the real one from the server
+                setChatMessages(prev => {
+                    const updated = prev.map(m => 
+                        m.id === tempId ? { ...data.data, isOptimistic: false } : m
+                    );
+                    chatCache.set(`history_${id}`, updated); // Update cache on sent message
+                    return updated;
+                });
             } else {
-                // Mark as failed or remove? Let's mark as failed
-                setChatMessages(prev => prev.map(msg => 
-                    msg.id === tempId ? { ...msg, error: true } : msg
-                ));
+                throw new Error(data.message || "Failed to send message")
             }
         } catch (err) {
-            console.error("Failed to send message", err);
-            setChatMessages(prev => prev.map(msg => 
-                msg.id === tempId ? { ...msg, error: true } : msg
-            ));
+            console.error("Failed to send message", err)
+            setChatMessages(prev => prev.map(m => 
+                m.id === tempId ? { ...m, status: 'error' } : m
+            ))
         }
     }
 
+    const formatChatTime = (dateStr) => {
+        const date = new Date(dateStr)
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+
     return (
-        <div className='conversation-page'>
-            <div className="conversation-header">
-                <div className="header-left">
-                    <button className="back-button" onClick={() => navigate(-1)}>
+        <div className="conversation-container">
+            <header className="chat-header">
+                <div className="header-left-side">
+                    <button className="back-btn" onClick={() => navigate('/messages')}>
                         <ArrowLeft size={24} />
                     </button>
-                    <div className="recipient-info">
-                        <img 
-                            src={recipient?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(recipient?.fullName || 'User')}&background=random`} 
-                            alt={recipient?.fullName}
-                            className="recipient-avatar"
-                        />
-                        <div className="recipient-details">
-                            <h3>{recipient?.fullName || 'Loading...'}</h3>
-                            <span className={`status ${connected ? 'online' : 'offline'}`}>
-                                {connected ? 'Active now' : 'Connecting...'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button className="more-button">
-                    <MoreVertical size={20} />
-                </button>
-            </div>
-            
-            <div className="conversation-body">
-                {chatMessages.length === 0 ? (
-                    <div className="no-messages">
-                        <p>Start the conversation</p>
-                    </div>
-                ) : (
-                    chatMessages.map((msg) => {
-                        const isMe = msg.sender.id.toString() !== id
-                        return (
-                            <div key={msg.id} className={`message-row ${isMe ? 'sent' : 'received'}`}>
-                                {!isMe && (
-                                    <img 
-                                        src={recipient?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(recipient?.fullName || 'User')}&background=random&size=32`}
-                                        alt=""
-                                        className="message-avatar"
-                                    />
-                                )}
-                                <div className="message-content-wrapper">
-                                    <div className={`message-bubble ${msg.error ? 'error' : ''} ${msg.isTemp ? 'pending' : ''}`}>
-                                        <p>{msg.content}</p>
-                                    </div>
-                                    <span className="message-time">
-                                        {msg.error ? 'Failed' : msg.isTemp ? 'Sending...' : msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
-                                    </span>
-                                </div>
+                    {recipient && (
+                        <div className="chat-user-info">
+                            <div className="chat-avatar-wrapper">
+                                <img 
+                                    src={recipient.profileImageUrl || recipient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(recipient.fullName)}&background=random`} 
+                                    alt={recipient.fullName} 
+                                    className="chat-avatar"
+                                />
+                                <span className="chat-online-dot"></span>
                             </div>
-                        )
-                    })
-                )}
-                <div ref={messagesEndRef} />
-            </div>
+                            <div className="chat-user-details">
+                                <h3>{recipient.fullName}</h3>
+                                <span className="chat-status">Online</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="header-right-side">
+                    <button className="icon-btn"><Phone size={20} /></button>
+                    <button className="icon-btn"><Video size={20} /></button>
+                    <button className="icon-btn"><MoreVertical size={20} /></button>
+                </div>
+            </header>
 
-            <div className="conversation-footer">
-                <form onSubmit={handleSendMessage}>
-                    <input
-                        type="text"
-                        placeholder="Type your message..."
+            <main className="chat-body">
+                <div className="messages-scroller">
+                    <AnimatePresence>
+                        {chatMessages.map((msg, index) => {
+                            const isMe = msg.sender.id.toString() === localStorage.getItem('userId');
+                            const showTime = index === 0 || 
+                                new Date(msg.timestamp).getTime() - new Date(chatMessages[index-1].timestamp).getTime() > 300000;
+
+                            return (
+                                <motion.div 
+                                    key={msg.id || index}
+                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    className={`message-bubble-wrapper ${isMe ? 'sent' : 'received'} ${msg.status || ''}`}
+                                >
+                                    {showTime && <span className="chat-timestamp-divider">{formatChatTime(msg.timestamp)}</span>}
+                                    <div className="bubble-content">
+                                        <p className="message-text">{msg.content}</p>
+                                        {isMe && (
+                                            <div className="message-status-indicator">
+                                                {msg.status === 'sending' && <Clock size={10} className="status-icon rotating" />}
+                                                {msg.status === 'error' && <AlertCircle size={10} className="status-icon error" />}
+                                                {!msg.status && <Check size={10} className="status-icon" />}
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )
+                        })}
+                    </AnimatePresence>
+                    <div ref={messagesEndRef} />
+                </div>
+            </main>
+
+            <footer className="chat-footer">
+                <AnimatePresence>
+                    {showEmojiPicker && (
+                        <motion.div 
+                            ref={emojiPickerRef}
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            className="custom-emoji-picker"
+                        >
+                            <div className="emoji-grid">
+                                {COMMON_EMOJIS.map((emoji, idx) => (
+                                    <button 
+                                        key={idx} 
+                                        type="button" 
+                                        className="emoji-item"
+                                        onClick={() => {
+                                            setNewMessage(prev => prev + emoji)
+                                        }}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                <div className="input-actions">
+                    <button className="action-btn-circle"><Paperclip size={20} /></button>
+                </div>
+                <form className="chat-form" onSubmit={handleSendMessage}>
+                    <input 
+                        type="text" 
+                        placeholder="Type a message..." 
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        disabled={!connected}
+                        onFocus={() => setShowEmojiPicker(false)}
+                        className="chat-input"
                     />
-                    <button type="submit" disabled={!connected || !newMessage.trim()}>
+                    <button 
+                        type="button" 
+                        className={`emoji-btn ${showEmojiPicker ? 'active' : ''}`}
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                        <Smile size={20} />
+                    </button>
+                    <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
                         <Send size={20} />
                     </button>
                 </form>
-            </div>
+            </footer>
         </div>
     )
 }
