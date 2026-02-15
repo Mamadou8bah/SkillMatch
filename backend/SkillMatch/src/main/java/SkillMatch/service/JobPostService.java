@@ -80,7 +80,7 @@ public class JobPostService {
                 .collect(Collectors.toList());
     }
 
-    private JobResponseDTO convertToResponseDTO(JobPost jobPost) {
+    public JobResponseDTO convertToResponseDTO(JobPost jobPost) {
         return JobResponseDTO.builder()
                 .id(String.valueOf(jobPost.getId()))
                 .title(jobPost.getTitle())

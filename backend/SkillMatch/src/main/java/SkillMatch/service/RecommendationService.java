@@ -71,6 +71,43 @@ public class RecommendationService {
     }
 
     /**
+     * Recommends all jobs ranked by relevance for the user.
+     */
+    public List<JobPost> recommendAllJobs(User user) {
+        List<JobPost> allJobs = jobPostRepo.findAll();
+        if (allJobs.isEmpty()) return Collections.emptyList();
+
+        List<JobRecommendation> precomputed = jobRecommendationRepository.findByUserIdOrderByRankAsc(user.getId());
+        
+        if (precomputed.isEmpty()) {
+            // Apply skill matching score to all jobs if no precomputed data
+            Set<String> candidateSkills = user.getSkills().stream()
+                    .map(s -> s.getTitle().toLowerCase().trim())
+                    .collect(Collectors.toSet());
+            
+            allJobs.sort(Comparator.comparingDouble((JobPost j) -> calculateJobMatchScore(j, candidateSkills, user)).reversed());
+            return allJobs;
+        }
+
+        Map<Long, Integer> jobRanks = precomputed.stream()
+                .collect(Collectors.toMap(JobRecommendation::getJobId, JobRecommendation::getRank, (a, b) -> a));
+
+        allJobs.sort((a, b) -> {
+            Integer rankA = jobRanks.getOrDefault(a.getId(), Integer.MAX_VALUE);
+            Integer rankB = jobRanks.getOrDefault(b.getId(), Integer.MAX_VALUE);
+            
+            if (!rankA.equals(rankB)) return rankA - rankB;
+            
+            // For unranked jobs or same rank, newest first
+            LocalDateTime dateA = a.getPostedAt() != null ? a.getPostedAt() : LocalDateTime.MIN;
+            LocalDateTime dateB = b.getPostedAt() != null ? b.getPostedAt() : LocalDateTime.MIN;
+            return dateB.compareTo(dateA);
+        });
+
+        return allJobs;
+    }
+
+    /**
      * Records a user interaction and skips ML sync if engine is down.
      */
     public void recordInteraction(User user, JobPost job, String type) {

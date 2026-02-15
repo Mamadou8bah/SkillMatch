@@ -2,10 +2,12 @@ package SkillMatch.controller;
 
 import SkillMatch.dto.ApiResponse;
 import SkillMatch.dto.CandidateJobMatchDTO;
+import SkillMatch.dto.JobResponseDTO;
 import SkillMatch.model.JobPost;
 import SkillMatch.model.User;
 import SkillMatch.repository.JobPostRepo;
 import SkillMatch.service.CandidateJobMatchService;
+import SkillMatch.service.JobPostService;
 import SkillMatch.service.RecommendationService;
 import SkillMatch.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/recommendations")
@@ -22,12 +25,23 @@ public class RecommendationController {
     private final UserService userService;
     private final CandidateJobMatchService candidateJobMatchService;
     private final JobPostRepo jobPostRepo;
+    private final JobPostService jobPostService;
 
     @GetMapping("/jobs")
     public ResponseEntity<ApiResponse<List<JobPost>>> getJobRecommendations() {
         User user = userService.getLogInUser();
         List<JobPost> recommendations = recommendationService.recommendJobs(user);
         return ResponseEntity.ok(ApiResponse.success("Job recommendations retrieved", recommendations));
+    }
+
+    @GetMapping("/jobs/all")
+    public ResponseEntity<ApiResponse<List<JobResponseDTO>>> getAllRankedJobs() {
+        User user = userService.getLogInUser();
+        List<JobPost> rankedJobs = recommendationService.recommendAllJobs(user);
+        List<JobResponseDTO> dtos = rankedJobs.stream()
+                .map(jobPostService::convertToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("All jobs retrieved and ranked", dtos));
     }
 
     @GetMapping("/candidates/{jobId}")

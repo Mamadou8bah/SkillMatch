@@ -9,7 +9,6 @@ export const Discover = () => {
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState(null)
   const [jobsList, setJobsList] = useState([])
-  const [recommendedJobs, setRecommendedJobs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -17,17 +16,17 @@ export const Discover = () => {
     
     const fetchJobs = async () => {
       try {
-        const [allJobsData, recData] = await Promise.all([
-          apiFetch('/post/all'),
-          role !== 'EMPLOYER' ? apiFetch('/api/recommendations/jobs') : Promise.resolve(null)
-        ]);
-
-        const allJobs = allJobsData?.content || allJobsData || [];
-        setJobsList(allJobs);
-
-        if (recData && recData.success && Array.isArray(recData.data)) {
-          setRecommendedJobs(recData.data);
+        let allJobs;
+        if (role !== 'EMPLOYER') {
+          // Candidates get all jobs ranked by relevance (ML score or skill match)
+          const response = await apiFetch('/api/recommendations/jobs/all');
+          allJobs = response?.data || [];
+        } else {
+          // Employers get all jobs normally (often by date)
+          const response = await apiFetch('/post/all');
+          allJobs = response?.content || response || [];
         }
+        setJobsList(allJobs);
       } catch (err) {
         console.error('Error fetching jobs:', err);
       } finally {
@@ -39,27 +38,22 @@ export const Discover = () => {
   }, []);
 
   const tags = useMemo(() => {
-    const listToProcess = search.trim() !== '' ? jobsList : recommendedJobs;
     const s = new Set()
-    listToProcess.forEach(j => {
+    jobsList.forEach(j => {
       if (j.locationType) s.add(j.locationType)
     })
     return Array.from(s)
-  }, [jobsList, recommendedJobs, search])
+  }, [jobsList])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     
-    // If NOT searching, show recommended jobs ranked by AI
-    if (!q) {
-      return recommendedJobs.filter(j => !activeTag || (j.locationType === activeTag));
-    }
-
-    // If searching, show all matching results from our job database
     return jobsList.filter(j => {
       const locationMatch = !activeTag || (j.locationType === activeTag);
       if (!locationMatch) return false;
       
+      if (!q) return true;
+
       const inTitle = j.title && j.title.toLowerCase().includes(q)
       const inEmployer = j.employer && j.employer.name && j.employer.name.toLowerCase().includes(q)
       const inSkills = (Array.isArray(j.requiredSkills) && j.requiredSkills.some(s => {
@@ -70,7 +64,7 @@ export const Discover = () => {
       
       return inTitle || inEmployer || inSkills || inIndustry
     })
-  }, [search, activeTag, jobsList, recommendedJobs])
+  }, [search, activeTag, jobsList])
 
   const [page, setPage] = useState(1)
   const pageSize = 10
@@ -134,10 +128,10 @@ export const Discover = () => {
       ) : paginated.length === 0 ? (
           <div className="no-jobs-container" style={{ marginTop: '2rem' }}>
             <p className="no-jobs-title">
-              {search.trim() ? "No jobs match your search" : "No recommendations yet"}
+              {search.trim() ? "No jobs match your search" : "No jobs available"}
             </p>
             <p className="no-jobs-text">
-              {search.trim() ? "Try different keywords or filters." : "Complete your profile to get personalized job picks."}
+              {search.trim() ? "Try different keywords or filters." : "Check back later for new job postings."}
             </p>
           </div>
       ) : (
