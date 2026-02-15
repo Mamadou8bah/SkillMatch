@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     background: var(--bg-color);
     position: relative;
     max-width: 600px;
@@ -400,4 +401,97 @@
 .send-btn:hover:not(:disabled) {
     transform: scale(1.05);
     box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 600px) {
+    .conversation-container {
+        border-left: none;
+        border-right: none;
+        height: 100dvh; /* Dynamic viewport height for better mobile support */
+    }
+
+    .chat-header {
+        padding: 10px 12px;
+    }
+
+    .header-left-side {
+        gap: 8px;
+    }
+
+    .back-btn {
+        padding: 4px;
+    }
+
+    .chat-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+    }
+
+    .chat-user-details h3 {
+        font-size: 15px;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-body {
+        padding: 15px 10px;
+    }
+
+    .message-bubble-wrapper {
+        max-width: 88%;
+    }
+
+    .bubble-content {
+        padding: 6px 10px;
+        border-radius: 15px;
+    }
+
+    .message-text {
+        font-size: 14px;
+    }
+
+    .chat-footer {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .action-btn-circle {
+        width: 34px;
+        height: 34px;
+    }
+
+    .chat-form {
+        border-radius: 20px;
+    }
+
+    .chat-input {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .send-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .custom-emoji-picker {
+        bottom: 65px;
+        left: 8px;
+        right: 8px;
+        padding: 8px;
+        border-radius: 15px;
+    }
+
+    .emoji-grid {
+        grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+        gap: 5px;
+    }
+
+    .emoji-item {
+        font-size: 18px;
+    }
 }

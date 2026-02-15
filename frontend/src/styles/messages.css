@@ -1,16 +1,19 @@
 .messages-page {
-  padding: 15px;
+  padding: 15px 15px 0 15px;
   max-width: 600px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-color);
   color: var(--text-color);
-  padding-bottom: 80px;
+  overflow: hidden;
 }
 
 /* Header Styles */
 .messages-header-nav {
   margin-bottom: 20px;
+  flex-shrink: 0;
 } 
 
 .header-top {
@@ -72,6 +75,14 @@
 .messages-list-section {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 100px; /* Space for the floating nav bar */
+  scrollbar-width: none; /* Firefox */
+}
+
+.messages-list-section::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .inbox-list-container {
@@ -197,6 +208,50 @@
   border-radius: 50%;
   margin-left: 10px;
   box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+}
+
+/* Responsive adjustment */
+@media screen and (max-width: 600px) {
+  .messages-page {
+    padding: 12px 12px 0 12px;
+  }
+
+  .messages-title {
+    font-size: 20px;
+  }
+
+  .message-item {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .message-avatar-container, .message-avatar {
+    min-width: 48px;
+    height: 48px;
+    width: 48px;
+  }
+
+  .message-info-col {
+    height: 48px;
+  }
+
+  .user-name-text {
+    font-size: 15px;
+  }
+
+  .message-preview-text {
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .message-time-text {
+    font-size: 10px;
+  }
+  
+  .messages-title {
+    font-size: 18px;
+  }
 }
 
 /* Empty State */
