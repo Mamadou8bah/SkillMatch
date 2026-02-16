@@ -102,7 +102,29 @@ export const Conversation = () => {
                         setChatMessages(prev => {
                             if (prev.find(m => m.id === receivedMessage.id)) return prev;
                             const newMessages = [...prev, receivedMessage];
-                            chatCache.set(`history_${id}`, newMessages); // Update cache on new message
+                            chatCache.set(`history_${id}`, newMessages); // Update history cache
+                            
+                            // Update inbox cache as well
+                            const cachedInbox = chatCache.get('inbox_list');
+                            if (cachedInbox) {
+                                const currentUserId = localStorage.getItem('userId');
+                                const conversationIndex = cachedInbox.findIndex(msg => {
+                                    const otherUserInInbox = msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+                                    return otherUserInInbox.id.toString() === id.toString();
+                                });
+
+                                let newInbox;
+                                if (conversationIndex !== -1) {
+                                    const updatedInbox = [...cachedInbox];
+                                    updatedInbox[conversationIndex] = { ...receivedMessage };
+                                    const [movedItem] = updatedInbox.splice(conversationIndex, 1);
+                                    newInbox = [movedItem, ...updatedInbox];
+                                } else {
+                                    newInbox = [receivedMessage, ...cachedInbox];
+                                }
+                                chatCache.set('inbox_list', newInbox);
+                            }
+
                             return newMessages;
                         })
                     }
@@ -170,7 +192,29 @@ export const Conversation = () => {
                     const updated = prev.map(m => 
                         m.id === tempId ? { ...data.data, isOptimistic: false } : m
                     );
-                    chatCache.set(`history_${id}`, updated); // Update cache on sent message
+                    chatCache.set(`history_${id}`, updated);
+                    
+                    // Update inbox cache as well
+                    const cachedInbox = chatCache.get('inbox_list');
+                    if (cachedInbox) {
+                        const currentUserId = localStorage.getItem('userId');
+                        const conversationIndex = cachedInbox.findIndex(msg => {
+                            const otherUserInInbox = msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+                            return otherUserInInbox.id.toString() === id.toString();
+                        });
+
+                        let newInbox;
+                        if (conversationIndex !== -1) {
+                            const updatedInbox = [...cachedInbox];
+                            updatedInbox[conversationIndex] = { ...data.data };
+                            const [movedItem] = updatedInbox.splice(conversationIndex, 1);
+                            newInbox = [movedItem, ...updatedInbox];
+                        } else {
+                            newInbox = [data.data, ...cachedInbox];
+                        }
+                        chatCache.set('inbox_list', newInbox);
+                    }
+
                     return updated;
                 });
             } else {

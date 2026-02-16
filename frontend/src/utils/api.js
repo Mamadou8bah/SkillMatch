@@ -1,3 +1,5 @@
+import { chatCache } from './cache';
+
 export const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://skillmatch-1-6nn0.onrender.com';
 
 export const isTokenExpired = (token) => {
@@ -19,6 +21,7 @@ export const isTokenExpired = (token) => {
 };
 
 export const redirectToLogin = () => {
+    chatCache.clearAll();
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');

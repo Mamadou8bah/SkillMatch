@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, MessageSquare, Plus } from 'lucide-react'
+import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 import '../styles/messages.css'
 import Loader from '../components/Loader'
-import { apiFetch } from '../utils/api'
+import { apiFetch, BASE_URL } from '../utils/api'
 import { chatCache } from '../utils/cache'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -11,6 +13,7 @@ export const Messages = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [inbox, setInbox] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const stompClient = useRef(null);
   
   const MAX_PREVIEW = 80;
   const truncate = (s, n) => (typeof s === 'string' && s.length > n ? s.slice(0, n - 3) + '...' : s || '');
@@ -38,6 +41,64 @@ export const Messages = () => {
       }
     };
     fetchInbox();
+  }, []);
+
+  useEffect(() => {
+    const socket = new SockJS(`${BASE_URL}/ws`);
+    const client = new Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe('/user/queue/messages', (message) => {
+          const receivedMessage = JSON.parse(message.body);
+          
+          setInbox(prevInbox => {
+            const currentUserId = localStorage.getItem('userId');
+            const otherUserInMsg = receivedMessage.sender.id.toString() === currentUserId ? receivedMessage.recipient : receivedMessage.sender;
+            
+            // Check if we already have a conversation with this person
+            const conversationIndex = prevInbox.findIndex(msg => {
+              const otherUserInInbox = msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+              return otherUserInInbox.id === otherUserInMsg.id;
+            });
+
+            let newInbox;
+            if (conversationIndex !== -1) {
+              // Move existing conversation to top and update the message
+              const updatedInbox = [...prevInbox];
+              updatedInbox[conversationIndex] = {
+                ...receivedMessage,
+                sender: receivedMessage.sender,
+                recipient: receivedMessage.recipient
+              };
+              const [movedItem] = updatedInbox.splice(conversationIndex, 1);
+              newInbox = [movedItem, ...updatedInbox];
+            } else {
+              // Prepend new conversation
+              newInbox = [receivedMessage, ...prevInbox];
+            }
+            
+            chatCache.set('inbox_list', newInbox);
+            return newInbox;
+          });
+        });
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error in Messages", frame);
+      }
+    });
+
+    client.activate();
+    stompClient.current = client;
+
+    return () => {
+      if (stompClient.current) {
+        stompClient.current.deactivate();
+      }
+    };
   }, []);
 
   const formatMessageDate = (dateStr) => {

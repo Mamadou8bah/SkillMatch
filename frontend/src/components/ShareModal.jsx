@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bookmark, Share2, Copy, X, ArrowLeft, Search, Check } from 'lucide-react';
 import { apiFetch } from '../utils/api';
+import { chatCache } from '../utils/cache';
 import '../styles/sharemodal.css';
 
 const ShareModal = ({ isOpen, onClose, job, isBookmarked, onToggleBookmark }) => {
@@ -28,10 +29,25 @@ const ShareModal = ({ isOpen, onClose, job, isBookmarked, onToggleBookmark }) =>
     }, [step]);
 
     const fetchRecipients = async () => {
-        setIsLoading(true);
+        // Try cache first
+        const cachedInbox = chatCache.get('inbox_list');
+        if (cachedInbox) {
+            const currentUserId = localStorage.getItem('userId');
+            const users = cachedInbox.map(msg => {
+                return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+            });
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
+            setRecipients(uniqueUsers);
+            // Don't show loader if we have cache
+            setIsLoading(false);
+        } else {
+            setIsLoading(true);
+        }
+
         try {
             const data = await apiFetch('/api/messages/inbox');
             if (data.success) {
+                chatCache.set('inbox_list', data.data);
                 const currentUserId = localStorage.getItem('userId');
                 const users = data.data.map(msg => {
                     return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
@@ -61,9 +77,33 @@ const ShareModal = ({ isOpen, onClose, job, isBookmarked, onToggleBookmark }) =>
 
             if (data.success) {
                 setSentStatus(prev => ({ ...prev, [recipient.id]: 'sent' }));
-                setTimeout(() => {
-                    // keep it showing sent for a bit
-                }, 2000);
+                
+                // Update inbox cache
+                const cachedInbox = chatCache.get('inbox_list');
+                if (cachedInbox) {
+                    const currentUserId = localStorage.getItem('userId');
+                    const conversationIndex = cachedInbox.findIndex(msg => {
+                        const otherUserInInbox = msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+                        return otherUserInInbox.id.toString() === recipient.id.toString();
+                    });
+
+                    let newInbox;
+                    if (conversationIndex !== -1) {
+                        const updatedInbox = [...cachedInbox];
+                        updatedInbox[conversationIndex] = { ...data.data };
+                        const [movedItem] = updatedInbox.splice(conversationIndex, 1);
+                        newInbox = [movedItem, ...updatedInbox];
+                    } else {
+                        newInbox = [data.data, ...cachedInbox];
+                    }
+                    chatCache.set('inbox_list', newInbox);
+                }
+
+                // Also update history cache if it exists
+                const cachedHistory = chatCache.get(`history_${recipient.id}`);
+                if (cachedHistory) {
+                    chatCache.set(`history_${recipient.id}`, [...cachedHistory, data.data]);
+                }
             } else {
                 setSentStatus(prev => ({ ...prev, [recipient.id]: 'error' }));
             }

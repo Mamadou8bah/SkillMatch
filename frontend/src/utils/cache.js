@@ -1,32 +1,47 @@
 
 const CACHE_NAME = 'skillmatch-chat-cache-v1';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes standard
+const DEFAULT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours for chat history
 
 export const chatCache = {
-    set: (key, data, expiry = CACHE_EXPIRY) => {
+    _getKey: (key) => {
+        const userId = localStorage.getItem('userId');
+        return `${CACHE_NAME}_${userId || 'anon'}_${key}`;
+    },
+
+    set: (key, data, expiry = DEFAULT_EXPIRY) => {
         const item = {
             data,
             timestamp: Date.now(),
             expiry
         };
-        localStorage.setItem(`${CACHE_NAME}_${key}`, JSON.stringify(item));
+        localStorage.setItem(chatCache._getKey(key), JSON.stringify(item));
     },
 
     get: (key) => {
-        const itemStr = localStorage.getItem(`${CACHE_NAME}_${key}`);
+        const itemStr = localStorage.getItem(chatCache._getKey(key));
         if (!itemStr) return null;
 
         const item = JSON.parse(itemStr);
-        const expiryTime = item.expiry || CACHE_EXPIRY;
+        const expiryTime = item.expiry || DEFAULT_EXPIRY;
         
         if (Date.now() - item.timestamp > expiryTime) {
-            localStorage.removeItem(`${CACHE_NAME}_${key}`);
+            localStorage.removeItem(chatCache._getKey(key));
             return null;
         }
         return item.data;
     },
 
     clear: (key) => {
-        localStorage.removeItem(`${CACHE_NAME}_${key}`);
+        localStorage.removeItem(chatCache._getKey(key));
+    },
+
+    clearAll: () => {
+        const userId = localStorage.getItem('userId');
+        const prefix = `${CACHE_NAME}_${userId || 'anon'}_`;
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(prefix)) {
+                localStorage.removeItem(key);
+            }
+        });
     }
 };
