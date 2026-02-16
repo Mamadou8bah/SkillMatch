@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useBookmarks } from '../contexts/BookmarksContext'
 import '../styles/jobdetails.css'
 import Loader from '../components/Loader'
+import ShareModal from '../components/ShareModal'
 import { apiFetch } from '../utils/api'
 
 export const JobDetails = () => {
@@ -15,6 +16,7 @@ export const JobDetails = () => {
     const [isApplying, setIsApplying] = useState(false);
     const [applicants, setApplicants] = useState([]);
     const [showApplicants, setShowApplicants] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
  
     useEffect(() => {
         apiFetch(`/post/${id}`)
@@ -88,16 +90,6 @@ export const JobDetails = () => {
         }
     };
 
-    const onBookmarkClick = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        toggleBookmark({
-            ...job,
-            company: job.employer?.name || job.employer?.companyName || job.companyName || 'Company',
-            companyLogo: job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''
-        })
-    }
-    
     return (
         <div className='jd-page'>
             <div className="jd-upper">
@@ -111,25 +103,14 @@ export const JobDetails = () => {
                             </g>
                         </svg>
                     </div>
-                    <button aria-pressed={isBookmarked(job.id)} className="bookmark-btn" onClick={onBookmarkClick}>
-                        {!isBookmarked(job.id) ? (
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" aria-hidden="true">
-                                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                                <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                                <g id="SVGRepo_iconCarrier">
-                                    <path d="M21 16.0909V11.0975C21 6.80891 21 4.6646 19.682 3.3323C18.364 2 16.2426 2 12 2C7.75736 2 5.63604 2 4.31802 3.3323C3 4.6646 3 6.80891 3 11.0975V16.0909C3 19.1875 3 20.7358 3.73411 21.4123C4.08421 21.735 4.52615 21.9377 4.99692 21.9915C5.98402 22.1045 7.13673 21.0849 9.44216 19.0458C10.4612 18.1445 10.9708 17.6938 11.5603 17.5751C11.8506 17.5166 12.1494 17.5166 12.4397 17.5751C13.0292 17.6938 13.5388 18.1445 14.5578 19.0458C16.8633 21.0849 18.016 22.1045 19.0031 21.9915C19.4739 21.9377 19.9158 21.735 20.2659 21.4123C21 20.7358 21 19.1875 21 16.0909Z" strokeWidth="1.5"></path>
-                                    <path opacity="0.5" d="M15 6H9" strokeWidth="1.5" strokeLinecap="round"></path>
-                                </g>
-                            </svg>
-                        ) : (
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" aria-hidden="true">
-                                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                                <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                                <g id="SVGRepo_iconCarrier">
-                                    <path fillRule="evenodd" stroke='gold' fill='gold' clipRule="evenodd" d="M21 11.0975V16.0909C21 19.1875 21 20.7358 20.2659 21.4123C19.9158 21.735 19.4739 21.9377 19.0031 21.9915C18.016 22.1045 16.8633 21.0849 14.5578 19.0458C13.5388 18.1445 13.0292 17.6938 12.4397 17.5751C12.1494 17.5166 11.8506 17.5166 11.5603 17.5751C10.9708 17.6938 10.4612 18.1445 9.44216 19.0458C7.13673 21.0849 5.98402 22.1045 4.99692 21.9915C4.52615 21.9377 4.08421 21.735 3.73411 21.4123C3 20.7358 3 19.1875 3 16.0909V11.0975C3 6.80891 3 4.6646 4.31802 3.3323C5.63604 2 7.75736 2 12 2C16.2426 2 18.364 2 19.682 3.3323C21 4.6646 21 6.80891 21 11.0975ZM8.25 6C8.25 5.58579 8.58579 5.25 9 5.25H15C15.4142 5.25 15.75 5.58579 15.75 6C15.75 6.41421 15.4142 6.75 15 6.75H9C8.58579 6.75 8.25 6.41421 8.25 6Z"></path>
-                                </g>
-                            </svg>
-                        )}
+                    <button className="bookmark-btn" onClick={() => setIsShareModalOpen(true)}>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M16.5 2.25C14.7051 2.25 13.25 3.70507 13.25 5.5C13.25 5.69591 13.2673 5.88776 13.3006 6.07412L8.56991 9.38558C8.54587 9.4024 8.52312 9.42038 8.50168 9.43939C7.94993 9.00747 7.25503 8.75 6.5 8.75C4.70507 8.75 3.25 10.2051 3.25 12C3.25 13.7949 4.70507 15.25 6.5 15.25C7.25503 15.25 7.94993 14.9925 8.50168 14.5606C8.52312 14.5796 8.54587 14.5976 8.56991 14.6144L13.3006 17.9259C13.2673 18.1122 13.25 18.3041 13.25 18.5C13.25 20.2949 14.7051 21.75 16.5 21.75C18.2949 21.75 19.75 20.2949 19.75 18.5C19.75 16.7051 18.2949 15.25 16.5 15.25C15.4472 15.25 14.5113 15.7506 13.9174 16.5267L9.43806 13.3911C9.63809 12.9694 9.75 12.4978 9.75 12C9.75 11.5022 9.63809 11.0306 9.43806 10.6089L13.9174 7.4733C14.5113 8.24942 15.4472 8.75 16.5 8.75C18.2949 8.75 19.75 7.29493 19.75 5.5C19.75 3.70507 18.2949 2.25 16.5 2.25ZM14.75 5.5C14.75 4.5335 15.5335 3.75 16.5 3.75C17.4665 3.75 18.25 4.5335 18.25 5.5C18.25 6.4665 17.4665 7.25 16.5 7.25C15.5335 7.25 14.75 6.4665 14.75 5.5ZM6.5 10.25C5.5335 10.25 4.75 11.0335 4.75 12C4.75 12.9665 5.5335 13.75 6.5 13.75C7.4665 13.75 8.25 12.9665 8.25 12C8.25 11.0335 7.4665 10.25 6.5 10.25ZM16.5 16.75C15.5335 16.75 14.75 17.5335 14.75 18.5C14.75 19.4665 15.5335 20.25 16.5 20.25C17.4665 20.25 18.25 19.4665 18.25 18.5C18.25 17.5335 17.4665 16.75 16.5 16.75Z" fill="white"></path>
+                            </g>
+                        </svg>
                     </button>
                 </div>
                 <div className="jd-info">
@@ -250,6 +231,18 @@ export const JobDetails = () => {
                     )}
                 </div>
             </div>
+
+            <ShareModal 
+                isOpen={isShareModalOpen} 
+                onClose={() => setIsShareModalOpen(false)} 
+                job={job}
+                isBookmarked={isBookmarked(job.id)}
+                onToggleBookmark={() => toggleBookmark({
+                    ...job,
+                    company: job.employer?.name || job.employer?.companyName || job.companyName || 'Company',
+                    companyLogo: job.employer?.logo || job.employer?.pictureUrl || job.companyLogo || ''
+                })}
+            />
         </div>
     );
 };
