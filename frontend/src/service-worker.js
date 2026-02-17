@@ -5,6 +5,11 @@ import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate } from 'workbox-strategies';
 
+const CACHE_VERSION = 'v2.2'; // Update this for every deployment
+const APP_CACHE = `skillmatch-app-${CACHE_VERSION}`;
+const IMAGE_CACHE = `skillmatch-images-${CACHE_VERSION}`;
+const API_CACHE = `skillmatch-api-${CACHE_VERSION}`;
+
 clientsClaim();
 
 precacheAndRoute(self.__WB_MANIFEST);
@@ -32,7 +37,7 @@ registerRoute(
 registerRoute(
   ({ url }) => url.origin === self.location.origin && (url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.svg')), 
   new StaleWhileRevalidate({
-    cacheName: 'images',
+    cacheName: IMAGE_CACHE,
     plugins: [
       new ExpirationPlugin({ maxEntries: 50 }),
     ],
@@ -42,7 +47,7 @@ registerRoute(
 registerRoute(
   ({ url }) => url.origin === 'https://skillmatch-1-6nn0.onrender.com' || url.pathname.startsWith('/api'),
   new StaleWhileRevalidate({
-    cacheName: 'api-cache',
+    cacheName: API_CACHE,
     plugins: [
       new ExpirationPlugin({
         maxEntries: 100,
@@ -51,6 +56,28 @@ registerRoute(
     ],
   })
 );
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => 
+            key !== APP_CACHE && 
+            key !== IMAGE_CACHE && 
+            key !== API_CACHE && 
+            !key.includes('workbox-precache')
+          )
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+  self.clients.claim();
+});
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
