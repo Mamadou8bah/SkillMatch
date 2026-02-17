@@ -22,6 +22,7 @@ import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
 import { useState, useEffect } from 'react';
 import { isTokenExpired, apiFetch } from './utils/api';
+import { chatCache } from './utils/cache';
 
 function App() {
   const location = useLocation();
@@ -30,6 +31,7 @@ function App() {
   const [fadeSplash, setFadeSplash] = useState(false);
 
   useEffect(() => {
+    chatCache.cleanup();
     apiFetch('/').catch(err => console.log('Backend wake-up initiated'));
 
     const fadeTimer = setTimeout(() => {
