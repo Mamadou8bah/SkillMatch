@@ -45,6 +45,13 @@ export const Onboarding = () => {
     }, [step, formData]);
 
     useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError('');
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
