@@ -23,45 +23,45 @@ const ShareModal = ({ isOpen, onClose, job, isBookmarked, onToggleBookmark }) =>
     }, [isOpen]);
 
     useEffect(() => {
+        const fetchRecipients = async () => {
+            // Try cache first
+            const cachedInbox = chatCache.get('inbox_list');
+            if (cachedInbox) {
+                const currentUserId = localStorage.getItem('userId');
+                const users = cachedInbox.map(msg => {
+                    return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+                });
+                const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
+                setRecipients(uniqueUsers);
+                // Don't show loader if we have cache
+                setIsLoading(false);
+            } else {
+                setIsLoading(true);
+            }
+
+            try {
+                const data = await apiFetch('/api/messages/inbox');
+                if (data.success) {
+                    chatCache.set('inbox_list', data.data);
+                    const currentUserId = localStorage.getItem('userId');
+                    const users = data.data.map(msg => {
+                        return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
+                    });
+                    // Unique users only
+                    const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
+                    setRecipients(uniqueUsers);
+                }
+            } catch (err) {
+                console.error("Failed to fetch recipients", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         if (step === 'dm' && recipients.length === 0) {
             fetchRecipients();
         }
-    }, [step]);
-
-    const fetchRecipients = async () => {
-        // Try cache first
-        const cachedInbox = chatCache.get('inbox_list');
-        if (cachedInbox) {
-            const currentUserId = localStorage.getItem('userId');
-            const users = cachedInbox.map(msg => {
-                return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
-            });
-            const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
-            setRecipients(uniqueUsers);
-            // Don't show loader if we have cache
-            setIsLoading(false);
-        } else {
-            setIsLoading(true);
-        }
-
-        try {
-            const data = await apiFetch('/api/messages/inbox');
-            if (data.success) {
-                chatCache.set('inbox_list', data.data);
-                const currentUserId = localStorage.getItem('userId');
-                const users = data.data.map(msg => {
-                    return msg.sender.id.toString() === currentUserId ? msg.recipient : msg.sender;
-                });
-                // Unique users only
-                const uniqueUsers = Array.from(new Map(users.map(u => [u.id, u])).values());
-                setRecipients(uniqueUsers);
-            }
-        } catch (err) {
-            console.error("Failed to fetch recipients", err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [step, recipients.length]);
 
     const handleSendDM = async (recipient) => {
         setSendingTo(recipient.id);
