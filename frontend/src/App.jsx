@@ -32,6 +32,24 @@ function App() {
 
   useEffect(() => {
     chatCache.cleanup();
+    
+    // UI Hard Refresh logic - every 3 days
+    const lastUIRefresh = localStorage.getItem('last_ui_hard_refresh');
+    const now = Date.now();
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+
+    if (!lastUIRefresh || now - parseInt(lastUIRefresh) > THREE_DAYS) {
+      localStorage.setItem('last_ui_hard_refresh', now.toString());
+      // Clear all caches before reloading to ensure absolute freshness
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
+        });
+      }
+      window.location.reload(true);
+      return;
+    }
+
     apiFetch('/').catch(err => console.log('Backend wake-up initiated'));
 
     const fadeTimer = setTimeout(() => {
