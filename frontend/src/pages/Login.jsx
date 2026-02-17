@@ -26,6 +26,19 @@ export const Login = () => {
     const [userId, setUserId] = useState(null)
     const [regStage, setRegStage] = useState(1)
 
+    useEffect(() => {
+        const savedUserId = localStorage.getItem('regUserId');
+        const savedRegStage = localStorage.getItem('regStage');
+        const savedEmail = localStorage.getItem('regEmail');
+        
+        if (savedUserId && savedRegStage && !localStorage.getItem('token')) {
+            setUserId(savedUserId);
+            setRegStage(parseInt(savedRegStage));
+            if (savedEmail) setEmail(savedEmail);
+            setHasAccount(false);
+        }
+    }, []);
+
     const diverseSkills = [
         { title: "Software Dev", icon: <Code size={18} /> },
         { title: "UI/UX Design", icon: <Palette size={18} /> },
@@ -191,7 +204,15 @@ export const Login = () => {
             })
             if (data.success) {
                 setUserId(data.data.id)
-                setRegStage(2)
+                let nextStage = 2;
+                if (data.data.registrationStage === 1) nextStage = 2;
+                else if (data.data.registrationStage === 2) nextStage = 3;
+                else if (data.data.registrationStage === 3) nextStage = 5;
+                
+                setRegStage(nextStage)
+                localStorage.setItem('regUserId', data.data.id)
+                localStorage.setItem('regStage', nextStage)
+                localStorage.setItem('regEmail', email)
             } else {
                 setError(data.message)
             }
@@ -239,6 +260,7 @@ export const Login = () => {
             })
             if (data.success) {
                 setRegStage(3)
+                localStorage.setItem('regStage', 3)
             }
         } catch (err) {
             setError('Update failed.')
@@ -258,10 +280,12 @@ export const Login = () => {
             })
             if (data.success) {
                 setRegStage(4)
+                localStorage.setItem('regStage', 4)
             }
         } catch (err) {
             setError('Failed to save photo.')
             setRegStage(4)
+            localStorage.setItem('regStage', 4)
         } finally {
             setIsLoading(false)
         }
@@ -281,6 +305,7 @@ export const Login = () => {
             })
             if (data.success) {
                 setRegStage(5)
+                localStorage.setItem('regStage', 5)
             } else {
                 setError(data.message || 'Failed to save skills. Please try again.')
             }
@@ -305,6 +330,9 @@ export const Login = () => {
             const data = await apiFetch(`/api/auth/register/verify?token=${code}`)
             if (data.success) {
                 alert('Account verified successfully! You can now log in.')
+                localStorage.removeItem('regUserId')
+                localStorage.removeItem('regStage')
+                localStorage.removeItem('regEmail')
                 setHasAccount(true)
             } else {
                 setError(data.message)
@@ -684,6 +712,18 @@ export const Login = () => {
                     )}
 
                     <div className="signup-link" style={{ marginTop: '2rem' }}>
+                        {regStage > 1 && (
+                            <p style={{ marginBottom: '10px' }}>
+                                Not you? <span onClick={() => {
+                                    localStorage.removeItem('regUserId');
+                                    localStorage.removeItem('regStage');
+                                    localStorage.removeItem('regEmail');
+                                    setRegStage(1);
+                                    setUserId(null);
+                                    setEmail('');
+                                }}>Start over</span>
+                            </p>
+                        )}
                         <p>Already have an account? <span onClick={() => setHasAccount(true)}>Sign In</span></p>
                     </div>
                 </div>

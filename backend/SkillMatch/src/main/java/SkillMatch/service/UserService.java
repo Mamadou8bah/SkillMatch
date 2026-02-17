@@ -171,6 +171,10 @@ public class UserService {
     public User registerStage1(RegistrationStage1Request request) throws UserAlreadyExistException {
         User existingUser = repo.findByEmail(request.email().trim().toLowerCase());
         if (existingUser != null) {
+            if (!existingUser.isAccountVerified()) {
+                // Return the existing unverified user to allow resuming
+                return existingUser;
+            }
             throw new UserAlreadyExistException("User with this email already exists");
         }
 

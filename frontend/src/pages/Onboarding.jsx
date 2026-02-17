@@ -13,15 +13,6 @@ export const Onboarding = () => {
     const [error, setError] = useState('');
     const [photoPreview, setPhotoPreview] = useState(null);
 
-    useEffect(() => {
-        if (error) {
-            const timer = setTimeout(() => {
-                setError('');
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [error]);
-
     const [formData, setFormData] = useState({
         role: localStorage.getItem('userRole') || 'CANDIDATE',
         skills: [],
@@ -30,6 +21,30 @@ export const Onboarding = () => {
         profession: '',
         photo: null
     });
+
+    // Load saved progress
+    useEffect(() => {
+        const savedOnboarding = localStorage.getItem('onboardingProgress');
+        if (savedOnboarding) {
+            try {
+                const { step: savedStep, formData: savedData } = JSON.parse(savedOnboarding);
+                setStep(savedStep || 1);
+                setFormData(prev => ({ ...prev, ...savedData }));
+                if (savedData.photo) setPhotoPreview(savedData.photo);
+            } catch (e) {
+                console.error("Failed to parse onboarding progress", e);
+            }
+        }
+    }, []);
+
+    // Save progress on change
+    useEffect(() => {
+        if (step > 1 || formData.skills.length > 0 || formData.profession) {
+            localStorage.setItem('onboardingProgress', JSON.stringify({ step, formData }));
+        }
+    }, [step, formData]);
+
+    useEffect(() => {
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
@@ -147,6 +162,7 @@ export const Onboarding = () => {
                 });
                 if (response) {
                     localStorage.setItem('registrationStage', '4');
+                    localStorage.removeItem('onboardingProgress');
                     navigate('/');
                 }
             } catch (err) {
