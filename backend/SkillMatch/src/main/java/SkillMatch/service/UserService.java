@@ -216,7 +216,7 @@ public class UserService {
                 photo.setUser(user);
                 user.setPhoto(photo);
             } catch (IOException e) {
-                // Log error but permit progress
+
             }
         }
         
@@ -392,7 +392,6 @@ public class UserService {
         user.setAccountVerified(true);
         repo.save(user);
         
-        // Remove token after verification is complete
         secureTokenService.removeToken(secureToken);
         return true;
     }

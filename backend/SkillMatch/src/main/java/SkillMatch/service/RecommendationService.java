@@ -2,6 +2,8 @@ package SkillMatch.service;
 
 import SkillMatch.model.*;
 import SkillMatch.repository.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +36,6 @@ public class RecommendationService {
      * Recommends JobPosts for a Candidate based on offline precomputed ML scores.
      */
     public List<JobPost> recommendJobs(User candidate) {
-        // 1. Try to fetch offline precomputed recommendations
         List<JobRecommendation> precomputed = jobRecommendationRepository.findByUserIdOrderByRankAsc(candidate.getId());
         
         if (!precomputed.isEmpty()) {
@@ -44,19 +45,17 @@ public class RecommendationService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             
-            // Log SHOWN event for training
+
             jobs.forEach(j -> logRecommendationEvent(candidate.getId(), j.getId(), "JOB", "SHOWN"));
             
             return jobs;
         }
 
-        // 2. Fallback to candidate job matches (previously computed/cached)
         List<JobPost> cachedMatches = candidateJobMatchService.getTopJobPosts(candidate, 100);
         if (!cachedMatches.isEmpty()) {
             return cachedMatches;
         }
 
-        // 3. Last resort: Fallback to basic skill matching (legacy logic)
         List<JobPost> allJobs = jobPostRepo.findAll();
         if (allJobs.isEmpty()) return Collections.emptyList();
 
@@ -443,15 +442,15 @@ public class RecommendationService {
     }
 
 
-    @lombok.Data
-    @lombok.AllArgsConstructor
+    @Data
+    @AllArgsConstructor
     private static class JobMatch {
         JobPost job;
         double score;
     }
 
-    @lombok.Data
-    @lombok.AllArgsConstructor
+    @Data
+    @AllArgsConstructor
     private static class UserMatch {
         User user;
         double score;

@@ -22,14 +22,14 @@ services:
     plan: free
     dockerContext: backend/SkillMatch
     dockerfilePath: Dockerfile
-    healthCheckPath: /api/jobs/external
+    healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_DATASOURCE_URL
-        value: "jdbc:postgresql://ep-lucky-tooth-ag8q522u-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require"
+        sync: false
       - key: SPRING_DATASOURCE_USERNAME
-        value: "neondb_owner"
+        sync: false
       - key: SPRING_DATASOURCE_PASSWORD
-        value: "npg_p1TULS4juAeJ"
+        sync: false
       - key: ML_ENGINE_URL
         value: https://skillmatch-r3lo.onrender.com/recommend
       - key: SPRING_PROFILES_ACTIVE

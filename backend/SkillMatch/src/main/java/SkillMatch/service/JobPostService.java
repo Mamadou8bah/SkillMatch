@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -63,7 +64,6 @@ public class JobPostService {
     }
 
     public List<JobResponseDTO> getJobPost(int pageNo, int readCount) {
-        // Fetch DB jobs (including synced external ones)
         Pageable pageable = PageRequest.of(pageNo, readCount);
         Page<JobPost> page = repo.findAll(pageable);
         
@@ -161,8 +161,7 @@ public class JobPostService {
         return post;
     }
 
-    // Disabled @Scheduled to save free-tier resources. Admin must trigger manually.
-    @org.springframework.scheduling.annotation.Async
+    @Async
     public void syncExternalJobs() {
         log.info("Starting manual job sync in background...");
         
@@ -213,13 +212,12 @@ public class JobPostService {
 
         log.info("Identified {} new unique jobs for processing", newJobs.size());
 
-        // Increased batch size to 10 for better efficiency (sending multiple jobs to AI at once)
+
         int batchSize = 6; 
         for (int i = 0; i < newJobs.size(); i += batchSize) {
             int end = Math.min(i + batchSize, newJobs.size());
             List<JobResponseDTO> batch = newJobs.subList(i, end);
             try {
-                // AI Quota survival: If Gemini fails, fallback to raw data
                 List<JobResponseDTO> structuredBatch = externalJobService.structureBatchWithAI(batch);
                 if (structuredBatch.isEmpty()) {
                     log.warn("AI extraction failed/quota hit. Falling back to native metadata for source: {}", source);

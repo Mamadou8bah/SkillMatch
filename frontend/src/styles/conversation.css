@@ -1,8 +1,7 @@
 .conversation-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
+    height: 100%;
     background: var(--bg-color);
     position: relative;
     max-width: 600px;
@@ -408,7 +407,7 @@
     .conversation-container {
         border-left: none;
         border-right: none;
-        height: 100dvh; /* Dynamic viewport height for better mobile support */
+        height: 100%; /* Fill the main container which handles dvh */
     }
 
     .chat-header {

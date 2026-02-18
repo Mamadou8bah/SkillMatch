@@ -80,11 +80,15 @@ public class ExternalJobService {
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Cache-Control", "no-cache")
+                    .header("Connection", "keep-alive")
                     .header("Referer", referer != null ? referer : "https://www.google.com/")
                     .header("Upgrade-Insecure-Requests", "1")
+                    .header("Sec-Ch-Ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"")
+                    .header("Sec-Ch-Ua-Mobile", "?0")
+                    .header("Sec-Ch-Ua-Platform", "\"Windows\"")
                     .header("Sec-Fetch-Dest", "document")
                     .header("Sec-Fetch-Mode", "navigate")
-                    .header("Sec-Fetch-Site", "same-origin")
+                    .header("Sec-Fetch-Site", "none")
                     .header("Sec-Fetch-User", "?1")
                     .followRedirects(true)
                     .ignoreHttpErrors(false)
@@ -112,10 +116,14 @@ public class ExternalJobService {
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .header("Cache-Control", "no-cache")
+                    .header("Connection", "keep-alive")
                     .header("Upgrade-Insecure-Requests", "1")
+                    .header("Sec-Ch-Ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"")
+                    .header("Sec-Ch-Ua-Mobile", "?0")
+                    .header("Sec-Ch-Ua-Platform", "\"Windows\"")
                     .header("Sec-Fetch-Dest", "document")
                     .header("Sec-Fetch-Mode", "navigate")
-                    .header("Sec-Fetch-Site", "same-origin");
+                    .header("Sec-Fetch-Site", "none");
             if (referer != null) requestBuilder.header("Referer", referer);
 
             HttpResponse<String> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
@@ -139,10 +147,9 @@ public class ExternalJobService {
         try {
             String proxyUrl = "https://r.jina.ai/" + url;
             log.info("Attempting text proxy for {}", url);
-            // Jina Reader prefers headers to be passed as standard to get clean markdown/text
             Document proxyResponse = tryFetchWithJsoup(proxyUrl, "https://www.google.com/");
             if (proxyResponse != null) {
-                // Jina returns markdown/plain text, but we parse it as HTML to maintain compatibility
+
                 return Jsoup.parse(proxyResponse.html(), url);
             }
         } catch (Exception e) {

@@ -91,8 +91,10 @@
 
 .main-container {
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .element {
@@ -101,7 +103,17 @@
     padding-bottom: 120px;
 }
 
+@media (max-width: 768px) {
+    .element {
+        padding-bottom: 100px; /* Reduced for mobile screens */
+    }
+}
+
 .admin-layout .element {
+    padding-bottom: 0;
+}
+
+.hide-navbar .element {
     padding-bottom: 0;
 }
 

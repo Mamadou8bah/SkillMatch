@@ -1,5 +1,6 @@
 .onboarding-page {
     height: 100vh;
+    height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -469,6 +470,7 @@
 /* Landing Intro Styles */
 .intro-page {
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     background: var(--bg-color);

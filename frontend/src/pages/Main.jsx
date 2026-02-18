@@ -45,7 +45,7 @@ export const Main = () => {
   }, [userRole])
 
   return (
-    <div className={`main-container ${isAdmin ? 'admin-layout' : ''}`}>
+    <div className={`main-container ${isAdmin ? 'admin-layout' : ''} ${shouldHideNavbar ? 'hide-navbar' : ''}`}>
       <div className="element">
         <AnimatePresence mode="wait">
           <motion.div

@@ -33,7 +33,7 @@ function App() {
   useEffect(() => {
     chatCache.cleanup();
     
-    // UI Hard Refresh logic - every 3 days
+  
     const lastUIRefresh = localStorage.getItem('last_ui_hard_refresh');
     const now = Date.now();
     const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
@@ -68,11 +68,7 @@ function App() {
     const handleThemeChange = (e) => {
       const savedSettings = localStorage.getItem('userSettings');
       const settings = savedSettings ? JSON.parse(savedSettings) : null;
-      
-      // Only auto-switch if user hasn't manually set a preference or if we want to follow system
-      // For now, let's follow the request "adopt system mood automatically"
-      // If user has manual setting, we might respect it, but the request implies automation.
-      // Let's check if the user has explicitly set darkMode in settings.
+    
       if (!settings || settings.darkMode === undefined) {
         document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
       }
