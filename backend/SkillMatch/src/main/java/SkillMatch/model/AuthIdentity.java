@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 
 @Entity
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
 public class AuthIdentity {
     @Id

@@ -61,6 +61,7 @@ public class User implements UserDetails {
     private boolean isActive;
     @CreatedDate
     @Column(nullable = false,updatable = false)
+    @Builder.Default
     private LocalDateTime createdAt=LocalDateTime.now();
 
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
@@ -69,32 +70,41 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Builder.Default
     private List<Token>tokens = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Builder.Default
     private List<SecureToken>secureTokens = new ArrayList<>();
 
-    private boolean accountVerified;
+    @Builder.Default
+    private boolean accountVerified = false;
 
-    private boolean loginDisabled;
+    @Builder.Default
+    private boolean loginDisabled = false;
 
+    @Builder.Default
     private int registrationStage = 1;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Builder.Default
     private Set<Application> applications = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Builder.Default
     private List<Education> educations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Builder.Default
     private List<Experience> experiences = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @Builder.Default
     private List<Skill> skills = new ArrayList<>();
 
     @Override
