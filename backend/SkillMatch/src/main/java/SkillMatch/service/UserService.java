@@ -475,7 +475,7 @@ public class UserService {
         if (!payload.getEmailVerified()){
             throw new EmailNotVerifiedException("Google email not verified");
         }
-        if (aidRepo.existByAuthProviderAndSubject(AuthProvider.GOOGLE,subject)){
+        if (aidRepo.existsByAuthProviderAndSubject(AuthProvider.GOOGLE,subject)){
             AuthIdentity authIdentity= aidRepo.findByAuthProviderAndSubject(AuthProvider.GOOGLE,subject).get();
             User user =getUserById(authIdentity.getUserId());
             return getLoginResponse(user);
@@ -503,7 +503,7 @@ public class UserService {
             authIdentity.setAuthProvider(AuthProvider.GOOGLE);
             aidRepo.save(authIdentity);
         } else {
-            if (!aidRepo.existByAuthProviderAndSubject(AuthProvider.GOOGLE, subject)) {
+            if (!aidRepo.existsByAuthProviderAndSubject(AuthProvider.GOOGLE, subject)) {
                 AuthIdentity authIdentity = new AuthIdentity();
                 authIdentity.setUserId(user.getId());
                 authIdentity.setSubject(subject);
