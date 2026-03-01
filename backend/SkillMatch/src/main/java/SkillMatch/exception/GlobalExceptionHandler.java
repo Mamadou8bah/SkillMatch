@@ -33,6 +33,11 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(InvalidCodeOrTokenException.class)
+    public ResponseEntity<ApiResponse<Object>> invalidCode(InvalidCodeOrTokenException ex) {
+        return error(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler({
             InvalidCredentialsException.class,
             AuthenticationException.class,
@@ -43,6 +48,12 @@ public class GlobalExceptionHandler {
         return error(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(
+            EmailNotVerifiedException.class
+    )
+    public ResponseEntity<ApiResponse<Object>> emailNotVerified(EmailNotVerifiedException ex) {
+        return error(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
     @ExceptionHandler({
             ValidationException.class,
             PasswordMismatchException.class,

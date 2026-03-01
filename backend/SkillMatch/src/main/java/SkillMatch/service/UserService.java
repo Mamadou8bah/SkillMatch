@@ -8,28 +8,16 @@ import SkillMatch.dto.RegistrationStage1Request;
 import SkillMatch.dto.RegistrationStage2Request;
 import SkillMatch.dto.RegistrationStage3Request;
 import SkillMatch.dto.UserDTO;
-import SkillMatch.exception.UserAlreadyExistException;
-import SkillMatch.exception.ResourceNotFoundException;
-import SkillMatch.exception.InvalidCredentialsException;
-import SkillMatch.exception.AuthenticationException;
-import SkillMatch.exception.ValidationException;
-import SkillMatch.exception.TokenExpiredException;
-import SkillMatch.exception.InvalidResetTokenException;
-import SkillMatch.exception.PasswordMismatchException;
+import SkillMatch.exception.*;
 import SkillMatch.model.*;
-import SkillMatch.repository.EmployerRepo;
-import SkillMatch.repository.PhotoRepository;
-import SkillMatch.repository.TokenRepo;
-import SkillMatch.repository.UserRepo;
-import SkillMatch.util.AccountVerificationEmailContext;
-import SkillMatch.util.PasswordResetEmailContext;
-import SkillMatch.util.PasswordResetConfirmationEmailContext;
-import SkillMatch.util.JwtUtil;
-import SkillMatch.util.Role;
+import SkillMatch.repository.*;
+import SkillMatch.util.*;
 import SkillMatch.validator.ObjectValidator;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -43,6 +31,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -62,8 +51,12 @@ public class UserService {
 
     private final JwtUtil jwtUtil;
 
+    private final GoogleTokenVerifier verifier;
+
 
     private final SecureTokenService secureTokenService;
+
+    private final AuthIdentityRepository aidRepo;
 
     private final TokenRepo tokenRepo;
 
@@ -319,16 +312,7 @@ public class UserService {
         if(!encoder.matches(request.getPassword(), user.getPassword())){
             throw new InvalidCredentialsException("Invalid credentials");
         }
-        String jwtToken=jwtUtil.generateToken(user.getEmail());
-        Token token=new Token();
-        token.setToken(jwtToken);
-        token.setRevoked(false);
-        token.setExpired(false);
-        token.setUser(user);
-        tokenRepo.save(token);
-        
-        String firstName = user.getFullName() != null ? user.getFullName().split(" ")[0] : "";
-        return new LoginResponse(jwtToken, user.getId(), user.getRole().name(), user.getRegistrationStage(), firstName);
+        return getLoginResponse(user);
     }
     public User getLogInUser(){
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
@@ -482,6 +466,80 @@ public class UserService {
     public ResponseEntity<?>changeProfilePhoto(Photo photo,MultipartFile newPhoto)throws IOException{
         photoService.updatePhoto(photo.getUrl(),newPhoto);
         return ResponseEntity.ok().build();
+    }
+
+    public LoginResponse googleLoginOrRegister(String idOrCode) throws UserAlreadyExistException {
+        GoogleIdToken.Payload payload=verify(idOrCode);
+        String subject= payload.getSubject();
+        String email=payload.getEmail();
+        if (!payload.getEmailVerified()){
+            throw new EmailNotVerifiedException("Google email not verified");
+        }
+        if (aidRepo.existByAuthProviderAndSubject(AuthProvider.GOOGLE,subject)){
+            AuthIdentity authIdentity= aidRepo.findByAuthProviderAndSubject(AuthProvider.GOOGLE,subject).get();
+            User user =getUserById(authIdentity.getUserId());
+            return getLoginResponse(user);
+        }
+        String firstname= (String) payload.get("given_name");
+        String lastname= (String) payload.get("family_name");
+        String fullName = (firstname != null ? firstname : "") + (lastname != null ? " " + lastname : "");
+        if (fullName.isEmpty()) fullName = email.split("@")[0];
+
+        User user = repo.findByEmail(email);
+        if (user == null) {
+            user = new User();
+            user.setFullName(fullName);
+            user.setEmail(email);
+            user.setPassword(encoder.encode(java.util.UUID.randomUUID().toString())); // Random password for social login
+            user.setRole(Role.CANDIDATE);
+            user.setActive(true);
+            user.setAccountVerified(true); // Google emails are verified
+            user.setRegistrationStage(2); // Skip Stage 1 (email verification)
+            user = repo.save(user);
+
+            AuthIdentity authIdentity = new AuthIdentity();
+            authIdentity.setUserId(user.getId());
+            authIdentity.setSubject(subject);
+            authIdentity.setAuthProvider(AuthProvider.GOOGLE);
+            aidRepo.save(authIdentity);
+        } else {
+            if (!aidRepo.existByAuthProviderAndSubject(AuthProvider.GOOGLE, subject)) {
+                AuthIdentity authIdentity = new AuthIdentity();
+                authIdentity.setUserId(user.getId());
+                authIdentity.setSubject(subject);
+                authIdentity.setAuthProvider(AuthProvider.GOOGLE);
+                aidRepo.save(authIdentity);
+            }
+            user.setAccountVerified(true);
+            repo.save(user);
+        }
+        
+        return getLoginResponse(user);
+    }
+
+    @NotNull
+    private LoginResponse getLoginResponse(User user) {
+        String jwtToken=jwtUtil.generateToken(user.getEmail());
+        Token token=new Token();
+        token.setToken(jwtToken);
+        token.setRevoked(false);
+        token.setExpired(false);
+        token.setUser(user);
+        tokenRepo.save(token);
+
+        String firstName = user.getFullName() != null ? user.getFullName().split(" ")[0] : "";
+        return new LoginResponse(jwtToken, user.getId(), user.getRole().name(), user.getRegistrationStage(), firstName);
+    }
+
+    private GoogleIdToken.Payload verify(String idToken) {
+        GoogleIdToken.Payload payload= verifier.verify(idToken);
+        if (payload == null) {
+            payload=verifier.exchangeAndVerify(idToken);
+        }
+        if (payload == null) {
+            throw new InvalidCodeOrTokenException("Invalid code or token");
+        }
+        return payload;
     }
 
 }

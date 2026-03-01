@@ -60,6 +60,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
+    @PostMapping("/google/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> googleLogin(@RequestBody java.util.Map<String, String> request) throws UserAlreadyExistException {
+        String code = request.get("code");
+        LoginResponse response = service.googleLoginOrRegister(code);
+        return ResponseEntity.ok(ApiResponse.success("Google login successful", response));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<User>> getCurrentUser(){
         User user = service.getLogInUser();
