@@ -14,12 +14,13 @@ const InstallPrompt = () => {
       setDeferredPrompt(e);
       // Update UI notify the user they can install the PWA
       setIsVisible(true);
+      console.log('beforeinstallprompt event fired and captured');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // If the app is already installed or if we've already shown the prompt this session
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
        setIsVisible(false);
     }
 
