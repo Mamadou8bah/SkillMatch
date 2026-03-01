@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface AuthIdentityRepository extends JpaRepository<AuthIdentity, Long> {
     Optional<AuthIdentity> findByAuthProviderAndSubject(AuthProvider authProvider, String subject);
     Optional<AuthIdentity> findByUserIdAndAuthProvider(long userId, AuthProvider authProvider);
-    boolean existByAuthProviderAndSubject(AuthProvider provider, String subject);
+    boolean existsByAuthProviderAndSubject(AuthProvider authProvider, String subject);
 }
