@@ -409,3 +409,38 @@
     }
 }
 
+.google-login-btn {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.google-login-btn:hover:not(:disabled) {
+    background: var(--hover-color);
+}
+
+.google-login-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+[data-theme='dark'] .google-login-btn {
+    background: #1d1f23;
+    border-color: #2f3336;
+}
+
+[data-theme='dark'] .google-login-btn:hover:not(:disabled) {
+    background: #272c30;
+}
+

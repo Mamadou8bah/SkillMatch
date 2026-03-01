@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
 import { Eye, EyeOff, MapPin, Briefcase, Camera, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useGoogleLogin } from '@react-oauth/google'
 
 import Loader from '../components/Loader'
 import { apiFetch, isTokenExpired } from '../utils/api'
@@ -174,6 +175,43 @@ export const Login = () => {
             setIsLoading(false)
         }
     }
+
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setIsLoading(true);
+            try {
+                const data = await apiFetch('/api/auth/google/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ code: tokenResponse.code })
+                });
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token)
+                    localStorage.setItem('userId', data.data.userId)
+                    localStorage.setItem('userRole', data.data.role)
+                    localStorage.setItem('registrationStage', data.data.registrationStage)
+                    localStorage.setItem('firstName', data.data.firstName)
+                    localStorage.setItem('hasVisited', 'true')
+
+                    if (data.data.registrationStage < 4) {
+                        setUserId(data.data.userId);
+                        setRegStage(data.data.registrationStage);
+                        setHasAccount(false);
+                        localStorage.setItem('regUserId', data.data.userId);
+                        localStorage.setItem('regStage', data.data.registrationStage);
+                    } else {
+                        const role = data.data.role;
+                        navigate(role === 'ADMIN' ? '/admin' : '/');
+                    }
+                }
+            } catch (err) {
+                setError('Google login failed. Please try again.');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        onError: () => setError('Google login was unsuccessful.'),
+        flow: 'auth-code',
+    });
 
     const handleStage1 = async (e) => {
         e.preventDefault()
@@ -426,6 +464,17 @@ export const Login = () => {
                             {isLoading ? <Loader size="small" /> : 'Log In'}
                         </button>
                     </form>
+                    <div className="social-login" style={{ marginTop: '1rem' }}>
+                        <button 
+                            type="button" 
+                            className="google-login-btn" 
+                            onClick={() => loginWithGoogle()}
+                            disabled={isLoading}
+                        >
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
+                            Continue with Google
+                        </button>
+                    </div>
                     <div className="signup-link">
                         <p>Don't have an account? <span onClick={() => { setHasAccount(false); setRegStage(1); }}>Sign Up</span></p>
                     </div>
@@ -479,6 +528,25 @@ export const Login = () => {
                                 {isLoading ? <Loader size="small" /> : 'Next Step'}
                             </button>
                         </form>
+                    )}
+
+                    {regStage === 1 && (
+                        <div className="social-login" style={{ width: '100%', marginTop: '1rem' }}>
+                            <div className="divider" style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', gap: '10px' }}>
+                                <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>OR</span>
+                                <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                            </div>
+                            <button 
+                                type="button" 
+                                className="google-login-btn" 
+                                onClick={() => loginWithGoogle()}
+                                disabled={isLoading}
+                            >
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
+                                Sign up with Google
+                            </button>
+                        </div>
                     )}
 
                     {regStage === 2 && (
