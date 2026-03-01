@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
                 .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
 
         return ResponseEntity.badRequest().body(
-                new ApiResponse<>(false, "Validation failed", errors, LocalDateTime.now())
+                ApiResponse.error("Validation failed", errors)
         );
     }
 
@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
                 .forEach(v -> errors.put(v.getPropertyPath().toString(), v.getMessage()));
 
         return ResponseEntity.badRequest().body(
-                new ApiResponse<>(false, "Validation failed", errors, LocalDateTime.now())
+                ApiResponse.error("Validation failed", errors)
         );
     }
 

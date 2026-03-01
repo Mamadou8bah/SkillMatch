@@ -56,7 +56,7 @@ public class JobPostController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateJobPost(@PathVariable long id,@RequestBody JobPost newPost){
+    public ResponseEntity<?> updateJobPost(@PathVariable long id, @Valid @RequestBody JobPost newPost){
        JobPost post= service.updateJobPost(id,newPost);
        return ResponseEntity.ok(post);
     }

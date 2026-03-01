@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,22 +32,32 @@ public class JobPost {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    @NotBlank(message = "Title is required")
+    @Size(min = 3, max = 255, message = "Title must be between 3 and 255 characters")
     @Column(nullable = false)
     private String title;
+
+    @NotBlank(message = "Description is required")
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
     
     @Column(unique = true)
     private String externalId;
+
     private String companyName;
+
     @Column(columnDefinition = "TEXT")
     private String companyLogo;
+
     @Column(columnDefinition = "TEXT")
     private String companyWebsite;
+
     @Column(columnDefinition = "TEXT", unique = true)
     private String jobUrl;
+
     private String source;
-    @Column(length = 1024)
+
     private String industry;
     
     @ElementCollection
@@ -56,6 +69,7 @@ public class JobPost {
     @JoinColumn(name = "employer_id")
     private Employer employer;
 
+    @NotNull(message = "Location type is required")
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private LocationType locationType;
