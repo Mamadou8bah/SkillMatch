@@ -48,15 +48,18 @@ public class GoogleTokenVerifier {
 
     public GoogleIdToken.Payload exchangeAndVerify(String authCode){
         try {
+            // Check if we are in production or local
+            String redirectUri = "postmessage";
+            
             GoogleTokenResponse tokenResponse= new GoogleAuthorizationCodeTokenRequest(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance(),
                     clientId,
                     clientSecret,
                     authCode,
-                    "postmessage"
+                    redirectUri
             ).execute();
-            String idToken=tokenResponse.getAccessToken();
+            String idToken=tokenResponse.getIdToken(); // CRITICAL: Use getIdToken(), not getAccessToken()
             GoogleIdToken.Payload payload=verify(idToken);
             return payload;
         } catch (IOException e) {
