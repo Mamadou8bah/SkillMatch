@@ -13,7 +13,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class SkillMatchApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SkillMatchApplication.class, args);
+		String port = System.getenv("PORT");
+		SpringApplication app = new SpringApplication(SkillMatchApplication.class);
+		if (port != null && !port.isEmpty()) {
+			app.setDefaultProperties(java.util.Collections.singletonMap("server.port", port));
+		}
+		app.run(args);
 	}
 
 }
