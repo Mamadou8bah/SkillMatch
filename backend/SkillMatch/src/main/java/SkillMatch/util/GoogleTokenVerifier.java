@@ -48,6 +48,9 @@ public class GoogleTokenVerifier {
     }
 
     public GoogleIdToken.Payload fetchFromAccessToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            return null;
+        }
         try {
             NetHttpTransport transport = new NetHttpTransport();
             GsonFactory gsonFactory = GsonFactory.getDefaultInstance();
@@ -68,11 +71,14 @@ public class GoogleTokenVerifier {
             payload.set("family_name", data.get("family_name"));
             return payload;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to fetch user info from access token: " + e.getMessage());
+            return null;
         }
     }
 
     public GoogleIdToken.Payload exchangeAndVerify(String authCode){
+        if (authCode == null || authCode.isBlank()) {
+            return null;
+        }
         try {
             // Check if we are in production or local
             String redirectUri = "postmessage";
@@ -89,7 +95,7 @@ public class GoogleTokenVerifier {
             GoogleIdToken.Payload payload=verify(idToken);
             return payload;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 

@@ -532,6 +532,10 @@ public class UserService {
     }
 
     private GoogleIdToken.Payload verify(String idOrToken) {
+        if (idOrToken == null || idOrToken.isBlank()) {
+            throw new InvalidCodeOrTokenException("Missing Google token or authorization code");
+        }
+
         // Try verifying as ID token first
         GoogleIdToken.Payload payload = verifier.verify(idOrToken);
         
@@ -539,9 +543,14 @@ public class UserService {
         if (payload == null) {
             payload = verifier.fetchFromAccessToken(idOrToken);
         }
+
+        // If it still fails, treat it as an authorization code and exchange it.
+        if (payload == null) {
+            payload = verifier.exchangeAndVerify(idOrToken);
+        }
         
         if (payload == null) {
-            throw new InvalidCodeOrTokenException("Invalid Google token or access token");
+            throw new InvalidCodeOrTokenException("Invalid Google token, access token, or authorization code");
         }
         return payload;
     }

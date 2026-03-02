@@ -180,10 +180,15 @@ export const Login = () => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
-                // Changing to credential/token flow for better SPA stability
                 const data = await apiFetch('/api/auth/google/login', {
                     method: 'POST',
-                    body: JSON.stringify({ token: tokenResponse.access_token || tokenResponse.credential })
+                    body: JSON.stringify({
+                        token: tokenResponse?.access_token || tokenResponse?.credential || tokenResponse?.code || tokenResponse?.id_token,
+                        accessToken: tokenResponse?.access_token,
+                        credential: tokenResponse?.credential,
+                        code: tokenResponse?.code,
+                        idToken: tokenResponse?.id_token
+                    })
                 });
                 if (data.success) {
                     localStorage.setItem('token', data.data.token)
@@ -205,12 +210,14 @@ export const Login = () => {
                     }
                 }
             } catch (err) {
-                setError('Google login failed. Please try again.');
+                setError(err.message || 'Google login failed. Please try again.');
             } finally {
                 setIsLoading(false);
             }
         },
         onError: () => setError('Google login was unsuccessful.'),
+        flow: 'auth-code',
+        scope: 'openid email profile'
     });
 
     const handleStage1 = async (e) => {
