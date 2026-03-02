@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -187,13 +188,24 @@ public class RecommendationService {
      * Logs recommendation events (SHOWN, CLICKED, etc.) for offline training pipelines.
      */
     public void logRecommendationEvent(Long userId, Long itemId, String itemType, String eventType) {
+        // Recommendation fetch endpoints run in read-only transactions; skip write-side logging there.
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
+            return;
+        }
+
         RecommendationLog logEntry = RecommendationLog.builder()
                 .userId(userId)
                 .itemId(itemId)
                 .itemType(itemType)
                 .eventType(eventType)
                 .build();
-        recommendationLogRepository.save(logEntry);
+        try {
+            recommendationLogRepository.save(logEntry);
+        } catch (Exception e) {
+            // Logging is non-critical; do not fail recommendation delivery if tracking write fails.
+            log.warn("Skipping recommendation log write: {}", e.getMessage());
+        }
     }
 
     private String buildUserProfileString(User user) {

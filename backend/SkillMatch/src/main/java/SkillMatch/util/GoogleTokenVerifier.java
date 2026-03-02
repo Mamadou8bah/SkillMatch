@@ -42,7 +42,7 @@ public class GoogleTokenVerifier {
                 return token.getPayload();
             }
             return null; 
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException | IOException | IllegalArgumentException e) {
             return null;
         }
     }
