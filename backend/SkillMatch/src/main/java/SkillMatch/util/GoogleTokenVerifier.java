@@ -36,13 +36,39 @@ public class GoogleTokenVerifier {
 
     public GoogleIdToken.Payload verify(String idToken){
         try {
-            GoogleIdToken token=verifier.verify(idToken);
-            GoogleIdToken.Payload payload=token.getPayload();
+            // Check if it's an access token (implicit flow) or ID token
+            GoogleIdToken token = verifier.verify(idToken);
+            if (token != null) {
+                return token.getPayload();
+            }
+            return null; 
+        } catch (GeneralSecurityException | IOException e) {
+            return null;
+        }
+    }
+
+    public GoogleIdToken.Payload fetchFromAccessToken(String accessToken) {
+        try {
+            NetHttpTransport transport = new NetHttpTransport();
+            GsonFactory gsonFactory = GsonFactory.getDefaultInstance();
+            com.google.api.client.http.HttpRequestFactory requestFactory = transport.createRequestFactory();
+            com.google.api.client.http.GenericUrl url = new com.google.api.client.http.GenericUrl("https://www.googleapis.com/oauth2/v3/userinfo");
+            
+            com.google.api.client.http.HttpRequest request = requestFactory.buildGetRequest(url);
+            request.getHeaders().setAuthorization("Bearer " + accessToken);
+            
+            com.google.api.client.http.HttpResponse response = request.execute();
+            java.util.Map<String, Object> data = response.parseAs(java.util.Map.class);
+            
+            GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+            payload.setEmail((String) data.get("email"));
+            payload.setEmailVerified((Boolean) data.get("email_verified"));
+            payload.setSubject((String) data.get("sub"));
+            payload.set("given_name", data.get("given_name"));
+            payload.set("family_name", data.get("family_name"));
             return payload;
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch user info from access token: " + e.getMessage());
         }
     }
 

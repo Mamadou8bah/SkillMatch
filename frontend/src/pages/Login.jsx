@@ -180,9 +180,10 @@ export const Login = () => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
+                // Changing to credential/token flow for better SPA stability
                 const data = await apiFetch('/api/auth/google/login', {
                     method: 'POST',
-                    body: JSON.stringify({ code: tokenResponse.code })
+                    body: JSON.stringify({ token: tokenResponse.access_token || tokenResponse.credential })
                 });
                 if (data.success) {
                     localStorage.setItem('token', data.data.token)
@@ -210,7 +211,6 @@ export const Login = () => {
             }
         },
         onError: () => setError('Google login was unsuccessful.'),
-        flow: 'auth-code',
     });
 
     const handleStage1 = async (e) => {

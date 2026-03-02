@@ -531,13 +531,17 @@ public class UserService {
         return new LoginResponse(jwtToken, user.getId(), user.getRole().name(), user.getRegistrationStage(), firstName);
     }
 
-    private GoogleIdToken.Payload verify(String idToken) {
-        GoogleIdToken.Payload payload= verifier.verify(idToken);
+    private GoogleIdToken.Payload verify(String idOrToken) {
+        // Try verifying as ID token first
+        GoogleIdToken.Payload payload = verifier.verify(idOrToken);
+        
+        // If it fails, treat it as an access token and fetch from userinfo endpoint
         if (payload == null) {
-            payload=verifier.exchangeAndVerify(idToken);
+            payload = verifier.fetchFromAccessToken(idOrToken);
         }
+        
         if (payload == null) {
-            throw new InvalidCodeOrTokenException("Invalid code or token");
+            throw new InvalidCodeOrTokenException("Invalid Google token or access token");
         }
         return payload;
     }
