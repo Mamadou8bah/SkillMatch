@@ -56,9 +56,9 @@ public class JobPostController {
 
     @GetMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> getJobPostById(@PathVariable long id){
+    public ResponseEntity<JobResponseDTO> getJobPostById(@PathVariable long id){
         JobPost post= service.getJobPostById(id);
-        return ResponseEntity.ok(post);
+        return ResponseEntity.ok(service.convertToResponseDTO(post));
     }
 
     @GetMapping("/search")

@@ -67,8 +67,9 @@ export const JobDetails = () => {
     }
 
     const handleApply = async () => {
-        if (job.jobUrl && job.source !== 'Own') {
-            window.open(job.jobUrl, '_blank', 'noopener,noreferrer');
+        const externalUrl = job.jobUrl || job.url;
+        if (externalUrl && job.source !== 'Own') {
+            window.open(externalUrl, '_blank', 'noopener,noreferrer');
             return;
         }
 
@@ -225,7 +226,7 @@ export const JobDetails = () => {
                             onClick={handleApply} 
                             disabled={(isApplied || isApplying) && job.source === 'Own'}
                         >
-                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : (job.source && job.source !== 'Own' && job.jobUrl ? `Apply on ${job.source}` : 'Apply Now')}
+                            {isApplying ? 'Applying...' : isApplied ? 'Applied' : (job.source && job.source !== 'Own' && (job.jobUrl || job.url) ? `Apply on ${job.source}` : 'Apply Now')}
                         </button>
                     )}
                 </div>
