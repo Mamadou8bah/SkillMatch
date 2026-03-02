@@ -81,6 +81,13 @@ public class JobPostService {
     }
 
     public JobResponseDTO convertToResponseDTO(JobPost jobPost) {
+        List<String> requirements = jobPost.getRequirements() == null
+                ? List.of()
+                : new ArrayList<>(jobPost.getRequirements());
+        List<String> skills = jobPost.getRequiredSkills() == null
+                ? List.of()
+                : jobPost.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList());
+
         return JobResponseDTO.builder()
                 .id(String.valueOf(jobPost.getId()))
                 .title(jobPost.getTitle())
@@ -95,8 +102,8 @@ public class JobPostService {
                 .postedAt(jobPost.getPostedAt())
                 .source(jobPost.getSource() != null ? jobPost.getSource() : "Own")
                 .industry(jobPost.getIndustry())
-                .requirements(jobPost.getRequirements())
-                .skills(jobPost.getRequiredSkills().stream().map(Skill::getTitle).collect(Collectors.toList()))
+                .requirements(requirements)
+                .skills(skills)
                 .build();
     }
 

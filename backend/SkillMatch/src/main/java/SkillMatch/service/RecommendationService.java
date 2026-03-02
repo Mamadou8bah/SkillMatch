@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -44,6 +45,7 @@ public class RecommendationService {
             List<JobPost> jobs = precomputed.stream()
                     .map(JobRecommendation::getJob)
                     .filter(Objects::nonNull)
+                    .map(this::materializeJobForSerialization)
                     .collect(Collectors.toList());
             
 
@@ -54,7 +56,10 @@ public class RecommendationService {
 
         List<JobPost> cachedMatches = candidateJobMatchService.getTopJobPosts(candidate, 100);
         if (!cachedMatches.isEmpty()) {
-            return cachedMatches;
+            return cachedMatches.stream()
+                    .filter(Objects::nonNull)
+                    .map(this::materializeJobForSerialization)
+                    .collect(Collectors.toList());
         }
 
         List<JobPost> allJobs = jobPostRepo.findAll();
@@ -68,6 +73,16 @@ public class RecommendationService {
                 .sorted(Comparator.comparingDouble((JobPost j) -> calculateJobMatchScore(j, candidateSkills, candidate)).reversed())
                 .limit(20)
                 .collect(Collectors.toList());
+    }
+
+    private JobPost materializeJobForSerialization(JobPost job) {
+        JobPost initialized = (JobPost) Hibernate.unproxy(job);
+        Hibernate.initialize(initialized.getRequirements());
+        if (initialized.getRequirements() != null) {
+            // Replace Hibernate persistent collection with a plain list for safe JSON serialization.
+            initialized.setRequirements(new ArrayList<>(initialized.getRequirements()));
+        }
+        return initialized;
     }
 
     /**
