@@ -180,6 +180,7 @@ export const Login = () => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
+                console.log('Google token response keys:', Object.keys(tokenResponse || {}));
                 const data = await apiFetch('/api/auth/google/login', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -210,13 +211,13 @@ export const Login = () => {
                     }
                 }
             } catch (err) {
+                console.error('Google login API error:', err);
                 setError(err.message || 'Google login failed. Please try again.');
             } finally {
                 setIsLoading(false);
             }
         },
         onError: () => setError('Google login was unsuccessful.'),
-        flow: 'auth-code',
         scope: 'openid email profile'
     });
 

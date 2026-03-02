@@ -60,13 +60,26 @@ export const apiFetch = async (endpoint, options = {}) => {
     }
     
     if (response.status === 204) return null;
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+
+    const rawText = await response.text().catch(() => '');
+    let data = null;
+    if (rawText) {
+        try {
+            data = JSON.parse(rawText);
+        } catch {
+            data = { message: rawText };
+        }
     }
-    
+
+    if (!response.ok) {
+        const message =
+            data?.message ||
+            data?.error ||
+            (typeof data === 'string' ? data : null) ||
+            `Request failed with status ${response.status}`;
+        throw new Error(message);
+    }
+
     return data;
 };
 
