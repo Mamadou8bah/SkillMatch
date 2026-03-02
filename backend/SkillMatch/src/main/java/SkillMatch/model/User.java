@@ -85,7 +85,7 @@ public class User implements UserDetails {
     private boolean loginDisabled = false;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(columnDefinition = "boolean default true")
     private boolean emailNotificationsEnabled = true;
 
     @Builder.Default
