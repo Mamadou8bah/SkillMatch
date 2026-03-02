@@ -38,11 +38,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JobPostService {
 
+    private static final int JOB_RETENTION_DAYS = 14;
 
     private final JobPostRepo repo;
     private final UserInteractionRepository interactionRepo;
     private final ExternalJobService externalJobService;
     private final UserRepo userRepository;
+    private final JobNotificationEmailService jobNotificationEmailService;
 
     public long countJobs() {
         return repo.count();
@@ -62,7 +64,9 @@ public class JobPostService {
         String email = auth.getName();
         User user = userRepository.findByEmail(email);
         jobPost.setEmployer(user.getEmployer());
-        return repo.save(jobPost);
+        JobPost savedJob = repo.save(jobPost);
+        jobNotificationEmailService.notifyIndustryMatches(savedJob);
+        return savedJob;
     }
 
     public List<JobResponseDTO> getJobPost(int pageNo, int readCount) {
@@ -211,6 +215,7 @@ public class JobPostService {
     @Async
     public void syncExternalJobs() {
         log.info("Starting manual job sync in background...");
+        cleanupExpiredJobsBeforeSync();
         
         try {
             List<JobResponseDTO> gamjobs = externalJobService.fetchGamjobs();
@@ -238,6 +243,16 @@ public class JobPostService {
         } catch (Exception e) { log.error("UNJobs sync failed", e); }
         
         log.info("Sync completed.");
+    }
+
+    private void cleanupExpiredJobsBeforeSync() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(JOB_RETENTION_DAYS);
+        long deleted = repo.deleteByPostedAtBefore(cutoff);
+        if (deleted > 0) {
+            log.info("Pre-sync cleanup: deleted {} jobs older than {} days (before {})", deleted, JOB_RETENTION_DAYS, cutoff);
+        } else {
+            log.info("Pre-sync cleanup: no jobs older than {} days were found", JOB_RETENTION_DAYS);
+        }
     }
 
     private void saveExternalJobs(List<JobResponseDTO> jobs, String source) {
@@ -321,7 +336,8 @@ public class JobPostService {
                 }
             }
             post.setRequiredSkills(skills);
-            repo.saveAndFlush(post);
+            JobPost savedPost = repo.saveAndFlush(post);
+            jobNotificationEmailService.notifyIndustryMatches(savedPost);
         } catch (DataIntegrityViolationException e) {
             log.info("Job already exists: {}", dto.getTitle());
         } catch (Exception e) {
@@ -340,9 +356,9 @@ public class JobPostService {
     @Scheduled(cron = "0 0 0 * * *") // Run every day at midnight
     @Transactional
     public void deleteOldJobs() {
-        LocalDateTime fifteenDaysAgo = LocalDateTime.now().minusDays(15);
-        log.info("Started automatic cleanup of jobs older than 15 days (before {})", fifteenDaysAgo);
-        repo.deleteByPostedAtBefore(fifteenDaysAgo);
-        log.info("Finished automatic cleanup.");
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(JOB_RETENTION_DAYS);
+        log.info("Started automatic cleanup of jobs older than {} days (before {})", JOB_RETENTION_DAYS, cutoff);
+        long deleted = repo.deleteByPostedAtBefore(cutoff);
+        log.info("Finished automatic cleanup. Deleted {} expired jobs.", deleted);
     }
 }

@@ -31,8 +31,8 @@
     }
 
     .nav-link {
-        width: 50px;
-        height: 50px;
+        width: 52px;
+        height: 52px;
     }
 
     .nav-link.active,
@@ -42,7 +42,12 @@
     }
 
     .nav-link p {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+    }
+
+    .nav-link svg {
+        width: 23px;
+        height: 23px;
     }
 }
 
@@ -61,8 +66,8 @@
     }
     
     .nav-link {
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        height: 50px;
         flex-shrink: 0;
     }
 
@@ -76,10 +81,15 @@
     .nav-link.active p {
         display: block !important;
         opacity: 1 !important;
-        font-size: 0.8rem;
+        font-size: 0.86rem;
         margin-left: 8px;
         max-width: 100px;
         width: auto;
+    }
+
+    .nav-link svg {
+        width: 22px;
+        height: 22px;
     }
 }
 

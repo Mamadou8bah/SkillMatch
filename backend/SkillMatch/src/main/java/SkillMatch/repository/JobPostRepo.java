@@ -30,5 +30,5 @@ public interface JobPostRepo extends JpaRepository<JobPost,Long> {
 
     long countByPostedAtAfter(java.time.LocalDateTime date);
 
-    void deleteByPostedAtBefore(java.time.LocalDateTime dateTime);
+    long deleteByPostedAtBefore(java.time.LocalDateTime dateTime);
 }

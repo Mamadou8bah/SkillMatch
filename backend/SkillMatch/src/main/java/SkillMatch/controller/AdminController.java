@@ -2,6 +2,8 @@ package SkillMatch.controller;
 
 import SkillMatch.dto.ApiResponse;
 import SkillMatch.dto.RecentActivityDTO;
+import SkillMatch.model.User;
+import SkillMatch.service.JobNotificationEmailService;
 import SkillMatch.service.UserService;
 import SkillMatch.service.JobPostService;
 import SkillMatch.service.ApplicationService;
@@ -9,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +31,7 @@ public class AdminController {
     private final UserService userService;
     private final JobPostService jobPostService;
     private final ApplicationService applicationService;
+    private final JobNotificationEmailService jobNotificationEmailService;
 
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboardStats() {
@@ -69,5 +74,13 @@ public class AdminController {
         activities.sort((a, b) -> b.getDate().compareTo(a.getDate()));
         
         return ResponseEntity.ok(ApiResponse.success("Activities retrieved successfully", activities));
+    }
+
+    @PostMapping("/notifications/test-email")
+    public ResponseEntity<ApiResponse<String>> sendTestNotificationEmail(@RequestParam(required = false) String email) {
+        User admin = userService.getLogInUser();
+        String recipient = (email == null || email.isBlank()) ? admin.getEmail() : email.trim();
+        jobNotificationEmailService.sendTestNotification(recipient, admin.getFullName());
+        return ResponseEntity.ok(ApiResponse.success("Test email queued successfully", recipient));
     }
 }

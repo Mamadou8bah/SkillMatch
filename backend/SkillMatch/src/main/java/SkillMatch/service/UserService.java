@@ -3,6 +3,8 @@ package SkillMatch.service;
 import SkillMatch.dto.LoginRequest;
 import SkillMatch.dto.LoginResponse;
 import SkillMatch.dto.PasswordResetDTO;
+import SkillMatch.dto.ChangePasswordRequest;
+import SkillMatch.dto.EmailNotificationPreferenceRequest;
 import SkillMatch.dto.RegisterRequest;
 import SkillMatch.dto.RegistrationStage1Request;
 import SkillMatch.dto.RegistrationStage2Request;
@@ -110,13 +112,51 @@ public class UserService {
     public User updateUser(long id,User newUser){
         User user=repo.findById(id).orElseThrow(()->new ResourceNotFoundException("User not found"));
 
-        user.setEmail(newUser.getEmail());
-        user.setFullName(newUser.getFullName());
-        user.setPassword(newUser.getPassword());
-        user.setLocation(newUser.getLocation());
+        if (newUser.getEmail() != null && !newUser.getEmail().isBlank()) {
+            user.setEmail(newUser.getEmail().trim().toLowerCase());
+        }
+        if (newUser.getFullName() != null && !newUser.getFullName().isBlank()) {
+            user.setFullName(newUser.getFullName().trim());
+        }
+        if (newUser.getLocation() != null) {
+            user.setLocation(newUser.getLocation().trim());
+        }
+        if (newUser.getProfession() != null) {
+            user.setProfession(newUser.getProfession().trim());
+            user.setIndustry(mapIndustryFromProfession(newUser.getProfession()));
+        }
 
         repo.save(user);
         return  user;
+    }
+
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        User user = getLogInUser();
+
+        if (!encoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMismatchException("New password and confirmation do not match");
+        }
+        if (request.getNewPassword().length() < 6) {
+            throw new ValidationException("New password must be at least 6 characters");
+        }
+        if (encoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new ValidationException("New password must be different from current password");
+        }
+
+        user.setPassword(encoder.encode(request.getNewPassword()));
+        repo.save(user);
+    }
+
+    @Transactional
+    public boolean updateEmailNotificationsPreference(EmailNotificationPreferenceRequest request) {
+        User user = getLogInUser();
+        user.setEmailNotificationsEnabled(Boolean.TRUE.equals(request.getEnabled()));
+        repo.save(user);
+        return user.isEmailNotificationsEnabled();
     }
 
     @Transactional

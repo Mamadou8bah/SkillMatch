@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, LocateFixed } from 'lucide-react';
+import { MapPin, LocateFixed, Search } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { PopularJobCard } from '../components/PopularJobCard';
@@ -22,6 +22,21 @@ const getLocationTag = (job) => (job?.locationType || 'ONSITE').toUpperCase();
 const getLocationText = (job) =>
   (job?.employer?.location || job?.location || job?.city || '').toString().trim();
 const DEFAULT_CENTER = { lat: 13.4549, lng: -16.5790 };
+const normalize = (value) => (value || '').toString().toLowerCase().trim();
+
+const matchesQuery = (job, query) => {
+  const q = normalize(query);
+  if (!q) return true;
+  const haystacks = [
+    job?.title,
+    getCompany(job),
+    getIndustry(job),
+    getLocationText(job),
+    getLocationTag(job),
+    ...(getJobSkills(job) || [])
+  ].map(normalize);
+  return haystacks.some((value) => value.includes(q));
+};
 
 const haversineKm = (a, b) => {
   const toRad = (v) => (v * Math.PI) / 180;
@@ -73,6 +88,9 @@ export const Explore = () => {
   const [jobs, setJobs] = useState([]);
   const [latestJobs, setLatestJobs] = useState([]);
   const [trendingJobs, setTrendingJobs] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [userPosition, setUserPosition] = useState(null);
   const [geoError, setGeoError] = useState('');
   const [jobCoordinates, setJobCoordinates] = useState({});
@@ -156,10 +174,55 @@ export const Explore = () => {
     load();
   }, []);
 
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await apiFetch(`/post/search?title=${encodeURIComponent(query)}`);
+        if (Array.isArray(response)) {
+          setSearchResults(response);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        const fallback = jobs.filter((job) => matchesQuery(job, query));
+        setSearchResults(fallback);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, jobs]);
+
+  const activeQuery = searchQuery.trim();
+  const searchedJobs = useMemo(() => {
+    if (!activeQuery) return [];
+    const source = searchResults.length ? searchResults : jobs.filter((job) => matchesQuery(job, activeQuery));
+    const byId = new Map();
+    source.forEach((job) => {
+      if (job?.id != null && !byId.has(job.id)) byId.set(job.id, job);
+    });
+    return Array.from(byId.values());
+  }, [activeQuery, searchResults, jobs]);
+
+  const latestView = useMemo(() => {
+    if (!activeQuery) return latestJobs;
+    return searchedJobs.slice(0, 12);
+  }, [activeQuery, latestJobs, searchedJobs]);
+
   const trendingView = useMemo(() => {
+    if (activeQuery) return searchedJobs;
     const pool = trendingJobs.length ? trendingJobs : jobs;
     return pool;
-  }, [trendingJobs, jobs]);
+  }, [activeQuery, searchedJobs, trendingJobs, jobs]);
 
   useEffect(() => {
     const geocodeJobs = async () => {
@@ -348,7 +411,7 @@ export const Explore = () => {
 
   useEffect(() => {
     const container = latestScrollRef.current;
-    if (!container || latestJobs.length < 2) return undefined;
+    if (!container || latestView.length < 2) return undefined;
 
     let timer = null;
     const start = () => {
@@ -382,23 +445,43 @@ export const Explore = () => {
       container.removeEventListener('touchstart', stop);
       container.removeEventListener('touchend', start);
     };
-  }, [latestJobs.length]);
+  }, [latestView.length]);
 
   if (isLoading) return <ExploreSkeleton />;
 
   return (
     <div className="explore-page">
+      <section className="explore-hero">
+        <h1>Explore Opportunities</h1>
+        <p>Search by job title, company, industry, location type, or skill.</p>
+        <div style={{ position: 'relative' }}>
+          <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.7, color: 'var(--text-secondary)' }} />
+          <input
+            className="explore-search"
+            style={{ paddingLeft: '2.2rem' }}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search jobs on Explore..."
+          />
+        </div>
+      </section>
+
       <section className="explore-section">
         <div className="explore-section-head">
-          <h2>New Jobs</h2>
+          <h2>{activeQuery ? 'Search Results' : 'New Jobs'}</h2>
+          {activeQuery && <span>{isSearching ? 'Searching...' : `${latestView.length} found`}</span>}
         </div>
         <div className="reco-scroll" ref={latestScrollRef}>
-          {latestJobs.map((job) => (
+          {latestView.map((job) => (
             <Link key={`latest-${job.id}`} to={`/jobs/${job.id}`}>
               <PopularJobCard job={job} />
             </Link>
           ))}
         </div>
+        {activeQuery && !isSearching && latestView.length === 0 && (
+          <p className="map-note">No jobs matched your search.</p>
+        )}
       </section>
 
       <section className="explore-section">
@@ -424,7 +507,7 @@ export const Explore = () => {
 
       <section className="explore-section">
         <div className="explore-section-head">
-          <h2>Trending Jobs</h2>
+          <h2>{activeQuery ? 'Related Jobs' : 'Trending Jobs'}</h2>
         </div>
         <div className="reco-scroll" ref={recoScrollRef}>
           {trendingView.map((job) => (

@@ -55,7 +55,7 @@ public class JobPostController {
     }
 
     @GetMapping("/{id}")
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<?> getJobPostById(@PathVariable long id){
         JobPost post= service.getJobPostById(id);
         return ResponseEntity.ok(post);

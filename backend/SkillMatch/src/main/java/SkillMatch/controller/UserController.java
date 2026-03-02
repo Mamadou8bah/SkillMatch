@@ -1,6 +1,8 @@
 package SkillMatch.controller;
 
 import SkillMatch.dto.ApiResponse;
+import SkillMatch.dto.ChangePasswordRequest;
+import SkillMatch.dto.EmailNotificationPreferenceRequest;
 import SkillMatch.dto.UserDTO;
 import SkillMatch.model.User;
 import SkillMatch.service.UserService;
@@ -60,6 +62,18 @@ public class UserController {
     public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable long id, @Valid @RequestBody User newUser){
         User updatedUser = service.updateUser(id, newUser);
         return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUser));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<String>> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        service.changePassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
+    }
+
+    @PutMapping("/email-notifications")
+    public ResponseEntity<ApiResponse<Boolean>> updateEmailNotifications(@Valid @RequestBody EmailNotificationPreferenceRequest request) {
+        boolean enabled = service.updateEmailNotificationsPreference(request);
+        return ResponseEntity.ok(ApiResponse.success("Email notification preference updated", enabled));
     }
 
     @PostMapping("/{id}/onboarding")

@@ -1,8 +1,10 @@
 .explore-page {
-  --accent: #d76925;
-  --ink: #0f172a;
-  --mist: #e2e8f0;
-  padding: 1rem 1rem 6.5rem;
+  --accent: var(--primary-color, #ff8c00);
+  --ink: var(--text-color, #0f1419);
+  --mist: var(--border-color, #e2e8f0);
+  --surface-soft: color-mix(in oklab, var(--primary-light, #fff0e6) 40%, #ffffff 60%);
+  --accent-soft: color-mix(in oklab, var(--primary-color, #ff8c00) 14%, #ffffff 86%);
+  padding: 1.65rem 1rem 6.5rem;
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -66,13 +68,14 @@
 .explore-hero {
   position: relative;
   background:
-    radial-gradient(120% 150% at 100% 0%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 56%),
-    linear-gradient(130deg, #0f172a 0%, #1f2937 52%, #334155 100%);
-  color: #fff;
+    radial-gradient(120% 150% at 100% 0%, rgba(255, 140, 0, 0.18) 0%, rgba(255, 255, 255, 0) 56%),
+    linear-gradient(130deg, var(--surface-soft) 0%, #ffffff 68%, #fff7ef 100%);
+  color: var(--text-color);
   border-radius: 22px;
   padding: 1rem 1rem 1.1rem;
-  margin-bottom: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in oklab, var(--primary-color, #ff8c00) 22%, var(--border-color) 78%);
+  box-shadow: 0 10px 28px rgba(255, 140, 0, 0.08);
 }
 
 .explore-hero-top {
@@ -94,27 +97,35 @@
   margin: 0 0 0.3rem;
   font-size: 1.48rem;
   letter-spacing: 0.01em;
+  color: var(--text-color);
 }
 
 .explore-hero p {
   margin: 0 0 0.78rem;
-  opacity: 0.9;
+  color: var(--text-secondary);
   font-size: 0.88rem;
   max-width: 680px;
 }
 
 .explore-search {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  border: 1px solid color-mix(in oklab, var(--border-color) 88%, #000000 12%);
+  background: color-mix(in oklab, var(--bg-color, #ffffff) 86%, var(--card-bg, #ffffff) 14%);
+  color: var(--text-color);
   border-radius: 11px;
   padding: 0.7rem 0.8rem;
   outline: none;
+  box-shadow: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .explore-search::placeholder {
-  color: rgba(255, 255, 255, 0.75);
+  color: color-mix(in oklab, var(--text-secondary) 82%, #ffffff 18%);
+}
+
+.explore-search:focus {
+  border-color: color-mix(in oklab, var(--primary-color, #ff8c00) 68%, var(--border-color) 32%);
+  background: var(--card-bg, #ffffff);
 }
 
 .insight-grid {
@@ -160,7 +171,7 @@
 .explore-section h2 {
   margin: 0;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 .explore-section-head {
@@ -184,6 +195,9 @@
 .explore-section-head span {
   color: var(--text-secondary);
   font-size: 0.83rem;
+  background: var(--accent-soft);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
 }
 
 .reco-row {
@@ -251,13 +265,13 @@
 }
 
 .fit-pill {
-  color: #0d9488;
-  background: rgba(13, 148, 136, 0.14);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .loc-pill {
   color: var(--accent);
-  background: rgba(215, 105, 37, 0.13);
+  background: var(--accent-soft);
 }
 
 .mini-tags {
@@ -283,7 +297,7 @@
 
 .chip {
   border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  background: var(--surface-soft);
   color: var(--text-primary);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
@@ -297,7 +311,7 @@
 
 .chip.active {
   border-color: var(--accent);
-  background: rgba(215, 105, 37, 0.11);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -334,7 +348,8 @@
 .explore-map-wrap {
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in oklab, var(--primary-color, #ff8c00) 24%, var(--border-color) 76%);
+  box-shadow: 0 6px 20px rgba(255, 140, 0, 0.08);
 }
 
 .explore-map {
@@ -355,8 +370,55 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #d76925;
+  background: var(--accent);
   border: 2px solid #ffffff;
+}
+
+[data-theme='dark'] .explore-page {
+  --surface-soft: color-mix(in oklab, #1b1e22 86%, var(--primary-color, #ff8c00) 14%);
+  --accent-soft: color-mix(in oklab, var(--primary-color, #ff8c00) 22%, #16181c 78%);
+}
+
+[data-theme='dark'] .explore-hero {
+  background:
+    radial-gradient(120% 150% at 100% 0%, rgba(255, 140, 0, 0.2) 0%, rgba(255, 255, 255, 0) 56%),
+    linear-gradient(130deg, #1a1d21 0%, #15181c 65%, #101215 100%);
+  border: 1px solid color-mix(in oklab, var(--primary-color, #ff8c00) 28%, var(--border-color) 72%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+}
+
+[data-theme='dark'] .explore-search {
+  background: #171a1e;
+  border-color: #343a40;
+  color: var(--text-color);
+}
+
+[data-theme='dark'] .explore-search::placeholder {
+  color: #8a929a;
+}
+
+[data-theme='dark'] .explore-search:focus {
+  border-color: color-mix(in oklab, var(--primary-color, #ff8c00) 72%, #3b424a 28%);
+  background: #1b1f24;
+}
+
+[data-theme='dark'] .explore-section-head span {
+  color: #ffcf9a;
+  background: rgba(255, 140, 0, 0.18);
+}
+
+[data-theme='dark'] .chip {
+  background: #1a1d21;
+  border-color: #2f3338;
+}
+
+[data-theme='dark'] .chip.active {
+  background: rgba(255, 140, 0, 0.2);
+}
+
+[data-theme='dark'] .explore-map-wrap {
+  border: 1px solid #2f3338;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 1000px) {
@@ -379,7 +441,7 @@
 
 @media (max-width: 640px) {
   .explore-page {
-    padding: 0.85rem 0.85rem 6.2rem;
+    padding: 1.2rem 0.85rem 6.2rem;
   }
 
   .explore-hero {

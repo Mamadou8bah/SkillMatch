@@ -383,6 +383,26 @@ const JobManagement = () => {
 };
 
 const AdminSettings = () => {
+    const [testEmail, setTestEmail] = useState('');
+    const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+
+    const handleSendTestEmail = async () => {
+        setIsSendingTestEmail(true);
+        try {
+            const query = testEmail.trim() ? `?email=${encodeURIComponent(testEmail.trim())}` : '';
+            const response = await apiFetch(`/api/admin/notifications/test-email${query}`, { method: 'POST' });
+            if (response.success) {
+                alert(`Test email queued for ${response.data}`);
+            } else {
+                alert(response.message || 'Failed to queue test email');
+            }
+        } catch (err) {
+            alert('Failed to queue test email');
+        } finally {
+            setIsSendingTestEmail(false);
+        }
+    };
+
     return (
         <div className="admin-card">
             <h3>System Settings</h3>
@@ -410,6 +430,46 @@ const AdminSettings = () => {
                             <option>Weekly</option>
                             <option>Manual Only</option>
                         </select>
+                    </div>
+                </div>
+
+                <div style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
+                    <h4 style={{ marginBottom: '0.5rem' }}>Email Notifications</h4>
+                    <p style={{ marginTop: 0, color: '#777', fontSize: '0.9rem' }}>
+                        Send a sample job-match notification email to verify templates and delivery.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <input
+                            type="email"
+                            value={testEmail}
+                            onChange={(e) => setTestEmail(e.target.value)}
+                            placeholder="Optional recipient email (defaults to your admin email)"
+                            style={{
+                                padding: '0.65rem 0.8rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--card-bg)',
+                                color: 'var(--text-color)',
+                                minWidth: '320px',
+                                maxWidth: '100%'
+                            }}
+                        />
+                        <button
+                            className="btn-primary"
+                            onClick={handleSendTestEmail}
+                            disabled={isSendingTestEmail}
+                            style={{
+                                background: 'var(--primary-color)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '0.65rem 1rem',
+                                borderRadius: '10px',
+                                fontWeight: '600',
+                                cursor: isSendingTestEmail ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            {isSendingTestEmail ? 'Sending...' : 'Send Test Notification Email'}
+                        </button>
                     </div>
                 </div>
 

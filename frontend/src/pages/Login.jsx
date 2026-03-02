@@ -906,21 +906,9 @@ export const Login = () => {
                     )}
 
                     <div className="signup-link" style={{ marginTop: '2rem' }}>
-                        {regStage > 1 && (
-                            <p style={{ marginBottom: '10px' }}>
-                                Not you? <span onClick={() => {
-                                    localStorage.removeItem('regUserId');
-                                    localStorage.removeItem('regStage');
-                                    localStorage.removeItem('regEmail');
-                                    localStorage.removeItem('regAuthProvider');
-                                    setRegStage(1);
-                                    setUserId(null);
-                                    setEmail('');
-                                    setIsGoogleOnboarding(false);
-                                }}>Start over</span>
-                            </p>
+                        {regStage === 1 && (
+                            <p>Already have an account? <span onClick={() => setHasAccount(true)}>Sign In</span></p>
                         )}
-                        <p>Already have an account? <span onClick={() => setHasAccount(true)}>Sign In</span></p>
                     </div>
                 </div>
             )}

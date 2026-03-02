@@ -54,7 +54,6 @@ export const Profile = () => {
     role: "",
     location: "",
     profession: "",
-    mobile: "",
     photoUrl: ""
   });
   const currentAvatar = getAvatarConfig(userId);
@@ -74,6 +73,7 @@ export const Profile = () => {
       language: 'English'
     };
   });
+  const [notificationSaving, setNotificationSaving] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('userSettings', JSON.stringify(settings));
@@ -100,6 +100,13 @@ export const Profile = () => {
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -132,11 +139,14 @@ export const Profile = () => {
           role: data.data.role || '',
           location: data.data.location || '',
           profession: data.data.profession || '',
-          mobile: data.data.mobile || '',
           photoUrl: data.data.photo?.url || ''
         };
         setProfileData(profileInfo);
         chatCache.set(`profile_${userId}`, profileInfo);
+        setSettings(prev => ({
+          ...prev,
+          emailNotifications: data.data.emailNotificationsEnabled !== false
+        }));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -180,7 +190,6 @@ export const Profile = () => {
     if (!profileData.fullName.trim()) return setError('Full Name is required');
     if (!profileData.location.trim()) return setError('Location is required');
     if (!profileData.profession.trim()) return setError('Profession is required');
-    if (!profileData.mobile.trim()) return setError('Mobile number is required');
 
     try {
       const data = await apiFetch(`/api/users/${userId}`, {
@@ -266,6 +275,65 @@ export const Profile = () => {
     redirectToLogin();
   };
 
+  const toggleEmailNotifications = async () => {
+    setError('');
+    const nextValue = !settings.emailNotifications;
+    setSettings(prev => ({ ...prev, emailNotifications: nextValue }));
+    setNotificationSaving(true);
+    try {
+      const response = await apiFetch('/api/users/email-notifications', {
+        method: 'PUT',
+        body: JSON.stringify({ enabled: nextValue })
+      });
+      if (!response.success) {
+        setSettings(prev => ({ ...prev, emailNotifications: !nextValue }));
+        setError(response.message || 'Failed to update email notifications');
+      }
+    } catch (e) {
+      setSettings(prev => ({ ...prev, emailNotifications: !nextValue }));
+      setError('Failed to update email notifications');
+    } finally {
+      setNotificationSaving(false);
+    }
+  };
+
+  const handlePasswordFieldChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async () => {
+    setError('');
+    setPasswordMessage('');
+
+    if (!passwordForm.currentPassword.trim()) return setError('Current password is required');
+    if (!passwordForm.newPassword.trim()) return setError('New password is required');
+    if (passwordForm.newPassword.length < 6) return setError('New password must be at least 6 characters');
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) return setError('New password and confirmation do not match');
+
+    setPasswordLoading(true);
+    try {
+      const response = await apiFetch('/api/users/change-password', {
+        method: 'POST',
+        body: JSON.stringify(passwordForm)
+      });
+      if (response.success) {
+        setPasswordMessage('Password changed successfully');
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+      } else {
+        setError(response.message || 'Failed to change password');
+      }
+    } catch (e) {
+      setError('Failed to change password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const renderBackBtn = () => (
     <button className="back-btn" onClick={() => { setActiveView('main'); }}>
       <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
@@ -346,10 +414,6 @@ export const Profile = () => {
           <div className="form-group">
             <label>Profession</label>
             <input type="text" name="profession" value={profileData.profession} onChange={handleInputChange} className="form-input" />
-          </div>
-          <div className="form-group">
-            <label>Mobile</label>
-            <input type="text" name="mobile" value={profileData.mobile} onChange={handleInputChange} className="form-input" />
           </div>
           <button className="save-btn" onClick={handleSaveProfile}>Save Changes</button>
         </div>
@@ -478,7 +542,8 @@ export const Profile = () => {
                 <input 
                   type="checkbox" 
                   checked={settings.emailNotifications} 
-                  onChange={() => toggleSetting('emailNotifications')} 
+                  onChange={toggleEmailNotifications}
+                  disabled={notificationSaving}
                 />
                 <span className="slider round"></span>
               </label>
@@ -487,7 +552,7 @@ export const Profile = () => {
 
           <div className="settings-section">
             <h3>Account & Security</h3>
-            <div className="setting-item-link" onClick={() => {}}>
+            <div className="setting-item-link" onClick={() => setActiveView('changePassword')}>
               <div className="setting-info">
                 <Lock size={20} />
                 <span>Change Password</span>
@@ -517,6 +582,56 @@ export const Profile = () => {
           <div className="version-info">
             SkillMatch v1.0.2
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeView === 'changePassword') {
+    return (
+      <div className="profile-container sub-view">
+        <div className="edit-header">
+          {renderBackBtn()}
+          <h2>Change Password</h2>
+          <div className="spacer"></div>
+        </div>
+        <div className="edit-form">
+          {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
+          {passwordMessage && <div style={{ color: 'green', marginBottom: '1rem', fontSize: '0.9rem' }}>{passwordMessage}</div>}
+
+          <div className="form-group">
+            <label>Current Password</label>
+            <input
+              type="password"
+              name="currentPassword"
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordFieldChange}
+              className="form-input"
+            />
+          </div>
+          <div className="form-group">
+            <label>New Password</label>
+            <input
+              type="password"
+              name="newPassword"
+              value={passwordForm.newPassword}
+              onChange={handlePasswordFieldChange}
+              className="form-input"
+            />
+          </div>
+          <div className="form-group">
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={passwordForm.confirmPassword}
+              onChange={handlePasswordFieldChange}
+              className="form-input"
+            />
+          </div>
+          <button className="save-btn" onClick={handleChangePassword} disabled={passwordLoading}>
+            {passwordLoading ? 'Updating...' : 'Update Password'}
+          </button>
         </div>
       </div>
     );

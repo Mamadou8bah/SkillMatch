@@ -85,6 +85,10 @@ public class User implements UserDetails {
     private boolean loginDisabled = false;
 
     @Builder.Default
+    @Column(nullable = false)
+    private boolean emailNotificationsEnabled = true;
+
+    @Builder.Default
     private int registrationStage = 1;
 
     @OneToMany(mappedBy = "user")
