@@ -175,7 +175,7 @@ public class RecommendationService {
 
     private String buildUserNarrative(User user) {
         StringBuilder narrative = new StringBuilder();
-        String latestTitle = (user.getExperiences() == null || user.getExperiences().isEmpty()) ? "Professional" : user.getExperiences().get(0).getJobTitle();
+        String latestTitle = (user.getProfession() == null || user.getProfession().isBlank()) ? "Professional" : user.getProfession();
         double years = calculateTotalExperience(user);
 
         narrative.append(latestTitle)
@@ -187,13 +187,6 @@ public class RecommendationService {
             narrative.append("Skilled in: ")
                     .append(user.getSkills().stream().map(Skill::getTitle).collect(Collectors.joining(", ")))
                     .append(". ");
-        }
-
-        if (user.getExperiences() != null) {
-            user.getExperiences().forEach(e -> {
-                narrative.append("Worked at ").append(e.getCompanyName()).append(" as ").append(e.getJobTitle()).append(". ");
-                if (e.getDescription() != null) narrative.append(e.getDescription()).append(" ");
-            });
         }
 
         return narrative.toString();
@@ -458,14 +451,16 @@ public class RecommendationService {
     }
 
     private double calculateTotalExperience(User user) {
-        if (user.getExperiences() == null) return 0;
-        return user.getExperiences().stream()
-                .mapToDouble(ex -> {
-                    java.time.LocalDate start = ex.getStartDate();
-                    java.time.LocalDate end = ex.getEndDate() != null ? ex.getEndDate() : java.time.LocalDate.now();
-                    return java.time.temporal.ChronoUnit.MONTHS.between(start, end) / 12.0;
-                })
-                .sum();
+        String level = user.getExperienceLevel();
+        if (level == null) return 0;
+        String normalized = level.toLowerCase(Locale.ROOT);
+        if (normalized.contains("entry") || normalized.contains("0-1")) return 0.5;
+        if (normalized.contains("junior") || normalized.contains("1-3")) return 2.0;
+        if (normalized.contains("intermediate") || normalized.contains("3-5")) return 4.0;
+        if (normalized.contains("mid")) return 4.0;
+        if (normalized.contains("senior") || normalized.contains("5+")) return 6.0;
+        if (normalized.contains("lead") || normalized.contains("manager")) return 8.0;
+        return 2.0;
     }
 
 

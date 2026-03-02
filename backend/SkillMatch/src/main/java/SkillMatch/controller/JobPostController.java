@@ -34,6 +34,12 @@ public class JobPostController {
         return ResponseEntity.ok(service.getAllJobs());
     }
 
+    @GetMapping("/trending")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<JobResponseDTO>> getTrendingJobs(@RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(service.getTrendingJobs(size));
+    }
+
     @PostMapping("/add")
     @Transactional
     public ResponseEntity<?> addJob(@Valid @RequestBody JobPost jobPost){

@@ -17,9 +17,6 @@ public record RegistrationStage2Request(
         @NotBlank(message = "Profession is required")
         String profession,
 
-        @NotBlank(message = "Industry is required")
-        String industry,
-
         String photo
 ) {
 }

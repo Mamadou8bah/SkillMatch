@@ -3,27 +3,26 @@
 }
 
 .jp-header{
-    margin: 0;
-    display: flex;
-    flex-direction: row;
+    margin: 0 0 0.6rem;
+    display: grid;
+    grid-template-columns: 2rem 1fr 2rem;
     align-items: center;
-    gap: 1rem;
-    position: relative;
+    gap: 0.6rem;
+}
+.jp-header a{
+    grid-column: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .jp-header h2{
     margin: 0;
     font-size: 1.2rem;
     font-weight: 600;
+    grid-column: 2;
     justify-self: center;
     text-align: center;
     color: #333333;
-    position: absolute;
-    left: 50%;
-}
-@media(max-width:640px) {
-    .jp-header h2{
-        left: 45%;
-    }
 }
 
 .back-button{

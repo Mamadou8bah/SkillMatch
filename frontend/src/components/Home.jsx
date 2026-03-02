@@ -4,14 +4,27 @@ import '../styles/home.css';
 import { PopularJobCard } from './PopularJobCard';
 import { JobCard } from './JobCard';
 import { apiFetch } from '../utils/api';
-import Loader from './Loader';
 import { chatCache } from '../utils/cache';
+import { getAvatarUrlForUser } from '../utils/avatar';
+
+const HomeSkeleton = () => (
+    <div className="home-loading">
+        <div className="home-skeleton home-skel-header" />
+        <div className="home-skeleton home-skel-carousel" />
+        <div className="home-skeleton home-skel-title" />
+        <div className="home-skeleton home-skel-list-item" />
+        <div className="home-skeleton home-skel-list-item" />
+        <div className="home-skeleton home-skel-list-item" />
+    </div>
+);
 
 export const Home = () => {
     const storedFirstName = localStorage.getItem('firstName');
     const [userData, setUserData] = useState({ 
         firstName: storedFirstName || 'User', 
-        photoUrl: null 
+        photoUrl: null,
+        fullName: '',
+        email: ''
     });
     const [jobsList, setJobsList] = useState([]);
     const [recommendedJobs, setRecommendedJobs] = useState([]);
@@ -34,7 +47,9 @@ export const Home = () => {
                 if (data.success) {
                     const newUserData = { 
                         firstName: data.data.fullName?.split(' ')[0] || 'User',
-                        photoUrl: data.data.photo?.url 
+                        photoUrl: data.data.photo?.url,
+                        fullName: data.data.fullName || '',
+                        email: data.data.email || ''
                     };
                     setUserData(newUserData);
                     // Update cache with updated user info but keep notification count if already there
@@ -184,7 +199,7 @@ export const Home = () => {
                             {userData.photoUrl ? (
                                 <img src={userData.photoUrl} alt="Profile" />
                             ) : (
-                                <img src="https://www.shutterstock.com/image-vector/default-avatar-social-media-display-600nw-2632690107.jpg" alt="Default Avatar" />
+                                <img src={getAvatarUrlForUser({ userId, fullName: userData.fullName, email: userData.email })} alt="Avatar" />
                             )}
                         </div>
                     </Link>
@@ -207,9 +222,9 @@ export const Home = () => {
                     />
                 </div>
             </div>
-            {isLoading ? (
+            {isLoading && jobsList.length === 0 && recommendedJobs.length === 0 ? (
                 <div className="home-content">
-                    <Loader />
+                    <HomeSkeleton />
                 </div>
             ) : jobsList.length === 0 ? (
                 <div className="no-jobs-container">

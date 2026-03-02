@@ -30,7 +30,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -197,8 +199,10 @@ public class UserService {
         if (request.location() != null) user.setLocation(request.location());
         if (request.experienceLevel() != null) user.setExperienceLevel(request.experienceLevel());
         if (request.role() != null) user.setRole(request.role());
-        if (request.profession() != null) user.setProfession(request.profession());
-        if (request.industry() != null) user.setIndustry(request.industry());
+        if (request.profession() != null) {
+            user.setProfession(request.profession());
+            user.setIndustry(mapIndustryFromProfession(request.profession()));
+        }
         
         if (request.photo() != null && !request.photo().isEmpty()) {
             try {
@@ -256,7 +260,9 @@ public class UserService {
         }
 
         if (data.containsKey("profession")) {
-            user.setProfession((String) data.get("profession"));
+            String profession = (String) data.get("profession");
+            user.setProfession(profession);
+            user.setIndustry(mapIndustryFromProfession(profession));
         }
 
         if (data.containsKey("experience")) {
@@ -553,6 +559,57 @@ public class UserService {
             throw new InvalidCodeOrTokenException("Invalid Google token, access token, or authorization code");
         }
         return payload;
+    }
+
+    private String mapIndustryFromProfession(String profession) {
+        if (profession == null || profession.isBlank()) return "General";
+        String key = profession.toLowerCase().trim();
+
+        Map<String, String> map = new HashMap<>();
+        map.put("software engineer", "Technology");
+        map.put("frontend developer", "Technology");
+        map.put("backend developer", "Technology");
+        map.put("full stack developer", "Technology");
+        map.put("mobile developer", "Technology");
+        map.put("data analyst", "Data & Analytics");
+        map.put("data scientist", "Data & Analytics");
+        map.put("product manager", "Technology");
+        map.put("project manager", "Business Operations");
+        map.put("devops engineer", "Technology");
+        map.put("qa engineer", "Technology");
+        map.put("ui/ux designer", "Design");
+        map.put("graphic designer", "Design");
+        map.put("digital marketer", "Marketing");
+        map.put("content writer", "Marketing");
+        map.put("sales representative", "Sales");
+        map.put("account manager", "Sales");
+        map.put("customer support specialist", "Customer Service");
+        map.put("hr specialist", "Human Resources");
+        map.put("recruiter", "Human Resources");
+        map.put("accountant", "Finance");
+        map.put("financial analyst", "Finance");
+        map.put("business analyst", "Business Operations");
+        map.put("operations manager", "Business Operations");
+        map.put("teacher", "Education");
+        map.put("lecturer", "Education");
+        map.put("nurse", "Healthcare");
+        map.put("doctor", "Healthcare");
+        map.put("pharmacist", "Healthcare");
+        map.put("lawyer", "Legal");
+        map.put("legal officer", "Legal");
+        map.put("civil engineer", "Engineering");
+        map.put("mechanical engineer", "Engineering");
+        map.put("electrical engineer", "Engineering");
+        map.put("architect", "Engineering");
+        map.put("supply chain specialist", "Logistics");
+        map.put("logistics coordinator", "Logistics");
+        map.put("administrative assistant", "Administration");
+        map.put("executive assistant", "Administration");
+        map.put("public relations officer", "Communications");
+        map.put("social media manager", "Marketing");
+        map.put("security analyst", "Cybersecurity");
+
+        return map.getOrDefault(key, "General");
     }
 
 }

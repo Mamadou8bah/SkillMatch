@@ -98,6 +98,12 @@
     margin-bottom: 1rem;
 }
 
+.discover-list a{
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
 .pagination{
     display: flex;
     flex-direction: column-reverse;
@@ -158,4 +164,45 @@
 .next-btn{
    
     transition: transform 0.3s ease;
+}
+
+.discover-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.discover-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in oklab, var(--card-bg, #f3f4f6) 88%, #ffffff 12%);
+}
+
+.discover-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+    animation: discover-shimmer 1.3s infinite;
+}
+
+.discover-skel-search {
+    height: 42px;
+}
+
+.discover-skel-tags {
+    height: 32px;
+}
+
+.discover-skel-card {
+    height: 108px;
+}
+
+@keyframes discover-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }

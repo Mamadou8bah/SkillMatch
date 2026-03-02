@@ -3,13 +3,13 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.95rem;
     background-color: var(--card-bg);
     position: fixed;
     bottom: 30px;
     width: fit-content;
     max-width: 90vw;
-    padding: 10px;
+    padding: 12px;
     left: 50%;
     transform: translateX(-50%);
     box-shadow: 0 10px 40px rgba(0,0,0,0.12);
@@ -25,32 +25,32 @@
     .nav-bar {
         bottom: 20px;
         bottom: calc(20px + env(safe-area-inset-bottom));
-        gap: 0.5rem;
-        padding: 8px;
+        gap: 0.65rem;
+        padding: 10px;
         max-width: 95vw;
     }
 
     .nav-link {
-        width: 44px;
-        height: 44px;
+        width: 50px;
+        height: 50px;
     }
 
     .nav-link.active,
     a.nav-link.active {
-        min-width: 100px;
-        padding: 0 15px;
+        min-width: 110px;
+        padding: 0 17px;
     }
 
     .nav-link p {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 }
 
 /* Small Device Optimizations */
 @media (max-width: 450px) {
     .nav-bar {
-        gap: 0.3rem;
-        padding: 6px;
+        gap: 0.45rem;
+        padding: 8px;
         max-width: 95vw;
         width: fit-content;
         bottom: 20px;
@@ -61,15 +61,15 @@
     }
     
     .nav-link {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         flex-shrink: 0;
     }
 
     .nav-link.active,
     a.nav-link.active {
-        min-width: 110px;
-        padding: 0 16px;
+        min-width: 116px;
+        padding: 0 18px;
         width: auto;
     }
 
@@ -100,12 +100,12 @@
 .element {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 120px;
+    padding-bottom: 136px;
 }
 
 @media (max-width: 768px) {
     .element {
-        padding-bottom: 100px; /* Reduced for mobile screens */
+        padding-bottom: 120px;
     }
 }
 
@@ -128,8 +128,8 @@
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     background-color: var(--hover-color);
     text-decoration: none;
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     border: 1px solid transparent;
     overflow: hidden;
 }
@@ -139,8 +139,8 @@
 }
 
 .nav-link svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     margin: 0;
     flex-shrink: 0;
     display: block;
@@ -148,7 +148,7 @@
 
 .nav-link p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     color: inherit;
     max-width: 0;
@@ -169,14 +169,14 @@ a.nav-link.active {
     color: #ffffff;
     width: auto;
     min-width: fit-content;
-    padding: 0 20px;
+    padding: 0 22px;
     box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
 }
 
 .nav-link.active p {
     max-width: 300px;
     opacity: 1;
-    margin-left: 10px;
+    margin-left: 11px;
     width: auto;
 }
 

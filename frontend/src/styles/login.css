@@ -444,3 +444,48 @@
     background: #272c30;
 }
 
+.google-processing-page {
+    min-height: calc(100vh - 2rem);
+    min-height: calc(100dvh - 2rem);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.google-processing-logo {
+    width: 110px;
+    height: auto;
+}
+
+.google-processing-page h2 {
+    margin: 0.25rem 0 0;
+    font-size: 1.35rem;
+    color: var(--text-color);
+}
+
+.google-processing-page p {
+    margin: 0;
+    max-width: 320px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.google-processing-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 140, 0, 0.22);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: googleSpin 0.9s linear infinite;
+}
+
+@keyframes googleSpin {
+    to { transform: rotate(360deg); }
+}
+

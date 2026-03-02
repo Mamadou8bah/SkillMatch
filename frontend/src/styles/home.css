@@ -216,6 +216,13 @@
     margin-bottom: 7rem;
 }
 
+.recent-jobs a,
+.searched-jobs a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
 .searching {
     display: none;
 }
@@ -257,4 +264,51 @@
 
 .no-jobs-text {
     font-size: 0.9rem;
+}
+
+.home-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 0 1rem;
+}
+
+.home-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in oklab, var(--card-bg, #f3f4f6) 88%, #ffffff 12%);
+}
+
+.home-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+    animation: home-shimmer 1.3s infinite;
+}
+
+.home-skel-header {
+    height: 190px;
+}
+
+.home-skel-carousel {
+    height: 200px;
+}
+
+.home-skel-title {
+    height: 22px;
+    width: 45%;
+}
+
+.home-skel-list-item {
+    height: 102px;
+}
+
+@keyframes home-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }

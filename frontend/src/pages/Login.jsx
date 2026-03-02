@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import '../styles/login.css'
-import { Eye, EyeOff, MapPin, Briefcase, Camera, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
+import { Eye, EyeOff, MapPin, Briefcase, Plus, X, Code, Palette, TrendingUp, Edit3, BarChart, PieChart, Users, Target, Headphones, Package, Cloud, ShieldCheck, Megaphone, Settings } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 
 import Loader from '../components/Loader'
 import { apiFetch, isTokenExpired } from '../utils/api'
+import { AVATAR_STYLES, AVATAR_VARIANTS, buildAvatarUrl, saveAvatarConfig } from '../utils/avatar'
 
 export const Login = () => {
     const navigate = useNavigate()
@@ -16,13 +17,13 @@ export const Login = () => {
     const [fullName, setFullName] = useState('')
     const [location, setLocation] = useState('')
     const [profession, setProfession] = useState('')
-    const [industry, setIndustry] = useState('')
     const [experienceLevel, setExperienceLevel] = useState('')
     const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', ''])
-    const [photo, setPhoto] = useState(null)
-    const [photoPreview, setPhotoPreview] = useState(null)
     const [skills, setSkills] = useState([])
     const [skillInput, setSkillInput] = useState('')
+    const [avatarStyle, setAvatarStyle] = useState('adventurer')
+    const [avatarVariant, setAvatarVariant] = useState('1')
+    const [isGoogleOnboarding, setIsGoogleOnboarding] = useState(localStorage.getItem('regAuthProvider') === 'GOOGLE')
 
     const [userId, setUserId] = useState(null)
     const [regStage, setRegStage] = useState(1)
@@ -31,11 +32,15 @@ export const Login = () => {
         const savedUserId = localStorage.getItem('regUserId');
         const savedRegStage = localStorage.getItem('regStage');
         const savedEmail = localStorage.getItem('regEmail');
+        const savedAuthProvider = localStorage.getItem('regAuthProvider');
         
-        if (savedUserId && savedRegStage && !localStorage.getItem('token')) {
+        if (savedUserId && savedRegStage) {
             setUserId(savedUserId);
-            setRegStage(parseInt(savedRegStage));
+            const parsedStage = parseInt(savedRegStage, 10);
+            // Stage 3 (photo) is deprecated; continue at skills stage.
+            setRegStage(parsedStage === 3 ? 4 : parsedStage);
             if (savedEmail) setEmail(savedEmail);
+            if (savedAuthProvider === 'GOOGLE') setIsGoogleOnboarding(true);
             setHasAccount(false);
         }
     }, []);
@@ -58,6 +63,101 @@ export const Login = () => {
         { title: "Operations", icon: <Settings size={18} /> }
     ];
 
+    const professionOptions = [
+        'Software Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'Mobile Developer',
+        'Data Analyst', 'Data Scientist', 'Product Manager', 'Project Manager', 'DevOps Engineer', 'QA Engineer',
+        'UI/UX Designer', 'Graphic Designer', 'Digital Marketer', 'Content Writer', 'Sales Representative',
+        'Account Manager', 'Customer Support Specialist', 'HR Specialist', 'Recruiter', 'Accountant',
+        'Financial Analyst', 'Business Analyst', 'Operations Manager', 'Teacher', 'Lecturer', 'Nurse', 'Doctor',
+        'Pharmacist', 'Lawyer', 'Legal Officer', 'Civil Engineer', 'Mechanical Engineer', 'Electrical Engineer',
+        'Architect', 'Supply Chain Specialist', 'Logistics Coordinator', 'Administrative Assistant',
+        'Executive Assistant', 'Public Relations Officer', 'Social Media Manager', 'Security Analyst'
+    ];
+
+    const locationOptions = [
+        'Banjul, The Gambia',
+        'Kanifing, The Gambia',
+        'Serrekunda, The Gambia',
+        'Bakau, The Gambia',
+        'Brikama, The Gambia',
+        'Sukuta, The Gambia',
+        'Lamin, The Gambia',
+        'Farato, The Gambia',
+        'Gunjur, The Gambia',
+        'Sanyang, The Gambia',
+        'Tanji, The Gambia',
+        'Kotu, The Gambia',
+        'Kololi, The Gambia',
+        'Fajara, The Gambia',
+        'Kerr Serign, The Gambia',
+        'Abuko, The Gambia',
+        'Yundum, The Gambia',
+        'Basse, The Gambia',
+        'Soma, The Gambia',
+        'Farafenni, The Gambia',
+        'Kerewan, The Gambia',
+        'Mansa Konko, The Gambia',
+        'Essau, The Gambia',
+        'Barra, The Gambia',
+        'Bwiam, The Gambia',
+        'Janjanbureh, The Gambia'
+    ];
+
+    const canonicalFromOptions = (value, options) => {
+        const trimmed = value.trim();
+        const match = options.find(o => o.toLowerCase() === trimmed.toLowerCase());
+        return match || '';
+    };
+
+    const mapIndustryFromProfession = (professionName) => {
+        const key = (professionName || '').toLowerCase().trim();
+        const map = {
+            'software engineer': 'Technology',
+            'frontend developer': 'Technology',
+            'backend developer': 'Technology',
+            'full stack developer': 'Technology',
+            'mobile developer': 'Technology',
+            'data analyst': 'Data & Analytics',
+            'data scientist': 'Data & Analytics',
+            'product manager': 'Technology',
+            'project manager': 'Business Operations',
+            'devops engineer': 'Technology',
+            'qa engineer': 'Technology',
+            'ui/ux designer': 'Design',
+            'graphic designer': 'Design',
+            'digital marketer': 'Marketing',
+            'content writer': 'Marketing',
+            'sales representative': 'Sales',
+            'account manager': 'Sales',
+            'customer support specialist': 'Customer Service',
+            'hr specialist': 'Human Resources',
+            'recruiter': 'Human Resources',
+            'accountant': 'Finance',
+            'financial analyst': 'Finance',
+            'business analyst': 'Business Operations',
+            'operations manager': 'Business Operations',
+            'teacher': 'Education',
+            'lecturer': 'Education',
+            'nurse': 'Healthcare',
+            'doctor': 'Healthcare',
+            'pharmacist': 'Healthcare',
+            'lawyer': 'Legal',
+            'legal officer': 'Legal',
+            'civil engineer': 'Engineering',
+            'mechanical engineer': 'Engineering',
+            'electrical engineer': 'Engineering',
+            'architect': 'Engineering',
+            'supply chain specialist': 'Logistics',
+            'logistics coordinator': 'Logistics',
+            'administrative assistant': 'Administration',
+            'executive assistant': 'Administration',
+            'public relations officer': 'Communications',
+            'social media manager': 'Marketing',
+            'security analyst': 'Cybersecurity'
+        };
+        return map[key] || 'General';
+    };
+
     const toggleSkill = (skill) => {
         const isSelected = skills.some(s => s.toLowerCase() === skill.toLowerCase());
         if (isSelected) {
@@ -74,26 +174,11 @@ export const Login = () => {
         }
     };
 
-    const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                setError('Photo size should be less than 2MB');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoPreview(reader.result);
-                setPhoto(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
     const [focused, setFocused] = useState('')
     const [hasAccount, setHasAccount] = useState(true)
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [isGoogleProcessing, setIsGoogleProcessing] = useState(false)
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -120,9 +205,26 @@ export const Login = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (token && !isTokenExpired(token)) {
+        const savedAuthProvider = localStorage.getItem('regAuthProvider');
+        const stage = parseInt(localStorage.getItem('registrationStage') || '0', 10);
+        const googleIncomplete = savedAuthProvider === 'GOOGLE' && stage > 0 && stage < 3;
+
+        if (token && !isTokenExpired(token) && !googleIncomplete) {
             const role = localStorage.getItem('userRole');
             navigate(role === 'ADMIN' ? '/admin' : '/');
+            return;
+        }
+
+        if (token && !isTokenExpired(token) && googleIncomplete) {
+            setHasAccount(false);
+            setIsGoogleOnboarding(true);
+            const stagedUserId = localStorage.getItem('regUserId') || localStorage.getItem('userId');
+            if (stagedUserId) setUserId(stagedUserId);
+            const parsedStage = stage === 3 ? 4 : stage;
+            if (parsedStage > 0) {
+                setRegStage(parsedStage);
+                localStorage.setItem('regStage', String(parsedStage));
+            }
             return;
         }
 
@@ -180,7 +282,6 @@ export const Login = () => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
-                console.log('Google token response keys:', Object.keys(tokenResponse || {}));
                 const data = await apiFetch('/api/auth/google/login', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -198,28 +299,46 @@ export const Login = () => {
                     localStorage.setItem('registrationStage', data.data.registrationStage)
                     localStorage.setItem('firstName', data.data.firstName)
                     localStorage.setItem('hasVisited', 'true')
+                    localStorage.setItem('regAuthProvider', 'GOOGLE')
+                    setIsGoogleOnboarding(true)
 
-                    if (data.data.registrationStage < 4) {
-                        setUserId(data.data.userId);
-                        setRegStage(data.data.registrationStage);
-                        setHasAccount(false);
-                        localStorage.setItem('regUserId', data.data.userId);
-                        localStorage.setItem('regStage', data.data.registrationStage);
-                    } else {
+                    // Google users never require email verification. If skills are done (stage >= 3), continue to app.
+                    if (data.data.registrationStage >= 3) {
+                        localStorage.removeItem('regUserId')
+                        localStorage.removeItem('regStage')
+                        localStorage.removeItem('regEmail')
+                        localStorage.removeItem('regAuthProvider')
                         const role = data.data.role;
                         navigate(role === 'ADMIN' ? '/admin' : '/');
+                    } else {
+                        const nextStage = data.data.registrationStage === 3 ? 4 : data.data.registrationStage;
+                        setUserId(data.data.userId);
+                        setRegStage(nextStage);
+                        setHasAccount(false);
+                        localStorage.setItem('regUserId', data.data.userId);
+                        localStorage.setItem('regStage', nextStage);
                     }
                 }
             } catch (err) {
-                console.error('Google login API error:', err);
                 setError(err.message || 'Google login failed. Please try again.');
             } finally {
+                setIsGoogleProcessing(false);
                 setIsLoading(false);
             }
         },
-        onError: () => setError('Google login was unsuccessful.'),
+        onError: () => {
+            setIsGoogleProcessing(false);
+            setIsLoading(false);
+            setError('Google login was unsuccessful.');
+        },
         scope: 'openid email profile'
     });
+
+    const handleGoogleClick = () => {
+        setError('');
+        setIsGoogleProcessing(true);
+        loginWithGoogle();
+    };
 
     const handleStage1 = async (e) => {
         e.preventDefault()
@@ -252,13 +371,15 @@ export const Login = () => {
                 setUserId(data.data.id)
                 let nextStage = 2;
                 if (data.data.registrationStage === 1) nextStage = 2;
-                else if (data.data.registrationStage === 2) nextStage = 3;
+                else if (data.data.registrationStage === 2) nextStage = 4; // photo stage removed
                 else if (data.data.registrationStage === 3) nextStage = 5;
                 
                 setRegStage(nextStage)
                 localStorage.setItem('regUserId', data.data.id)
                 localStorage.setItem('regStage', nextStage)
                 localStorage.setItem('regEmail', email)
+                localStorage.setItem('regAuthProvider', 'EMAIL')
+                setIsGoogleOnboarding(false)
             } else {
                 setError(data.message)
             }
@@ -272,18 +393,14 @@ export const Login = () => {
     const handleStage2 = async (e) => {
         e.preventDefault()
         
-        if (location.trim().length < 3) {
-            setError('Please enter a valid location (City, Country)')
+        const selectedLocation = canonicalFromOptions(location, locationOptions);
+        if (!selectedLocation) {
+            setError('Please search and select a location from the list')
             return
         }
-
-        if (profession.trim().length < 2) {
-            setError('Please enter your profession')
-            return
-        }
-
-        if (industry.trim().length < 2) {
-            setError('Please enter your industry')
+        const selectedProfession = canonicalFromOptions(profession, professionOptions);
+        if (!selectedProfession) {
+            setError('Please search and select a profession from the list')
             return
         }
 
@@ -294,44 +411,24 @@ export const Login = () => {
 
         setIsLoading(true)
         try {
+            const mappedIndustry = mapIndustryFromProfession(selectedProfession);
             const data = await apiFetch(`/api/auth/register/stage2/${userId}`, {
                 method: 'POST',
                 body: JSON.stringify({ 
-                    location, 
-                    profession, 
-                    industry,
+                    location: selectedLocation, 
+                    profession: selectedProfession,
+                    industry: mappedIndustry,
                     experienceLevel,
                     role: 'CANDIDATE' 
                 })
             })
             if (data.success) {
-                setRegStage(3)
-                localStorage.setItem('regStage', 3)
-            }
-        } catch (err) {
-            setError('Update failed.')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleStage3 = async (e) => {
-        e.preventDefault()
-        // Photo is optional, so we can proceed even if null
-        setIsLoading(true)
-        try {
-            const data = await apiFetch(`/api/auth/register/stage2/${userId}`, {
-                method: 'POST',
-                body: JSON.stringify({ photo })
-            })
-            if (data.success) {
+                // Photo stage removed; continue directly to skills.
                 setRegStage(4)
                 localStorage.setItem('regStage', 4)
             }
         } catch (err) {
-            setError('Failed to save photo.')
-            setRegStage(4)
-            localStorage.setItem('regStage', 4)
+            setError('Update failed.')
         } finally {
             setIsLoading(false)
         }
@@ -350,8 +447,20 @@ export const Login = () => {
                 body: JSON.stringify({ skills })
             })
             if (data.success) {
-                setRegStage(5)
-                localStorage.setItem('regStage', 5)
+                localStorage.setItem('avatarStyle', avatarStyle)
+                saveAvatarConfig(localStorage.getItem('userId') || userId, avatarStyle, avatarVariant)
+                if (isGoogleOnboarding) {
+                    localStorage.setItem('registrationStage', '3')
+                    localStorage.removeItem('regUserId')
+                    localStorage.removeItem('regStage')
+                    localStorage.removeItem('regEmail')
+                    localStorage.removeItem('regAuthProvider')
+                    const role = localStorage.getItem('userRole')
+                    navigate(role === 'ADMIN' ? '/admin' : '/')
+                } else {
+                    setRegStage(5)
+                    localStorage.setItem('regStage', 5)
+                }
             } else {
                 setError(data.message || 'Failed to save skills. Please try again.')
             }
@@ -379,6 +488,7 @@ export const Login = () => {
                 localStorage.removeItem('regUserId')
                 localStorage.removeItem('regStage')
                 localStorage.removeItem('regEmail')
+                localStorage.removeItem('regAuthProvider')
                 setHasAccount(true)
             } else {
                 setError(data.message)
@@ -425,6 +535,16 @@ export const Login = () => {
 
     return (
         <div className="login-page">
+            {isGoogleProcessing && (
+                <div className="google-processing-page">
+                    <img src="/assets/logos/skillmatch-logo.png" alt="SkillMatch Logo" className="google-processing-logo" />
+                    <div className="google-processing-spinner" />
+                    <h2>Securing Your Google Sign-In</h2>
+                    <p>We are verifying your account and preparing your workspace.</p>
+                </div>
+            )}
+            {!isGoogleProcessing && (
+            <>
             <div className="back-button">
                 <button onClick={() => navigate('/')}>
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor">
@@ -473,14 +593,14 @@ export const Login = () => {
                         </button>
                     </form>
                     <div className="social-login" style={{ marginTop: '1rem' }}>
-                        <button 
-                            type="button" 
-                            className="google-login-btn" 
-                            onClick={() => loginWithGoogle()}
-                            disabled={isLoading}
-                        >
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
-                            Continue with Google
+                            <button 
+                                type="button" 
+                                className="google-login-btn" 
+                                onClick={handleGoogleClick}
+                                disabled={isLoading || isGoogleProcessing}
+                            >
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
+                                Continue with Google
                         </button>
                     </div>
                     <div className="signup-link">
@@ -495,15 +615,13 @@ export const Login = () => {
                     <p className="welcome-back">
                         {regStage === 1 ? 'Create account' : 
                          regStage === 2 ? 'About you' : 
-                         regStage === 3 ? 'Profile Photo' :
                          regStage === 4 ? 'What are your skills?' :
                          'Verify Identity'}
                     </p>
                     <p className="welcome-subheading">
                         {regStage === 5 ? `A 6-digit verification code has been delivered to ${email}` : 
                          regStage === 4 ? 'Select skills that best describe what you can do' :
-                         regStage === 3 ? 'Add a photo so people can recognize you (Optional)' :
-                         `Step ${regStage} of 4`}
+                         `Step ${regStage === 4 ? 3 : regStage} of 3`}
                     </p>
 
                     {regStage === 1 && (
@@ -548,8 +666,8 @@ export const Login = () => {
                             <button 
                                 type="button" 
                                 className="google-login-btn" 
-                                onClick={() => loginWithGoogle()}
-                                disabled={isLoading}
+                                onClick={handleGoogleClick}
+                                disabled={isLoading || isGoogleProcessing}
                             >
                                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
                                 Sign up with Google
@@ -568,8 +686,14 @@ export const Login = () => {
                                     onChange={(e) => setLocation(e.target.value)} 
                                     onFocus={() => setFocused('location')} 
                                     onBlur={() => setFocused('')} 
-                                    placeholder='Location (City, Country)' 
+                                    placeholder='Search and select location' 
+                                    list="location-options"
                                 />
+                                <datalist id="location-options">
+                                    {locationOptions.map((opt) => (
+                                        <option key={opt} value={opt} />
+                                    ))}
+                                </datalist>
                             </div>
                             <div className={focused === 'profession' ? 'input-div focused' : 'input-div'}>
                                 <label><Briefcase size={20} /></label>
@@ -580,20 +704,14 @@ export const Login = () => {
                                     onChange={(e) => setProfession(e.target.value)} 
                                     onFocus={() => setFocused('profession')} 
                                     onBlur={() => setFocused('')} 
-                                    placeholder='Profession (e.g. Software Engineer)' 
+                                    placeholder='Search and select profession' 
+                                    list="profession-options"
                                 />
-                            </div>
-                            <div className={focused === 'industry' ? 'input-div focused' : 'input-div'}>
-                                <label><Target size={20} /></label>
-                                <input 
-                                    type="text" 
-                                    required 
-                                    value={industry} 
-                                    onChange={(e) => setIndustry(e.target.value)} 
-                                    onFocus={() => setFocused('industry')} 
-                                    onBlur={() => setFocused('')} 
-                                    placeholder='Industry (e.g. Tech, Finance, Healthcare)' 
-                                />
+                                <datalist id="profession-options">
+                                    {professionOptions.map((opt) => (
+                                        <option key={opt} value={opt} />
+                                    ))}
+                                </datalist>
                             </div>
                             <div className={focused === 'experience' ? 'input-div focused' : 'input-div'}>
                                 <label><TrendingUp size={20} /></label>
@@ -627,52 +745,52 @@ export const Login = () => {
                         </form>
                     )}
 
-                    {regStage === 3 && (
-                        <form onSubmit={handleStage3} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-                            <div className="photo-upload-container" style={{ position: 'relative' }}>
-                                <div className="photo-preview-circle" style={{ 
-                                    width: '120px', 
-                                    height: '120px', 
-                                    borderRadius: '50%', 
-                                    background: '#f0f2f5', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    border: '2px dashed #ff8c00',
-                                    overflow: 'hidden'
-                                }}>
-                                    {photoPreview ? (
-                                        <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <Camera size={40} color="#ff8c00" />
-                                    )}
-                                </div>
-                                <label className="photo-upload-label" style={{
-                                    position: 'absolute',
-                                    bottom: '0',
-                                    right: '0',
-                                    background: '#ff8c00',
-                                    color: 'white',
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer'
-                                }}>
-                                    <Plus size={20} />
-                                    <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
-                                </label>
-                            </div>
-                            <button type="submit" className="login-button" disabled={isLoading}>
-                                {isLoading ? <Loader size="small" /> : (photo ? 'Save & Continue' : 'Skip for now')}
-                            </button>
-                        </form>
-                    )}
-
                     {regStage === 4 && (
                         <form onSubmit={handleStage4} style={{ width: '100%' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <p style={{ fontSize: '0.9rem', marginBottom: '8px', color: '#555' }}>Choose your avatar:</p>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                                    {AVATAR_STYLES.map((style) => (
+                                        <button
+                                            key={style}
+                                            type="button"
+                                            onClick={() => setAvatarStyle(style)}
+                                            style={{
+                                                padding: '6px 10px',
+                                                borderRadius: '999px',
+                                                border: `1px solid ${avatarStyle === style ? '#ff8c00' : '#ddd'}`,
+                                                background: avatarStyle === style ? '#fff3e0' : '#fff',
+                                                cursor: 'pointer',
+                                                textTransform: 'capitalize'
+                                            }}
+                                        >
+                                            {style}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+                                    {AVATAR_VARIANTS.map((variant) => {
+                                        const src = buildAvatarUrl(avatarStyle, `${fullName || email || 'SkillMatchUser'}-${variant}`);
+                                        const active = avatarVariant === variant;
+                                        return (
+                                            <button
+                                                key={variant}
+                                                type="button"
+                                                onClick={() => setAvatarVariant(variant)}
+                                                style={{
+                                                    border: active ? '2px solid #ff8c00' : '1px solid #ddd',
+                                                    borderRadius: '12px',
+                                                    padding: '2px',
+                                                    background: '#fff',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <img src={src} alt={`Avatar ${variant}`} style={{ width: '100%', display: 'block' }} />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                             <div className="skills-grid">
                                 {diverseSkills.map((skill, idx) => (
                                     <div 
@@ -794,15 +912,19 @@ export const Login = () => {
                                     localStorage.removeItem('regUserId');
                                     localStorage.removeItem('regStage');
                                     localStorage.removeItem('regEmail');
+                                    localStorage.removeItem('regAuthProvider');
                                     setRegStage(1);
                                     setUserId(null);
                                     setEmail('');
+                                    setIsGoogleOnboarding(false);
                                 }}>Start over</span>
                             </p>
                         )}
                         <p>Already have an account? <span onClick={() => setHasAccount(true)}>Sign In</span></p>
                     </div>
                 </div>
+            )}
+            </>
             )}
         </div>
     )

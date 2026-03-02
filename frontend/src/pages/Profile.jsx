@@ -6,12 +6,9 @@ import {
   LogOut,
   ChevronRight,
   Bell,
-  Briefcase,
   Award,
   Plus,
   X,
-  Trash2,
-  Camera,
   Settings,
   Globe,
   Lock,
@@ -20,13 +17,24 @@ import {
   HelpCircle,
   Smartphone
 } from 'lucide-react';
-import Loader from '../components/Loader';
 import { commonSkills } from '../data/skills';
 import { apiFetch, redirectToLogin } from '../utils/api';
 import { chatCache } from '../utils/cache';
+import { AVATAR_STYLES, AVATAR_VARIANTS, buildAvatarUrl, getAvatarConfig, saveAvatarConfig } from '../utils/avatar';
+
+const ProfileSkeleton = () => (
+  <div className="profile-container">
+    <div className="profile-skeleton profile-skel-top" />
+    <div className="profile-skeleton profile-skel-block" />
+    <div className="profile-skeleton profile-skel-row" />
+    <div className="profile-skeleton profile-skel-row" />
+    <div className="profile-skeleton profile-skel-row" />
+  </div>
+);
 
 export const Profile = () => {
   const navigate = useNavigate();
+  const userId = localStorage.getItem('userId');
   const [activeView, setActiveView] = useState('main'); 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,9 +55,11 @@ export const Profile = () => {
     location: "",
     profession: "",
     mobile: "",
-    experienceLevel: "",
     photoUrl: ""
   });
+  const currentAvatar = getAvatarConfig(userId);
+  const [avatarStyle, setAvatarStyle] = useState(currentAvatar.style);
+  const [avatarVariant, setAvatarVariant] = useState(currentAvatar.variant);
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('userSettings');
@@ -78,22 +88,18 @@ export const Profile = () => {
     setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const generatedAvatarUrl = buildAvatarUrl(
+    avatarStyle,
+    `${profileData.fullName || profileData.email || 'SkillMatchUser'}-${avatarVariant}`
+  );
+
+  useEffect(() => {
+    saveAvatarConfig(userId, avatarStyle, avatarVariant);
+  }, [avatarStyle, avatarVariant, userId]);
+
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-
-  const [experiences, setExperiences] = useState([]);
-  const [newExperience, setNewExperience] = useState({
-    companyName: '',
-    jobTitle: '',
-    startDate: '',
-    endDate: '',
-    description: ''
-  });
-
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -110,7 +116,7 @@ export const Profile = () => {
     const cachedProfile = chatCache.get(`profile_${userId}`);
     if (cachedProfile) {
       setProfileData(cachedProfile);
-      // Don't set isLoading(false) here yet if we want a fresh fetch in background
+      setIsLoading(false);
     }
 
     try {
@@ -127,7 +133,6 @@ export const Profile = () => {
           location: data.data.location || '',
           profession: data.data.profession || '',
           mobile: data.data.mobile || '',
-          experienceLevel: data.data.experienceLevel || '',
           photoUrl: data.data.photo?.url || ''
         };
         setProfileData(profileInfo);
@@ -142,7 +147,10 @@ export const Profile = () => {
 
   const fetchSkills = useCallback(async () => {
     const cachedSkills = chatCache.get(`skills_${userId}`);
-    if (cachedSkills) setSkills(cachedSkills);
+    if (cachedSkills) {
+      setSkills(cachedSkills);
+      setIsLoading(false);
+    }
 
     try {
       const data = await apiFetch(`/api/skill/user/${userId}`);
@@ -155,65 +163,16 @@ export const Profile = () => {
     }
   }, [userId]);
 
-  const fetchExperiences = useCallback(async () => {
-    const cachedExp = chatCache.get(`exp_${userId}`);
-    if (cachedExp) setExperiences(cachedExp);
-
-    try {
-      const data = await apiFetch(`/api/experience/user/${userId}`);
-      if (data.success) {
-        setExperiences(data.data || []);
-        chatCache.set(`exp_${userId}`, data.data || []);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [userId]);
-
   useEffect(() => {
     if (userId) {
       fetchUserProfile();
       fetchSkills();
-      fetchExperiences();
     }
-  }, [userId, fetchUserProfile, fetchSkills, fetchExperiences]);
+  }, [userId, fetchUserProfile, fetchSkills]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size exceeds 5MB limit');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      setIsLoading(true);
-      const data = await apiFetch(`/api/users/${userId}/photo`, {
-        method: 'POST',
-        body: formData
-      });
-      if (data.success) {
-        fetchUserProfile();
-      } else {
-        setError(data.message || 'Failed to upload photo');
-      }
-    } catch (err) {
-      console.error('Error uploading photo:', err);
-      if (err.message !== 'Unauthorized' && err.message !== 'Token expired') {
-        setError('Error uploading photo');
-      }
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleSaveProfile = async () => {
@@ -301,56 +260,14 @@ export const Profile = () => {
     }
   };
 
-  const handleAddExperience = async () => {
-    setError('');
-    if (!newExperience.companyName.trim()) return setError('Company Name is required');
-    if (!newExperience.jobTitle.trim()) return setError('Job Title is required');
-    if (!newExperience.startDate.trim()) return setError('Start Date is required');
-    if (!newExperience.description.trim()) return setError('Description is required');
-
-    try {
-      const data = await apiFetch('/api/experience', {
-        method: 'POST',
-        body: JSON.stringify(newExperience)
-      });
-      if (data.success) {
-        setExperiences([...experiences, data.data]);
-        setNewExperience({
-          companyName: '',
-          jobTitle: '',
-          startDate: '',
-          endDate: '',
-          description: ''
-        });
-        setShowAddForm(false);
-      }
-    } catch (e) {
-      console.error(e);
-      if (e.message !== 'Unauthorized' && e.message !== 'Token expired') {
-        setError('Failed to add experience');
-      }
-    }
-  };
-
-  const handleDeleteExperience = async (id) => {
-    try {
-      const data = await apiFetch(`/api/experience/${id}`, {
-        method: 'DELETE'
-      });
-      if (data.success) {
-        setExperiences(experiences.filter(exp => exp.id !== id));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleLogout = () => {
+    const shouldLogout = window.confirm('Are you sure you wanna lock out?');
+    if (!shouldLogout) return;
     redirectToLogin();
   };
 
   const renderBackBtn = () => (
-    <button className="back-btn" onClick={() => { setActiveView('main'); setShowAddForm(false); }}>
+    <button className="back-btn" onClick={() => { setActiveView('main'); }}>
       <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
         <path fill="currentColor" d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"></path>
         <path fill="currentColor" d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"></path>
@@ -358,7 +275,7 @@ export const Profile = () => {
     </button>
   );
 
-  if (isLoading) return <Loader fullPage={true} />;
+  if (isLoading) return <ProfileSkeleton />;
 
   if (activeView === 'edit') {
     return (
@@ -373,19 +290,48 @@ export const Profile = () => {
           
           <div className="edit-photo-section" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
             <div className="profile-avatar-container">
-              {profileData.photoUrl ? (
-                <img src={profileData.photoUrl} alt="Profile" className="profile-image-large" />
-              ) : (
-                <img 
-                  src="https://www.shutterstock.com/image-vector/default-avatar-social-media-display-600nw-2632690107.jpg" 
-                  alt="Default Avatar" 
-                  className="profile-image-large" 
-                />
-              )}
-              <label className="photo-upload-label">
-                <Camera size={20} />
-                <input type="file" onChange={handlePhotoChange} hidden accept="image/*" />
-              </label>
+              <img src={generatedAvatarUrl} alt="Profile" className="profile-image-large" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Avatar Style</label>
+            <select
+              value={avatarStyle}
+              onChange={(e) => setAvatarStyle(e.target.value)}
+              className="form-input"
+            >
+              {AVATAR_STYLES.map((style) => (
+                <option key={style} value={style}>{style[0].toUpperCase() + style.slice(1)}</option>
+              ))}
+            </select>
+            <small style={{ color: '#777' }}>Choose from multiple avatar styles and looks.</small>
+          </div>
+          <div className="form-group">
+            <label>Avatar Variant</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+              {AVATAR_VARIANTS.map((variant) => {
+                const src = buildAvatarUrl(
+                  avatarStyle,
+                  `${profileData.fullName || profileData.email || 'SkillMatchUser'}-${variant}`
+                );
+                const active = avatarVariant === variant;
+                return (
+                  <button
+                    key={variant}
+                    type="button"
+                    onClick={() => setAvatarVariant(variant)}
+                    style={{
+                      border: active ? '2px solid #ff8c00' : '1px solid #ddd',
+                      borderRadius: '12px',
+                      padding: '2px',
+                      background: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <img src={src} alt={`Avatar ${variant}`} style={{ width: '100%', display: 'block' }} />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -404,16 +350,6 @@ export const Profile = () => {
           <div className="form-group">
             <label>Mobile</label>
             <input type="text" name="mobile" value={profileData.mobile} onChange={handleInputChange} className="form-input" />
-          </div>
-          <div className="form-group">
-            <label>Experience Level</label>
-            <select name="experienceLevel" value={profileData.experienceLevel} onChange={handleInputChange} className="form-input">
-              <option value="">Select Level</option>
-              <option value="Entry Level">Entry Level</option>
-              <option value="Mid Level">Mid Level</option>
-              <option value="Senior Level">Senior Level</option>
-              <option value="Lead/Manager">Lead/Manager</option>
-            </select>
           </div>
           <button className="save-btn" onClick={handleSaveProfile}>Save Changes</button>
         </div>
@@ -468,65 +404,6 @@ export const Profile = () => {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeView === 'experience') {
-    return (
-      <div className="profile-container sub-view">
-        <div className="edit-header">
-          {renderBackBtn()}
-          <h2>Experience</h2>
-          <button className="add-btn" onClick={() => setShowAddForm(true)}><Plus size={20} /></button>
-        </div>
-        {showAddForm && (
-          <div className="add-experience-form">
-            <h3>Add New Experience</h3>
-            {error && <div className="error-message" style={{ color: 'red', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
-            <div className="exp-row">
-              <div className="form-group">
-                <label>Company Name</label>
-                <input type="text" placeholder="e.g. Google" value={newExperience.companyName} onChange={(e) => setNewExperience({...newExperience, companyName: e.target.value})} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>Job Title</label>
-                <input type="text" placeholder="e.g. Senior Developer" value={newExperience.jobTitle} onChange={(e) => setNewExperience({...newExperience, jobTitle: e.target.value})} className="form-input" />
-              </div>
-            </div>
-            <div className="exp-row">
-              <div className="form-group">
-                <label>Start Date</label>
-                <input type="date" value={newExperience.startDate} onChange={(e) => setNewExperience({...newExperience, startDate: e.target.value})} className="form-input" />
-              </div>
-              <div className="form-group">
-                <label>End Date</label>
-                <input type="date" value={newExperience.endDate} onChange={(e) => setNewExperience({...newExperience, endDate: e.target.value})} className="form-input" />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <textarea placeholder="Describe your roles and achievements..." value={newExperience.description} onChange={(e) => setNewExperience({...newExperience, description: e.target.value})} className="form-input experience-textarea" rows={4} />
-            </div>
-            <div className="form-actions">
-              <button className="cancel-btn" onClick={() => setShowAddForm(false)}>Cancel</button>
-              <button className="save-experience-btn" onClick={handleAddExperience}>Add Experience</button>
-            </div>
-          </div>
-        )}
-        <div className="experience-list-container">
-          {experiences.map(exp => (
-            <div key={exp.id} className="experience-card">
-              <div className="exp-card-header">
-                <h3>{exp.jobTitle}</h3>
-                <button onClick={() => handleDeleteExperience(exp.id)} className="remove-exp-btn"><Trash2 size={18} /></button>
-              </div>
-              <p className="exp-company">{exp.companyName}</p>
-              <p className="exp-dates">{exp.startDate} - {exp.endDate || 'Present'}</p>
-              {exp.description && <p className="exp-desc">{exp.description}</p>}
-            </div>
-          ))}
         </div>
       </div>
     );
@@ -647,85 +524,75 @@ export const Profile = () => {
 
   return (
     <div className="profile-container">
-      <div className="profile-header">
-        <div className="edit-header" style={{ width: '100%', marginBottom: '1rem', padding: '0' }}>
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
-              <path fill="currentColor" d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"></path>
-              <path fill="currentColor" d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"></path>
-            </svg>
-          </button>
-          <div className="spacer"></div>
-        </div>
-        <div className="profile-avatar-container">
-          {profileData.photoUrl ? (
-            <img src={profileData.photoUrl} alt="Profile" className="profile-image-large" />
-          ) : (
-            <img 
-              src="https://www.shutterstock.com/image-vector/default-avatar-social-media-display-600nw-2632690107.jpg" 
-              alt="Default Avatar" 
-              className="profile-image-large" 
-            />
-          )}
-          <label className="photo-upload-label">
-            <Camera size={20} />
-            <input type="file" onChange={handlePhotoChange} hidden accept="image/*" />
-          </label>
-        </div>
-        <h1 className="profile-name">{profileData.fullName}</h1>
-        <p className="profile-role">{profileData.profession || profileData.role}</p>
-        <div className="profile-location">
-          <Globe size={14} />
-          <span>{profileData.location || "Location not set"}</span>
-        </div>
+      <div className="edit-header" style={{ width: '100%', marginBottom: '1rem', padding: '0' }}>
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24px" height="24px">
+            <path fill="currentColor" d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"></path>
+            <path fill="currentColor" d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"></path>
+          </svg>
+        </button>
+        <h2>Profile</h2>
+        <div className="spacer"></div>
       </div>
 
-      <div className="profile-menu">
-        <div className="menu-item" onClick={() => setActiveView('edit')}>
-          <div className="menu-icon-wrapper"><UserIcon size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Personal Information</span>
-            <span className="menu-value">{profileData.email}</span>
+      <div className="settings-list profile-main-settings">
+        <div className="settings-section">
+          <h3>Account</h3>
+          <div className="setting-row profile-summary-row">
+            <div className="setting-info">
+              <div className="profile-avatar-container">
+                <img src={generatedAvatarUrl} alt="Profile" className="profile-image-large" />
+              </div>
+              <div className="menu-content">
+                <span className="menu-label">{profileData.fullName || 'Your Name'}</span>
+                <span className="menu-value">{profileData.profession || profileData.role || 'Profession not set'}</span>
+                <span className="menu-value">{profileData.location || 'Location not set'}</span>
+              </div>
+            </div>
           </div>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-item" onClick={() => setActiveView('skills')}>
-          <div className="menu-icon-wrapper"><Award size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Skills</span>
-            <span className="menu-value">{skills.slice(0, 3).map(s => s.title).join(', ')}{skills.length > 3 ? '...' : ''}</span>
+          <div className="setting-item-link" onClick={() => setActiveView('edit')}>
+            <div className="setting-info">
+              <UserIcon size={20} />
+              <span>Personal Information</span>
+            </div>
+            <ChevronRight size={18} />
           </div>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-item" onClick={() => setActiveView('experience')}>
-          <div className="menu-icon-wrapper"><Briefcase size={20} /></div>
-          <div className="menu-content">
-            <span className="menu-label">Experience</span>
-            <span className="menu-value">{experiences.length} {experiences.length === 1 ? 'entry' : 'entries'}</span>
+          <div className="setting-item-link" onClick={() => setActiveView('skills')}>
+            <div className="setting-info">
+              <Award size={20} />
+              <span>Skills</span>
+            </div>
+            <span className="menu-value">{skills.length}</span>
           </div>
-          <ChevronRight className="chevron" size={20} />
         </div>
 
-        <div className="menu-divider"></div>
-
-        <div className="menu-item" onClick={() => navigate('/notifications')}>
-          <div className="menu-icon-wrapper"><Bell size={20} /></div>
-          <span className="menu-label">Notifications</span>
-          <ChevronRight className="chevron" size={20} />
+        <div className="settings-section">
+          <h3>General</h3>
+          <div className="setting-item-link" onClick={() => navigate('/notifications')}>
+            <div className="setting-info">
+              <Bell size={20} />
+              <span>Notifications</span>
+            </div>
+            <ChevronRight size={18} />
+          </div>
+          <div className="setting-item-link" onClick={() => setActiveView('settings')}>
+            <div className="setting-info">
+              <Settings size={20} />
+              <span>Settings</span>
+            </div>
+            <ChevronRight size={18} />
+          </div>
         </div>
 
-        <div className="menu-item" onClick={() => setActiveView('settings')}>
-          <div className="menu-icon-wrapper"><Settings size={20} /></div>
-          <span className="menu-label">Settings</span>
-          <ChevronRight className="chevron" size={20} />
-        </div>
-
-        <div className="menu-item logout" onClick={handleLogout}>
-          <div className="menu-icon-wrapper"><LogOut size={20} /></div>
-          <span className="menu-label">Log out</span>
-          <ChevronRight className="chevron" size={20} />
+        <div className="settings-section">
+          <h3>Session</h3>
+          <div className="setting-item-link logout-link" onClick={handleLogout}>
+            <div className="setting-info">
+              <LogOut size={20} />
+              <span>Log out</span>
+            </div>
+            <ChevronRight size={18} />
+          </div>
         </div>
       </div>
     </div>

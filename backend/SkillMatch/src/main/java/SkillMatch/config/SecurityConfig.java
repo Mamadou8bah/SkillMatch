@@ -47,7 +47,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/post/add", "/post/sync").hasAnyRole("EMPLOYER", "ADMIN")
                         .requestMatchers("/api/auth/me").authenticated()
-                        .requestMatchers("/user/**", "/experience/**", "/education/**", "/skill/**",
+                        .requestMatchers("/user/**", "/education/**", "/skill/**",
                                 "/candidates/**", "/post/**", "/api/apply/**").authenticated()
                         .anyRequest().authenticated()
                 )

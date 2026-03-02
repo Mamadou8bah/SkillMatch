@@ -2,9 +2,18 @@ import React, { useState, useMemo, useEffect } from 'react'
 import '../styles/discover.css'
 import { JobCard } from './JobCard'
 import { Link } from 'react-router-dom'
-import Loader from './Loader'
 import { apiFetch } from '../utils/api'
 import { chatCache } from '../utils/cache'
+
+const DiscoverSkeleton = () => (
+  <div className="discover-loading">
+    <div className="discover-skeleton discover-skel-search" />
+    <div className="discover-skeleton discover-skel-tags" />
+    <div className="discover-skeleton discover-skel-card" />
+    <div className="discover-skeleton discover-skel-card" />
+    <div className="discover-skeleton discover-skel-card" />
+  </div>
+)
 
 export const Discover = () => {
   const [search, setSearch] = useState('')
@@ -132,8 +141,8 @@ export const Discover = () => {
         
       </div>
 
-      {isLoading ? (
-          <Loader />
+      {isLoading && jobsList.length === 0 ? (
+          <DiscoverSkeleton />
       ) : paginated.length === 0 ? (
           <div className="no-jobs-container" style={{ marginTop: '2rem' }}>
             <p className="no-jobs-title">

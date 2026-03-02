@@ -97,11 +97,6 @@ public class User implements UserDetails {
     @Builder.Default
     private List<Education> educations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
-    @JsonIgnore
-    @Builder.Default
-    private List<Experience> experiences = new ArrayList<>();
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnore
     @Builder.Default

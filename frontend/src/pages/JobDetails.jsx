@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useBookmarks } from '../contexts/BookmarksContext'
 import '../styles/jobdetails.css'
 import Loader from '../components/Loader'
@@ -206,7 +206,6 @@ export const JobDetails = () => {
                                             <p className="applicant-email">{app.user.email}</p>
                                         </div>
                                     </div>
-                                    <Link to={`/messages/${app.user.id}`} className="message-btn">Message</Link>
                                 </div>
                             ))
                         )}

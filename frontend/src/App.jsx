@@ -11,11 +11,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmarks } from './components/Bookmarks';
 import { JobDetails } from './pages/JobDetails';
 import { Profile } from './pages/Profile';
-import { Messages } from './pages/Messages';
-import { Conversation } from './components/Conversation';
-import { Candidates } from './components/Candidates';
 import { Notifications } from './pages/Notifications';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { Explore } from './pages/Explore';
 
 import { ManageJobs } from './components/ManageJobs';
 import InstallPrompt from './components/InstallPrompt';
@@ -132,16 +130,16 @@ function App() {
             <Route index element={<Home />} />
             <Route path="about" element={<div>About</div>} />
             <Route path="profile" element={<Profile />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="messages/:id" element={<Conversation />} />
+            <Route path="explore" element={<Explore />} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="candidates" element={<Candidates />} />
             <Route path="jobs" element={<Jobs />}>
               <Route index element={role === 'EMPLOYER' ? <ManageJobs /> : <Discover />} />
               <Route path="discover" element={<Discover />} />
               <Route path="bookmarks" element={<Bookmarks />} />
             </Route>
             <Route path="jobs/:id" element={<JobDetails />} />
+            <Route path="messages/*" element={<Navigate to="/explore" replace />} />
+            <Route path="candidates/*" element={<Navigate to="/explore" replace />} />
             <Route path="admin/*" element={<AdminDashboard />} />
           </Route>
         </Routes>
@@ -155,6 +153,8 @@ const AuthGuard = () => {
   const location = useLocation();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
+  const registrationStage = parseInt(localStorage.getItem('registrationStage') || '0', 10);
+  const regAuthProvider = localStorage.getItem('regAuthProvider');
   const hasVisited = localStorage.getItem('hasVisited');
   const isAuthenticated = !!token && !isTokenExpired(token);
 
@@ -173,6 +173,14 @@ const AuthGuard = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  const isGoogleIncomplete = regAuthProvider === 'GOOGLE' && registrationStage > 0 && registrationStage < 3;
+  if (isGoogleIncomplete) {
+    const userId = localStorage.getItem('userId');
+    if (userId && !localStorage.getItem('regUserId')) localStorage.setItem('regUserId', userId);
+    localStorage.setItem('regStage', String(registrationStage));
+    return <Navigate to="/login" state={{ mode: 'signup', from: location }} replace />;
+  }
+
   if (userRole === 'ADMIN' && location.pathname === '/') {
     return <Navigate to="/admin" replace />;
   }
@@ -181,4 +189,3 @@ const AuthGuard = () => {
 }
 
 export default App;
-

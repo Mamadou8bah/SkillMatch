@@ -28,7 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +79,44 @@ public class JobPostService {
         return repo.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .sorted(Comparator.comparing(JobResponseDTO::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
+
+    public List<JobResponseDTO> getTrendingJobs(int limit) {
+        List<Object[]> topClicks = interactionRepo.findTopClickedJobIds(PageRequest.of(0, Math.max(1, limit)));
+
+        if (topClicks.isEmpty()) {
+            return getRecentJobs(Math.max(1, limit)).stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList());
+        }
+
+        List<Long> ids = topClicks.stream()
+                .map(row -> (Long) row[0])
+                .collect(Collectors.toList());
+
+        Map<Long, Long> clickCounts = new HashMap<>();
+        for (Object[] row : topClicks) {
+            clickCounts.put((Long) row[0], (Long) row[1]);
+        }
+
+        Map<Long, JobPost> jobById = repo.findAllById(ids).stream()
+                .collect(Collectors.toMap(JobPost::getId, j -> j));
+
+        return ids.stream()
+                .map(jobById::get)
+                .filter(java.util.Objects::nonNull)
+                .sorted((a, b) -> {
+                    long aClicks = clickCounts.getOrDefault(a.getId(), 0L);
+                    long bClicks = clickCounts.getOrDefault(b.getId(), 0L);
+                    if (aClicks == bClicks) {
+                        return Comparator.comparing(JobPost::getPostedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                                .compare(a, b);
+                    }
+                    return Long.compare(bClicks, aClicks);
+                })
+                .limit(Math.max(1, limit))
+                .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
