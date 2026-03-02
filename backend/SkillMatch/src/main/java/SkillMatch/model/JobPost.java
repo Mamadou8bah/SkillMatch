@@ -74,7 +74,7 @@ public class JobPost {
     @Enumerated(EnumType.STRING)
     private LocationType locationType;
 
-    @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "jobPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Skill> requiredSkills;
     

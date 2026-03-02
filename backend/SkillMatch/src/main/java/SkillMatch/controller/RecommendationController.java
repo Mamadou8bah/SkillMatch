@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @RestController
 @RequestMapping("/api/recommendations")
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class RecommendationController {
     private final JobPostService jobPostService;
 
     @GetMapping("/jobs")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<JobPost>>> getJobRecommendations() {
         User user = userService.getLogInUser();
         List<JobPost> recommendations = recommendationService.recommendJobs(user);
@@ -35,6 +38,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/jobs/all")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<JobResponseDTO>>> getAllRankedJobs() {
         User user = userService.getLogInUser();
         List<JobPost> rankedJobs = recommendationService.recommendAllJobs(user);
@@ -45,6 +49,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/candidates/{jobId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<User>>> getCandidateRecommendations(@PathVariable Long jobId) {
         JobPost job = jobPostRepo.findById(jobId)
                 .orElseThrow(() -> new SkillMatch.exception.ResourceNotFoundException("Job not found"));
@@ -53,6 +58,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/matches")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<CandidateJobMatchDTO>>> getPrecomputedMatches(@RequestParam(defaultValue = "20") int limit) {
         User user = userService.getLogInUser();
         List<CandidateJobMatchDTO> matches = candidateJobMatchService.getTopMatches(user, limit);
@@ -60,6 +66,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/connections")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<User>>> getConnectionRecommendations() {
         User user = userService.getLogInUser();
         List<User> recommendations = recommendationService.recommendConnections(user);

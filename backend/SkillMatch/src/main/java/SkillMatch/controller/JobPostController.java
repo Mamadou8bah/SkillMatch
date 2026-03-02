@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @RestController
 @RequestMapping({"/post", "/jobs"})
 @RequiredArgsConstructor
@@ -20,17 +22,20 @@ public class JobPostController {
     private final JobPostService service;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getJobPost(@RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "5") int size){
         return ResponseEntity.ok(service.getJobPost(page, size));
     }
 
     @GetMapping("/all")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<JobResponseDTO>> getAllJobs() {
         return ResponseEntity.ok(service.getAllJobs());
     }
 
     @PostMapping("/add")
+    @Transactional
     public ResponseEntity<?> addJob(@Valid @RequestBody JobPost jobPost){
          service.addJob(jobPost);
          return ResponseEntity.ok("Job Added");
@@ -38,17 +43,20 @@ public class JobPostController {
 
 
     @GetMapping("/myjobs")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<JobPost>> getMyJobs() {
         return ResponseEntity.ok(service.getJobsByLoggedInEmployer());
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getJobPostById(@PathVariable long id){
         JobPost post= service.getJobPostById(id);
         return ResponseEntity.ok(post);
     }
 
     @GetMapping("/search")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> searchPosts(@RequestParam String title){
         List<JobPost>posts= service.searchPosts(title);
         return ResponseEntity.ok(posts);
@@ -56,12 +64,14 @@ public class JobPostController {
 
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> updateJobPost(@PathVariable long id, @Valid @RequestBody JobPost newPost){
        JobPost post= service.updateJobPost(id,newPost);
        return ResponseEntity.ok(post);
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<?> deletePost(@PathVariable long id){
         service.deletePost(id);
         return ResponseEntity.ok("Post Deleted");

@@ -92,7 +92,7 @@ public class User implements UserDetails {
     @Builder.Default
     private Set<Application> applications = new java.util.HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     @JsonIgnore
     @Builder.Default
     private List<Education> educations = new ArrayList<>();
@@ -102,7 +102,7 @@ public class User implements UserDetails {
     @Builder.Default
     private List<Experience> experiences = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnore
     @Builder.Default
     private List<Skill> skills = new ArrayList<>();
